@@ -26,7 +26,7 @@ ARTIFACT_DESCRIPTIONS = {
 
 
 def build_demo_dashboard(analysis_dir: str | Path, output_path: str | Path | None = None) -> Path:
-    """Build a self-contained, offline HTML report from verified historical analysis."""
+    """Build a self-contained interactive dashboard from a verified historical analysis."""
     root = Path(analysis_dir)
     manifest_path = root / "manifest.json"
     if not manifest_path.is_file():
@@ -41,10 +41,9 @@ def build_demo_dashboard(analysis_dir: str | Path, output_path: str | Path | Non
 
     names = (
         "event_master.csv", "multi_stock_event_study.csv", "multi_stock_car.csv",
-        "multi_stock_significance.csv", "event_volatility.csv", "event_window_audit.csv",
-        "event_level_audit.csv", "event_pair_overlap_audit.csv",
-        "documented_confounder_audit.csv", "trade_candidates.csv",
+        "multi_stock_significance.csv", "cross_stock_consistency.csv",
         "event_trading_results.csv", "sample_performance.csv",
+        "transaction_cost_sensitivity.csv", "covid_extreme_day_sensitivity.csv",
     )
     datasets: dict[str, list[dict]] = {}
     for name in names:
@@ -58,51 +57,140 @@ def build_demo_dashboard(analysis_dir: str | Path, output_path: str | Path | Non
 
     payload = json.dumps({"manifest": manifest, "datasets": datasets}, default=str)
     payload = payload.replace("</", "<\\/")
-    title = "EventEcho — Frozen Historical Event Study"
+    title = "EventEcho | Historical Event Study"
+    template = r'''<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__TITLE__</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#121a2b;--panel2:#182338;--line:#293750;--muted:#9eacc3;--text:#edf3ff;--blue:#83b8ff;--green:#63d9b0;--red:#ff8d9a;--amber:#f4c879}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 10% 0%,#18294a 0,transparent 38%),var(--bg);color:var(--text);font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:1480px;margin:auto;padding:28px 22px 60px}.eyebrow{color:var(--blue);font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+header{display:flex;gap:24px;align-items:flex-start;justify-content:space-between;margin-bottom:22px}h1{font-size:clamp(30px,4vw,46px);letter-spacing:-.04em;line-height:1.08;margin:8px 0 12px}h2{font-size:17px;margin:0 0 14px;letter-spacing:-.015em}h3{font-size:13px;margin:0 0 8px;color:#cbd7eb}.sub{max-width:760px;color:var(--muted);font-size:15px}.snapshot{border:1px solid #385078;background:#14233a;padding:13px 15px;border-radius:12px;min-width:220px}.snapshot strong{display:block;font-size:12px;color:var(--blue);margin-bottom:5px}.snapshot span{font-size:12px;color:#c5d1e5;overflow-wrap:anywhere}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:22px 0}.metric,.panel{background:linear-gradient(145deg,var(--panel),#101828);border:1px solid var(--line);border-radius:15px}.metric{padding:17px}.metric .label{color:var(--muted);font-size:12px}.metric .value{font-size:27px;font-weight:750;letter-spacing:-.03em;margin:5px 0}.metric .note{font-size:11px;color:var(--muted)}
+.controls{display:flex;flex-wrap:wrap;gap:12px;align-items:end;padding:16px;margin:16px 0}.field{display:flex;flex-direction:column;gap:6px;min-width:160px}.field label{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em}select{background:#0c1423;color:var(--text);border:1px solid #3a4b66;border-radius:8px;padding:10px 11px;font:inherit;min-width:160px}.layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(320px,.7fr);gap:14px}.panel{padding:18px;min-width:0;margin-bottom:14px}.wide{grid-column:1/-1}.muted{color:var(--muted)}.small{font-size:12px;color:var(--muted)}.pill{display:inline-block;padding:3px 8px;border-radius:99px;background:#22314a;color:#dce8fa;font-size:11px;font-weight:700}.pill.warn{background:#4a351c;color:#ffdaa0}.pill.good{background:#143d37;color:#9bf1d5}
+.tablewrap{overflow:auto;max-width:100%}table{width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap}th,td{text-align:right;padding:9px 10px;border-bottom:1px solid #27334a}th{color:#aebed5;background:#141e30;font-size:10px;letter-spacing:.06em;text-transform:uppercase;position:sticky;top:0}th:first-child,td:first-child{text-align:left}tr:last-child td{border-bottom:0}.empty{padding:18px;color:var(--muted);background:#0e1726;border-radius:9px}
+.chart{width:100%;height:auto;display:block;overflow:visible}.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--muted);margin-top:7px}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}.eventcard{padding:13px;border:1px solid #2c3a51;background:#101a2b;border-radius:10px;margin:8px 0}.eventtitle{font-weight:700}.eventmeta{font-size:11px;color:var(--muted);margin-top:4px}.noteBox{border-left:3px solid var(--amber);padding:11px 13px;background:#2a241a;color:#f0d9aa;border-radius:0 8px 8px 0;font-size:12px;margin-top:12px}.footer{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);font-size:11px;color:var(--muted)}
+@media(max-width:900px){header{display:block}.snapshot{margin-top:16px}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.layout{grid-template-columns:1fr}.wide{grid-column:auto}}@media(max-width:520px){main{padding:18px 12px 40px}.metrics{gap:8px}.metric{padding:12px}.metric .value{font-size:22px}.field,select{width:100%}.controls{display:grid;grid-template-columns:1fr}}
+</style></head><body><main>
+<header><div><div class="eyebrow">Quantitative research workspace / India equities</div><h1>EventEcho</h1><div class="sub">Explore stock reactions around selected policy and macroeconomic events. Compare abnormal returns against a market-model expectation, inspect uncertainty, and audit event timing and overlap. This is an evidence explorer, not a prediction engine.</div></div><div class="snapshot"><strong>FROZEN HISTORICAL SNAPSHOT</strong><span id="snapshotId">__SNAPSHOT__</span><br><span id="period"></span><br><span id="source"></span></div></header>
+<div class="metrics" id="metrics"></div>
+<section class="panel controls"><div class="field"><label for="eventSelect">Event</label><select id="eventSelect"></select></div><div class="field"><label for="stockSelect">Stock</label><select id="stockSelect"></select></div><div class="field"><label for="windowSelect">CAR window</label><select id="windowSelect"></select></div><div class="field"><label for="sampleSelect">Trading sample</label><select id="sampleSelect"><option value="all">All events</option><option value="Development">Development</option><option value="Holdout">Holdout</option></select></div></section>
+<div class="layout">
+<section class="panel"><h2>CAR heatmap</h2><p class="small">Cumulative abnormal return by event and stock. Colors encode direction and magnitude; values are percentages.</p><div id="heatmap"></div></section>
+<section class="panel"><h2>Selected event</h2><div id="eventDetail"></div><h3 style="margin-top:16px">Return response around Day 0</h3><div id="returnChart"></div><div class="legend"><span><i class="dot" style="background:#83b8ff"></i>Daily abnormal return</span><span><i class="dot" style="background:#63d9b0"></i>Cumulative abnormal return</span></div></section>
+<section class="panel wide"><h2>Inference & uncertainty</h2><p class="small">Confidence intervals and Holm-adjusted p-values are approximate under the current model assumptions. Statistical significance is not causality.</p><div id="inference"></div></section>
+<section class="panel"><h2>Across-stock consistency</h2><p class="small">Do stocks move in the same direction around this event?</p><div id="consistency"></div></section>
+<section class="panel"><h2>Hypothetical trading diagnostic</h2><p class="small">Exploratory close-to-close rule; not an investable backtest.</p><div id="trading"></div><div id="costs" style="margin-top:12px"></div></section>
+<section class="panel wide"><h2>Event register & overlap audit</h2><div id="eventRegister"></div></section>
+<section class="panel wide"><h2>Data provenance & interpretation limits</h2><div id="provenance"></div><div class="noteBox">Daily data cannot isolate intraday reactions to market-hours announcements. The sample contains only a small, hand-selected set of events; overlapping news and shared macro episodes weaken independence. Do not interpret these associations as causal effects or future returns.</div></section>
+</div><div class="footer">EventEcho research prototype · Data provider and timestamps are recorded in the manifest. Confirm event timing and primary sources before presenting results. No investment advice.</div>
+<script id="eventecho-data" type="application/json">__PAYLOAD__</script>
+<script>
+(function(){
+"use strict";
+var root=JSON.parse(document.getElementById("eventecho-data").textContent),d=root.datasets||{},m=root.manifest||{};
+var events=d["event_master.csv"]||[],cars=d["multi_stock_car.csv"]||[],study=d["multi_stock_event_study.csv"]||[],sig=d["multi_stock_significance.csv"]||[],cons=d["cross_stock_consistency.csv"]||[],trades=d["event_trading_results.csv"]||[],samples=d["sample_performance.csv"]||[],costs=d["transaction_cost_sensitivity.csv"]||[],covid=d["covid_extreme_day_sensitivity.csv"]||[];
+var $=function(id){return document.getElementById(id);};
+var esc=function(v){return String(v==null?"—":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});};
+var num=function(v){var n=Number(v);return Number.isFinite(n)?n:null;};
+var pct=function(v,digits){var n=num(v);return n===null?"—":n.toFixed(digits==null?2:digits)+"%";};
+var uniq=function(a){return Array.from(new Set(a.filter(function(x){return x!==null&&x!==undefined&&x!=="";})));};
+var labelWindow=function(w){return String(w||"").replace("CAR_","").replace("_","").replace("_"," to ");};
+var selected=function(){return {e:$("eventSelect").value,s:$("stockSelect").value,w:$("windowSelect").value,sample:$("sampleSelect").value};};
+function option(select,values,allLabel){select.innerHTML="";if(allLabel){var o=document.createElement("option");o.value="all";o.textContent=allLabel;select.appendChild(o);}values.forEach(function(v){var o=document.createElement("option");o.value=v;o.textContent=v;select.appendChild(o);});}
+option($("eventSelect"),events.map(function(x){return x.event_id;}));
+option($("stockSelect"),uniq(cars.map(function(x){return x.stock;})),"All stocks");
+option($("windowSelect"),uniq(cars.map(function(x){return x.window;})));
+if(!$("eventSelect").options.length||!$("stockSelect").options.length||!$("windowSelect").options.length){$("metrics").innerHTML='<div class="metric">Analysis data is incomplete. Inspect the uploaded CSV artifacts and manifest.</div>';return;}
+$("period").textContent=(m.period_start||"—")+" → "+(m.period_end||"—");
+$("source").textContent=((m.input_data_provenance||{}).source||"Recorded source unavailable")+" · "+(m.benchmark||"Benchmark not recorded");
+function metric(label,value,note){return '<div class="metric"><div class="label">'+esc(label)+'</div><div class="value">'+esc(value)+'</div><div class="note">'+esc(note)+'</div></div>';}
+function table(headers,rows){if(!rows.length)return '<div class="empty">No rows match these filters.</div>';return '<div class="tablewrap"><table><thead><tr>'+headers.map(function(h){return '<th>'+esc(h)+'</th>';}).join("")+'</tr></thead><tbody>'+rows.map(function(r){return '<tr>'+r.map(function(v,i){return '<td>'+ (i===0?String(v):esc(v))+'</td>';}).join("")+'</tr>';}).join("")+'</tbody></table></div>';}
+function signed(v){var n=num(v);return n===null?"—":(n>0?"+":"")+n.toFixed(2)+"%";}
+function selectedEvent(id){return events.find(function(x){return x.event_id===id;})||{};}
+function filteredRows(file){var q=selected();return file.filter(function(r){return (!q.e||r.event_id===q.e)&&(!q.s||q.s==="all"||!r.stock||r.stock===q.s)&&(!q.w||r.window===q.w);});}
+function heatmap(){
+var q=selected(),rows=cars.filter(function(r){return (!q.e||r.event_id===q.e)&&(!q.s||q.s==="all"||r.stock===q.s)&&(!q.w||r.window===q.w);});
+if(!rows.length){$("heatmap").innerHTML='<div class="empty">No CAR rows available.</div>';return;}
+var stocks=uniq(rows.map(function(r){return r.stock;})),ids=uniq(rows.map(function(r){return r.event_id;}));
+var html='<div class="tablewrap"><table><thead><tr><th>Event</th>'+stocks.map(function(s){return '<th>'+esc(s)+'</th>';}).join("")+'</tr></thead><tbody>';
+ids.forEach(function(id){html+='<tr><td>'+esc(id)+'</td>';stocks.forEach(function(s){var r=rows.find(function(x){return x.event_id===id&&x.stock===s;});var v=r?num(r.CAR)*100:null;var alpha=v===null?0:Math.min(.78,Math.abs(v)/25);var color=v===null?"#202b3d":v>=0?"rgba(40,178,135,"+alpha+")":"rgba(226,87,111,"+alpha+")";html+='<td style="background:'+color+'">'+(v===null?"—":signed(v))+'</td>';});html+='</tr>';});html+='</tbody></table></div>';$("heatmap").innerHTML=html;
+}
+function eventDetail(){
+var e=selectedEvent(selected().e),overlap=String(e.overlap_flag).toLowerCase()==="true";
+var url=e.source_url?'<a href="'+esc(e.source_url)+'" target="_blank" rel="noopener noreferrer">Open recorded source ↗</a>':"No source URL recorded";
+$("eventDetail").innerHTML='<div class="eventcard"><div class="eventtitle">'+esc(e.headline||e.event_id)+'</div><div class="eventmeta">'+esc(e.event_id)+' · '+esc(e.category)+' · Announced '+esc(e.event_date)+' · Effective '+esc(e.effective_event_date)+'</div><p>'+esc(e.notes||"No event note recorded.")+'</p><div>'+ (overlap?'<span class="pill warn">Overlap flagged</span>':'<span class="pill">No overlap flag recorded</span>')+' <span class="pill">'+esc(e.timing_confidence||"Timing ungraded")+'</span></div><p class="small">'+url+'</p></div>';
+}
+function chart(){
+var q=selected(),rows=study.filter(function(r){return r.event_id===q.e&&(q.s==="all"||r.stock===q.s);});
+if(q.s==="all"){rows=rows.filter(function(r){return r.stock===uniq(cars.filter(function(c){return c.event_id===q.e;}).map(function(c){return c.stock;}))[0];});}
+rows.sort(function(a,b){return Number(a.event_day)-Number(b.event_day);});
+if(!rows.length){$("returnChart").innerHTML='<div class="empty">No event-window daily returns.</div>';return;}
+var width=520,height=245,left=42,right=14,top=18,bottom=30,plotW=width-left-right,plotH=height-top-bottom;
+var ars=rows.map(function(r){return num(r.abnormal_return)*100;}),days=rows.map(function(r){return Number(r.event_day);}),cum=[],sum=0;
+ars.forEach(function(v){sum+=v||0;cum.push(sum);});
+var all=ars.concat(cum).filter(function(v){return v!==null&&Number.isFinite(v);}),min=Math.min.apply(null,all.concat([0])),max=Math.max.apply(null,all.concat([0]));if(max===min){max+=1;min-=1;}
+var x=function(i){return left+(i/Math.max(1,rows.length-1))*plotW;},y=function(v){return top+(max-v)/(max-min)*plotH;};
+var svg='<svg class="chart" viewBox="0 0 '+width+' '+height+'" role="img" aria-label="Abnormal and cumulative abnormal returns by event day">';
+for(var g=0;g<5;g++){var v=min+(max-min)*g/4,yy=y(v);svg+='<line x1="'+left+'" y1="'+yy+'" x2="'+(width-right)+'" y2="'+yy+'" stroke="#2b3950"/><text x="'+(left-7)+'" y="'+(yy+4)+'" fill="#9eacc3" font-size="10" text-anchor="end">'+v.toFixed(1)+'</text>';}
+var zeroIndex=days.indexOf(0);if(zeroIndex>=0)svg+='<line x1="'+x(zeroIndex)+'" y1="'+top+'" x2="'+x(zeroIndex)+'" y2="'+(height-bottom)+'" stroke="#f4c879" stroke-dasharray="4 4"/>';
+svg+='<line x1="'+left+'" y1="'+y(0)+'" x2="'+(width-right)+'" y2="'+y(0)+'" stroke="#8797b0" stroke-dasharray="2 3"/>';
+ars.forEach(function(v,i){var xx=x(i),yy=y(v||0),base=y(0),barW=Math.min(18,plotW/rows.length*.48);svg+='<rect x="'+(xx-barW/2)+'" y="'+Math.min(yy,base)+'" width="'+barW+'" height="'+Math.max(1,Math.abs(base-yy))+'" rx="2" fill="#83b8ff" opacity=".82"><title>Day '+days[i]+': '+(v==null?"n/a":v.toFixed(3))+'%</title></rect>';});
+svg+='<polyline fill="none" stroke="#63d9b0" stroke-width="2.5" points="'+cum.map(function(v,i){return x(i)+","+y(v);}).join(" ")+'"/>';
+cum.forEach(function(v,i){svg+='<circle cx="'+x(i)+'" cy="'+y(v)+'" r="3" fill="#63d9b0"><title>Day '+days[i]+': CAR '+v.toFixed(3)+'%</title></circle>';});
+days.forEach(function(v,i){svg+='<text x="'+x(i)+'" y="'+(height-9)+'" fill="#9eacc3" font-size="10" text-anchor="middle">'+v+'</text>';});
+svg+='<text x="12" y="12" fill="#9eacc3" font-size="10">Return (%)</text></svg>';$("returnChart").innerHTML=svg;
+}
+function inference(){
+var q=selected(),rows=sig.filter(function(r){return r.event_id===q.e&&(q.s==="all"||r.stock===q.s)&&r.window===q.w;});
+rows.sort(function(a,b){return (num(a.holm_p_value)||1)-(num(b.holm_p_value)||1);});
+$("inference").innerHTML=table(["Event","Stock","Window","CAR","95% CI","Raw p","Holm p","Holm < 0.05"],rows.map(function(r){return [esc(r.event_id),esc(r.stock),esc(r.window),signed(r.CAR_pct),signed(r.ci_lower_pct)+" to "+signed(r.ci_upper_pct),num(r.raw_p_value)===null?"—":Number(r.raw_p_value).toPrecision(3),num(r.holm_p_value)===null?"—":Number(r.holm_p_value).toPrecision(3),String(r.significant_after_holm_5pct).toLowerCase()==="true"?'<span class="pill good">Yes</span>':'No'];}));
+}
+function consistency(){
+var q=selected(),rows=cons.filter(function(r){return r.event_id===q.e&&r.window===q.w;});
+$("consistency").innerHTML=table(["Window","Mean CAR","Median CAR","Across-stock SD","Positive stocks","N"],rows.map(function(r){return [esc(r.window),signed(r.mean_CAR_pct),signed(r.median_CAR_pct),pct(r.cross_stock_std_pct),pct(num(r.positive_stock_fraction)*100),esc(r.stocks_observed)];}));
+}
+function trading(){
+var q=selected(),rows=trades.filter(function(r){return (q.sample==="all"||r.sample===q.sample)&&(!q.e||r.event_id===q.e);});
+$("trading").innerHTML=table(["Event","Sample","Net return","Benchmark","Excess","Stocks"],rows.map(function(r){return [esc(r.event_id),esc(r.sample),signed(num(r.portfolio_net_return)*100),signed(num(r.benchmark_return)*100),signed(num(r.excess_return)*100),esc(r.stocks_traded)];}));
+var ss=samples.filter(function(r){return q.sample==="all"||r.sample===q.sample;});
+$("costs").innerHTML='<h3>Chronological sample summary</h3>'+table(["Sample","Events","Mean net","Mean excess","Benchmark beat rate"],ss.map(function(r){return [esc(r.sample),esc(r.number_of_events),signed(r.mean_net_return_pct),signed(r.mean_excess_return_pct),pct(r.benchmark_outperformance_rate_pct)];}));
+var cc=costs.map(function(r){return [esc(r.cost_bps_per_side),signed(r.avg_net_return_pct),signed(r.avg_excess_return_pct)];});
+$("costs").innerHTML+='<h3 style="margin-top:12px">Transaction-cost sensitivity</h3>'+table(["Cost / side (bps)","Mean net return","Mean excess return"],cc);
+}
+function register(){
+var rows=events.map(function(e){var flag=String(e.overlap_flag).toLowerCase()==="true";return ['<strong>'+esc(e.event_id)+'</strong>',esc(e.event_date),esc(e.effective_event_date),esc(e.category),esc(e.episode_id),flag?'<span class="pill warn">Flagged</span>':'No flag',esc(e.verification_status)];});
+$("eventRegister").innerHTML=table(["ID","Announced","Effective","Category","Episode","Overlap","Recorded status"],rows);
+}
+function provenance(){
+var p=m.input_data_provenance||{},checks=m.input_checksums_sha256||{};
+$("provenance").innerHTML='<div class="tablewrap"><table><tbody>'+
+[['Snapshot ID',m.snapshot_id],['Period',(m.period_start||"—")+" to "+(m.period_end||"—")],['Provider',p.source||p.provider],['Retrieved UTC',p.retrieved_at_utc],['Benchmark',m.benchmark],['Price input',m.input_prices],['Price SHA-256',checks.prices],['Estimation sessions',m.estimation_sessions],['Gap sessions',m.gap_sessions],['Event-window radius',m.event_window_sessions],['Event sources independently verified',m.source_independently_verified]].map(function(r){return '<tr><td>'+esc(r[0])+'</td><td style="text-align:left;white-space:normal;overflow-wrap:anywhere">'+esc(r[1])+'</td></tr>';}).join("")+
+'</tbody></table></div><p class="small">Stock returns use provider adjusted-close fields; the Nifty benchmark uses a price-index close, so dividend conventions differ. The manifest records provenance but does not independently validate every event source.</p>';
+}
+function render(){
+var q=selected(),eventRows=study.filter(function(r){return r.event_id===q.e;}),testRows=sig.filter(function(r){return !q.e||r.event_id===q.e;});
+var significant=testRows.filter(function(r){return String(r.significant_after_holm_5pct).toLowerCase()==="true";}).length;
+var obs=study.length,carCount=cars.length;
+$("metrics").innerHTML=metric("Historical events",m.event_count||events.length,"Selected event master")+
+metric("Stock-event-day rows",obs.toLocaleString(),"Actual, expected and abnormal returns")+
+metric("CAR estimates",carCount.toLocaleString(),"Three windows where complete")+
+metric("Holm-significant in selected event",significant.toString(),"Of "+testRows.length+" tests in current event filter");
+heatmap();eventDetail();chart();inference();consistency();trading();register();provenance();
+}
+["eventSelect","stockSelect","windowSelect","sampleSelect"].forEach(function(id){$(id).addEventListener("change",render);});
+render();
+})();
+</script></main></body></html>'''
     html = (
-        "<!doctype html><html lang='en'><head><meta charset='utf-8'>"
-        "<meta name='viewport' content='width=device-width,initial-scale=1'>"
-        f"<title>{title}</title><style>"
-        "body{font:15px system-ui;max-width:1400px;margin:24px auto;padding:0 16px;background:#101827;color:#e7edf7}"
-        "section,header{background:#192538;border:1px solid #34445b;border-radius:12px;padding:16px;margin:14px 0}"
-        "pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#c7d7eb}h1,h2{margin-top:0}.tag{color:#b7d3ff}"
-        "</style></head><body><header><p class='tag'>HISTORICAL DATA SNAPSHOT</p>"
-        f"<h1>{title}</h1><p>Abnormal returns, CAR, volatility, uncertainty and confounder diagnostics. "
-        "Associations only; not causal claims or investment advice.</p>"
-        f"<p>Snapshot: {manifest.get('snapshot_id')} | Period: {manifest.get('period_start')} to {manifest.get('period_end')} "
-        f"| Events: {manifest.get('event_count')}</p></header>"
-        "<section><h2>Event selector</h2><label>Event<select id='eventSelect'></select></label> "
-        "<label>Stock<select id='stockSelect'></select></label> "
-        "<label>CAR window<select id='windowSelect'></select></label></section>"
-        "<section><h2>CAR heatmap</h2><div id='carHeatmap'></div></section>"
-        "<section><h2>Event timeline</h2><div id='timeline'></div></section>"
-        "<section><h2>Abnormal returns / cumulative CAR</h2><div id='cumulativeCar'></div></section>"
-        "<section><h2>Volatility</h2><div id='volatility'></div></section>"
-        "<section><h2>Hypothetical trading</h2><div id='trading'></div></section>"
-        "<section><h2>Uncertainty and multiple testing</h2><div id='uncertainty'></div></section>"
-        "<section><h2>Confounders and event overlap</h2><div id='confounders'></div></section>"
-        "<section><h2>Embedded reproducibility data</h2><pre id='provenance'></pre>"
-        f"<script id='eventecho-data' type='application/json'>{payload}</script></section>"
-        "<script>const a=JSON.parse(document.getElementById('eventecho-data').textContent),d=a.datasets,m=a.manifest;"
-        "const names=['eventSelect','stockSelect','windowSelect'];"
-        "const vals=[...new Set((d['event_master.csv']||[]).map(x=>x.event_id).filter(Boolean))];"
-        "document.getElementById(names[0]).innerHTML=vals.map(x=>'<option>'+x+'</option>').join('');"
-        "document.getElementById(names[1]).innerHTML=[...new Set((d['multi_stock_car.csv']||[]).map(x=>x.stock).filter(Boolean))].map(x=>'<option>'+x+'</option>').join('');"
-        "document.getElementById(names[2]).innerHTML=[...new Set((d['multi_stock_car.csv']||[]).map(x=>x.window).filter(Boolean))].map(x=>'<option>'+x+'</option>').join('');"
-        "document.getElementById('provenance').textContent=JSON.stringify({snapshot:m.snapshot_id,prices:m.input_prices,checksums:m.input_checksums_sha256,source:m.input_data_provenance},null,2);"
-        "function render(){const e=document.getElementById('eventSelect').value,s=document.getElementById('stockSelect').value,w=document.getElementById('windowSelect').value;"
-        "for(const [id,file] of [['carHeatmap','multi_stock_car.csv'],['timeline','event_master.csv'],['cumulativeCar','multi_stock_event_study.csv'],['volatility','event_volatility.csv'],['trading','event_trading_results.csv'],['uncertainty','multi_stock_significance.csv']]){"
-        "const rs=(d[file]||[]).filter(r=>(!e||r.event_id===e)&&(!s||!r.stock||r.stock===s)&&(!w||!r.window||r.window===w));"
-        "document.getElementById(id).textContent=JSON.stringify(rs,null,2);}"
-        "document.getElementById('confounders').textContent=JSON.stringify(['event_level_audit.csv','event_window_audit.csv','event_pair_overlap_audit.csv','documented_confounder_audit.csv'].flatMap(k=>d[k]||[]).filter(r=>!e||r.event_id===e||r.event_id_a===e||r.event_id_b===e),null,2);}"
-        "names.forEach(id=>document.getElementById(id).addEventListener('change',render));render();</script>"
-        "</body></html>"
+        template.replace("__TITLE__", title)
+        .replace("__SNAPSHOT__", str(manifest.get("snapshot_id", "unavailable")))
+        .replace("__PAYLOAD__", payload)
     )
     destination = Path(output_path) if output_path is not None else root / "eventecho_demo.html"
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(html, encoding="utf-8")
     return destination
-
 
 def write_artifacts(artifacts: dict[str, pd.DataFrame], output_dir: Path, manifest: dict) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
