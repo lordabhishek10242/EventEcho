@@ -74,7 +74,7 @@ jobs:
           SNAPSHOT_ID: ${{ inputs.snapshot_id }}
         run: |
           python scripts/run_analysis.py \
-            --prices "data/snapshots/$SNAPSHOT_ID/prices.csv" \
+            --snapshot-id "$SNAPSHOT_ID" \
             --offline \
             --output-dir results/real_market_analysis \
             --verbose
