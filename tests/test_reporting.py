@@ -94,5 +94,5 @@ def test_demo_builds_offline_selectable_visual_report_from_analysis_artifacts(tm
 
     assert output.exists()
     document = output.read_text(encoding="utf-8")
-    for required in ("eventSelect", "stockSelect", "windowSelect", "eventDetail", "heatmap", "returnChart", "inference", "consistency", "trading", "eventRegister", "provenance", "snapshot-1", "confidence intervals", "Transaction-cost sensitivity"):
+    for required in ("eventSelect", "stockSelect", "windowSelect", "eventDetail", "heatmap", "returnChart", "inference", "consistency", "trading", "eventRegister", "provenance", "snapshot-1", "Confidence intervals", "Transaction-cost sensitivity"):
         assert required in document
