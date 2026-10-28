@@ -79,7 +79,15 @@ def test_unlabeled_local_input_is_not_claimed_as_historical(tmp_path):
 
 
 def test_analysis_snapshot_selection_records_exact_input_and_provenance(monkeypatch, tmp_path):
-    prices = Path("data/prices.csv").resolve()
+    prices = tmp_path / "prices.csv"
+    dates = pd.bdate_range("2016-01-01", periods=260)
+    frame = pd.DataFrame(
+        {label: 100.0 + pd.Series(range(len(dates))).to_numpy() * (1 + i / 10)
+         for i, label in enumerate(["RELIANCE", "TCS", "INFY", "HDFCBANK", "ICICIBANK", "ITC", "NIFTY50"])},
+        index=dates,
+    )
+    frame.index.name = "date"
+    frame.to_csv(prices)
     provenance = {
         "classification": "historical_market_data",
         "snapshot_id": "fixture-snapshot",
@@ -108,7 +116,7 @@ def test_analysis_snapshot_selection_records_exact_input_and_provenance(monkeypa
     manifest = json.loads((output / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["snapshot_id"] == "fixture-snapshot"
     assert manifest["input_data_classification"] == "historical_market_data"
-    assert manifest["input_prices_exact_path"] == prices.as_posix()
+    assert manifest["input_prices_exact_path"] == prices.resolve().as_posix()
     assert manifest["input_checksums_sha256"]["prices"] == sha256_file(prices)
     assert manifest["real_market_evidence"] is True
     assert manifest["source_independently_verified"] is False
