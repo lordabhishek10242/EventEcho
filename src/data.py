@@ -30,7 +30,7 @@ def load_price_provenance(path: str | Path) -> dict:
     promoted to historical-market evidence.
     """
     price_path = Path(path)
-    sidecar = price_path.with_name(price_path.name + ".provenance.json")
+    sidecar = price_path.with_name(f"{price_path.stem}.provenance.json")
     if not sidecar.is_file():
         return {
             "classification": "unverified_local_input",
