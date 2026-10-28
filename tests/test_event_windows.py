@@ -23,6 +23,24 @@ def test_event_window_uses_sessions_and_separates_estimation_period():
     assert sample.index[0] == returns.index[15]
 
 
+
+
+def test_estimation_sample_backfills_missing_rows_without_crossing_event_gap():
+    returns = make_returns(length=220)
+    event_date = returns.index[180]
+    # Remove two otherwise eligible observations from the fixed-width lookback.
+    returns.loc[returns.index[[75, 80]], "A"] = np.nan
+    sample = estimation_sample(
+        returns, event_date, estimation_sessions=100, gap_sessions=20, stock_column="A"
+    )
+    event_position = returns.index.get_loc(event_date)
+    last_allowed_position = event_position - 5 - 20 - 1
+    assert len(sample) == 100
+    assert sample.index[-1] <= returns.index[last_allowed_position]
+    assert sample["A"].notna().all()
+    assert sample["NIFTY50_RETURN"].notna().all()
+
+
 def test_non_trading_effective_date_is_explicitly_aligned_forward():
     dates = pd.DatetimeIndex(["2024-01-01", "2024-01-03", "2024-01-04"])
     assert align_event_date("2024-01-02", dates) == pd.Timestamp("2024-01-03")
