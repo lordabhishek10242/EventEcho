@@ -136,12 +136,28 @@ def test_documented_confounder_flag_is_not_the_same_as_event_overlap():
     assert audit.iloc[0]["event_window_overlap_count"] == 0
 
 
-def test_confounded_record_preserves_all_source_fields_from_reference_json():
-    with open("data/confounders.json", encoding="utf-8") as file:
-        records = json.load(file)
-    assert len(records) == 4
-    assert all(record["source_name"] and record["source_url"] for record in records)
-    assert all("not independently re-verified" in record["provenance_note"] for record in records)
+def test_documented_confounder_records_preserve_source_fields_without_external_fixture():
+    dates, _, events, _ = make_fixture()
+    records = [
+        {
+            "confounder_id": f"C{i}",
+            "event_id": event_id,
+            "date": dates[position - 3],
+            "headline": f"Test confounder {i}",
+            "source_name": f"Fixture source {i}",
+            "source_url": f"https://example.test/source/{i}",
+            "potential_relevance": "Potential concurrent information",
+            "provenance_note": "Synthetic test fixture; not independently re-verified.",
+        }
+        for i, (event_id, position) in enumerate({"E1": 60, "E2": 62, "E3": 110, "E4": 145}.items(), start=1)
+    ]
+    audit = audit_event_windows(events, dates, event_window_radius=5)
+    result = audit_documented_confounders(pd.DataFrame(records), audit, dates)
+    assert len(result) == 4
+    assert result["source_name"].tolist() == [f"Fixture source {i}" for i in range(1, 5)]
+    assert result["source_url"].tolist() == [f"https://example.test/source/{i}" for i in range(1, 5)]
+    assert all("not independently re-verified" in note for note in result["provenance_note"])
+    assert not result["causal_effect_estimated"].any()
 
 
 def test_category_car_averages_stocks_then_collapses_related_events_by_episode():
