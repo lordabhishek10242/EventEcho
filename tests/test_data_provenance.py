@@ -80,7 +80,7 @@ def test_unlabeled_local_input_is_not_claimed_as_historical(tmp_path):
 
 def test_analysis_snapshot_selection_records_exact_input_and_provenance(monkeypatch, tmp_path):
     prices = tmp_path / "prices.csv"
-    dates = pd.bdate_range("2016-01-01", periods=260)
+    dates = pd.bdate_range("2016-01-01", periods=2600)
     frame = pd.DataFrame(
         {label: 100.0 + pd.Series(range(len(dates))).to_numpy() * (1 + i / 10)
          for i, label in enumerate(["RELIANCE", "TCS", "INFY", "HDFCBANK", "ICICIBANK", "ITC", "NIFTY50"])},
