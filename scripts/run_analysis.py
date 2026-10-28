@@ -30,7 +30,8 @@ from src.config import (  # noqa: E402
     START_DATE,
     STOCK_TICKERS,
 )
-from src.data import align_stock_benchmark_returns, calculate_returns, download_prices, load_price_csv  # noqa: E402
+from src.data import align_stock_benchmark_returns, calculate_returns, download_prices, load_price_csv, load_price_provenance, sha256_file  # noqa: E402
+from src.snapshots import resolve_market_snapshot  # noqa: E402
 from src.event_study import calculate_event_study  # noqa: E402
 from src.events import chronological_split, validate_events  # noqa: E402
 from src.reporting import write_artifacts  # noqa: E402
@@ -83,8 +84,20 @@ def run_analysis(
     start_date: str = START_DATE,
     end_date: str = END_DATE,
     cost_bps_per_side: float = BASE_COST_BPS_PER_SIDE,
+    snapshot_id: str | None = None,
+    allow_synthetic: bool = False,
 ) -> dict[str, pd.DataFrame]:
     events = validate_events(pd.read_csv(events_path))
+    snapshot_manifest = None
+    provenance = None
+    if snapshot_id is not None:
+        prices_path, snapshot_manifest, provenance = resolve_market_snapshot(
+            ROOT / "data" / "snapshots", snapshot_id
+        )
+    elif prices_path is not None:
+        provenance = load_price_provenance(prices_path)
+        if provenance.get("classification") == "synthetic" and not allow_synthetic:
+            raise ValueError("Synthetic prices are validation-only; pass --allow-synthetic to opt in")
     if prices_path is not None:
         if not prices_path.exists():
             raise FileNotFoundError(f"Specified price file does not exist: {prices_path}")
@@ -180,7 +193,22 @@ def run_analysis(
         "inference_note": "Approximate t-tests include OLS parameter uncertainty; residual independence/homoskedasticity remain assumptions.",
         "data_note": "Stock returns use adjusted close; benchmark returns use price close. Local missing prices are not filled.",
         "provider_note": "Yahoo Finance history is provider-controlled and can change; this run is not based on a frozen vendor snapshot.",
+        "input_data_classification": (
+            provenance.get("classification", "unverified_local_input") if provenance else "live_provider_download"
+        ),
+        "real_market_evidence": bool(
+            provenance and provenance.get("classification") == "historical_market_data"
+            and provenance.get("provenance_verified")
+        ),
+        "source_independently_verified": bool(provenance and provenance.get("source_independently_verified")),
+        "input_checksums_sha256": {"prices": provenance.get("sha256")} if provenance else {},
+        "input_data_provenance": provenance or {},
+        "input_prices_exact_path": prices_path.resolve().as_posix() if prices_path else None,
+        "snapshot_id": snapshot_id,
     }
+    if snapshot_manifest is not None:
+        manifest["snapshot_manifest"] = snapshot_manifest
+        manifest["input_prices"] = f"data/snapshots/{snapshot_id}/prices.csv"
     write_artifacts(artifacts, output_dir, manifest)
     LOGGER.info("Wrote %d non-empty artifacts to %s", len(artifacts), output_dir)
     return artifacts
@@ -195,6 +223,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--start", default=START_DATE)
     parser.add_argument("--end", default=END_DATE)
     parser.add_argument("--cost-bps-per-side", type=float, default=BASE_COST_BPS_PER_SIDE)
+    parser.add_argument("--snapshot-id", default=None, help="Use a verified frozen historical market snapshot")
+    parser.add_argument("--allow-synthetic", action="store_true", help="Allow explicitly labelled synthetic prices for validation only")
     parser.add_argument("--verbose", action="store_true")
     return parser.parse_args()
 
@@ -205,7 +235,7 @@ def main() -> None:
     try:
         run_analysis(
             args.events, args.output_dir, args.prices, args.offline,
-            args.start, args.end, args.cost_bps_per_side,
+            args.start, args.end, args.cost_bps_per_side, args.snapshot_id, args.allow_synthetic,
         )
     except Exception as exc:
         LOGGER.error("Analysis failed: %s", exc)
