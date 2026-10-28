@@ -26,7 +26,7 @@ ARTIFACT_DESCRIPTIONS = {
 
 
 def build_demo_dashboard(analysis_dir: str | Path, output_path: str | Path | None = None) -> Path:
-    """Build a self-contained, offline HTML dashboard from frozen analysis outputs."""
+    """Build a self-contained, offline HTML report from verified historical analysis."""
     root = Path(analysis_dir)
     manifest_path = root / "manifest.json"
     if not manifest_path.is_file():
@@ -39,73 +39,70 @@ def build_demo_dashboard(analysis_dir: str | Path, output_path: str | Path | Non
     ):
         raise ValueError("Demo dashboard requires a frozen historical-market-data analysis manifest")
 
-    datasets: dict[str, list[dict]] = {}
-    for filename in (
+    names = (
         "event_master.csv", "multi_stock_event_study.csv", "multi_stock_car.csv",
         "multi_stock_significance.csv", "event_volatility.csv", "event_window_audit.csv",
         "event_level_audit.csv", "event_pair_overlap_audit.csv",
         "documented_confounder_audit.csv", "trade_candidates.csv",
         "event_trading_results.csv", "sample_performance.csv",
-    ):
-        file_path = root / filename
-        if file_path.is_file():
+    )
+    datasets: dict[str, list[dict]] = {}
+    for name in names:
+        path = root / name
+        if path.is_file():
             try:
-                datasets[filename] = pd.read_csv(file_path).where(pd.notna(pd.read_csv(file_path)), None).to_dict(orient="records")
+                frame = pd.read_csv(path)
+                datasets[name] = frame.astype(object).where(pd.notna(frame), None).to_dict(orient="records")
             except pd.errors.EmptyDataError:
-                datasets[filename] = []
+                datasets[name] = []
 
-    # Embed JSON safely for a portable, no-network dashboard.
     payload = json.dumps({"manifest": manifest, "datasets": datasets}, default=str)
     payload = payload.replace("</", "<\\/")
-    document = """<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>EventEcho — Frozen Historical Event Study</title>
-<style>
-:root{color-scheme:dark;font-family:Inter,system-ui,sans-serif;background:#101827;color:#e7edf7}
-body{margin:0;padding:24px;max-width:1400px;margin-inline:auto}header,.panel{background:#192538;border:1px solid #34445b;border-radius:14px;padding:18px;margin-bottom:16px}
-h1,h2{margin-top:0}p,.muted{color:#a9b8cc}.controls{display:flex;gap:12px;flex-wrap:wrap}label{display:grid;gap:6px;color:#a9b8cc}
-select{background:#101827;color:#e7edf7;border:1px solid #50617a;border-radius:8px;padding:9px;min-width:150px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.metric{background:#101827;border-radius:10px;padding:14px}
-table{width:100%;border-collapse:collapse;font-size:13px;display:block;overflow:auto}th,td{text-align:left;padding:8px;border-bottom:1px solid #34445b;white-space:nowrap}
-.tag{display:inline-block;border:1px solid #58708f;border-radius:99px;padding:3px 8px;color:#b7d3ff}
-</style></head><body>
-<header><span class="tag">HISTORICAL DATA SNAPSHOT</span><h1>EventEcho</h1>
-<p>Evidence-oriented event study: abnormal returns, cumulative abnormal returns (CAR), volatility, overlap and confounder diagnostics. Results are associations, not causal claims or investment advice.</p>
-<div class="grid" id="summary"></div><p class="muted" id="provenance"></p></header>
-<section class="panel"><h2>Explore results</h2><div class="controls">
-<label>Event<select id="eventSelect"></select></label><label>Stock<select id="stockSelect"></select></label><label>CAR window<select id="windowSelect"></select></label></div></section>
-<section class="panel"><h2>CAR heatmap data</h2><div id="carHeatmap"></div></section>
-<section class="panel"><h2>Event timeline</h2><div id="timeline"></div></section>
-<section class="panel"><h2>Daily abnormal returns</h2><div id="cumulativeCar"></div></section>
-<section class="panel"><h2>Volatility before / after</h2><div id="volatility"></div></section>
-<section class="panel"><h2>Hypothetical trading simulation</h2><div id="trading"></div></section>
-<section class="panel"><h2>Uncertainty and multiple testing</h2><div id="uncertainty"></div></section>
-<section class="panel"><h2>Overlap and confounder audit</h2><div id="confounders"></div></section>
-<script id="eventecho-data" type="application/json">""" + payload + """</script>
-<script>
-const app=JSON.parse(document.getElementById('eventecho-data').textContent), d=app.datasets, m=app.manifest;
-const rows=(name)=>d[name]||[], esc=(x)=>String(x??'—').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function table(data){if(!data.length)return '<p class="muted">No artifact available for this section.</p>';const cols=Object.keys(data[0]);return '<table><thead><tr>'+cols.map(c=>'<th>'+esc(c)+'</th>').join('')+'</tr></thead><tbody>'+data.slice(0,300).map(r=>'<tr>'+cols.map(c=>'<td>'+esc(r[c])+'</td>').join('')+'</tr>').join('')+'</tbody></table>'}
-function select(id,vals){const e=document.getElementById(id);e.innerHTML=vals.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join('')}
-const events=rows('event_master.csv'), cars=rows('multi_stock_car.csv'), daily=rows('multi_stock_event_study.csv');
-select('eventSelect',[...new Set(events.map(x=>x.event_id).filter(Boolean))]);select('stockSelect',[...new Set(cars.map(x=>x.stock).filter(Boolean))]);select('windowSelect',[...new Set(cars.map(x=>x.window).filter(Boolean))]);
-document.getElementById('summary').innerHTML=[['Snapshot',m.snapshot_id],['Period',(m.period_start||'')+' → '+(m.period_end||'')],['Events',m.event_count],['Stocks',(m.stock_universe||[]).join(', ')],['Benchmark',m.benchmark||'NIFTY50']].map(([k,v])=>'<div class="metric"><p>'+esc(k)+'</p><strong>'+esc(v)+'</strong></div>').join('');
-document.getElementById('provenance').textContent='Input: '+(m.input_prices||'snapshot prices')+' | SHA-256: '+JSON.stringify(m.input_checksums_sha256||{})+' | Source independently verified: '+String((m.input_data_provenance||{}).source_independently_verified??false);
-function render(){const ev=document.getElementById('eventSelect').value, st=document.getElementById('stockSelect').value, win=document.getElementById('windowSelect').value;
-document.getElementById('carHeatmap').innerHTML=table(cars.filter(r=>(!ev||r.event_id===ev)&&(!st||r.stock===st)&&(!win||r.window===win)));
-document.getElementById('timeline').innerHTML=table(events.filter(r=>!ev||r.event_id===ev));
-document.getElementById('cumulativeCar').innerHTML=table(daily.filter(r=>(!ev||r.event_id===ev)&&(!st||r.stock===st)));
-document.getElementById('volatility').innerHTML=table(rows('event_volatility.csv').filter(r=>(!ev||r.event_id===ev)&&(!st||r.stock===st)));
-document.getElementById('trading').innerHTML=table(rows('event_trading_results.csv').filter(r=>!ev||r.event_id===ev));
-document.getElementById('uncertainty').innerHTML=table(rows('multi_stock_significance.csv').filter(r=>(!ev||r.event_id===ev)&&(!st||r.stock===st)&&(!win||r.window===win)));
-document.getElementById('confounders').innerHTML=table([...rows('event_level_audit.csv'),...rows('event_window_audit.csv'),...rows('event_pair_overlap_audit.csv'),...rows('documented_confounder_audit.csv')].filter(r=>!ev||r.event_id===ev||r.event_id_a===ev||r.event_id_b===ev));
-}
-['eventSelect','stockSelect','windowSelect'].forEach(id=>document.getElementById(id).addEventListener('change',render));render();
-</script></body></html>""";
-    const destination = output_path ? Path(output_path) : root / "eventecho_demo.html";
-    destination.parent.mkdir(parents=True, exist_ok=True);
-    destination.write_text(document, encoding="utf-8");
+    title = "EventEcho — Frozen Historical Event Study"
+    html = (
+        "<!doctype html><html lang='en'><head><meta charset='utf-8'>"
+        "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+        f"<title>{title}</title><style>"
+        "body{font:15px system-ui;max-width:1400px;margin:24px auto;padding:0 16px;background:#101827;color:#e7edf7}"
+        "section,header{background:#192538;border:1px solid #34445b;border-radius:12px;padding:16px;margin:14px 0}"
+        "pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#c7d7eb}h1,h2{margin-top:0}.tag{color:#b7d3ff}"
+        "</style></head><body><header><p class='tag'>HISTORICAL DATA SNAPSHOT</p>"
+        f"<h1>{title}</h1><p>Abnormal returns, CAR, volatility, uncertainty and confounder diagnostics. "
+        "Associations only; not causal claims or investment advice.</p>"
+        f"<p>Snapshot: {manifest.get('snapshot_id')} | Period: {manifest.get('period_start')} to {manifest.get('period_end')} "
+        f"| Events: {manifest.get('event_count')}</p></header>"
+        "<section><h2>Event selector</h2><label>Event<select id='eventSelect'></select></label> "
+        "<label>Stock<select id='stockSelect'></select></label> "
+        "<label>CAR window<select id='windowSelect'></select></label></section>"
+        "<section><h2>CAR heatmap</h2><div id='carHeatmap'></div></section>"
+        "<section><h2>Event timeline</h2><div id='timeline'></div></section>"
+        "<section><h2>Abnormal returns / cumulative CAR</h2><div id='cumulativeCar'></div></section>"
+        "<section><h2>Volatility</h2><div id='volatility'></div></section>"
+        "<section><h2>Hypothetical trading</h2><div id='trading'></div></section>"
+        "<section><h2>Uncertainty and multiple testing</h2><div id='uncertainty'></div></section>"
+        "<section><h2>Confounders and event overlap</h2><div id='confounders'></div></section>"
+        "<section><h2>Embedded reproducibility data</h2><pre id='provenance'></pre>"
+        f"<script id='eventecho-data' type='application/json'>{payload}</script></section>"
+        "<script>const a=JSON.parse(document.getElementById('eventecho-data').textContent),d=a.datasets,m=a.manifest;"
+        "const names=['eventSelect','stockSelect','windowSelect'];"
+        "const vals=[...new Set((d['event_master.csv']||[]).map(x=>x.event_id).filter(Boolean))];"
+        "document.getElementById(names[0]).innerHTML=vals.map(x=>'<option>'+x+'</option>').join('');"
+        "document.getElementById(names[1]).innerHTML=[...new Set((d['multi_stock_car.csv']||[]).map(x=>x.stock).filter(Boolean))].map(x=>'<option>'+x+'</option>').join('');"
+        "document.getElementById(names[2]).innerHTML=[...new Set((d['multi_stock_car.csv']||[]).map(x=>x.window).filter(Boolean))].map(x=>'<option>'+x+'</option>').join('');"
+        "document.getElementById('provenance').textContent=JSON.stringify({snapshot:m.snapshot_id,prices:m.input_prices,checksums:m.input_checksums_sha256,source:m.input_data_provenance},null,2);"
+        "function render(){const e=document.getElementById('eventSelect').value,s=document.getElementById('stockSelect').value,w=document.getElementById('windowSelect').value;"
+        "for(const [id,file] of [['carHeatmap','multi_stock_car.csv'],['timeline','event_master.csv'],['cumulativeCar','multi_stock_event_study.csv'],['volatility','event_volatility.csv'],['trading','event_trading_results.csv'],['uncertainty','multi_stock_significance.csv']]){"
+        "const rs=(d[file]||[]).filter(r=>(!e||r.event_id===e)&&(!s||!r.stock||r.stock===s)&&(!w||!r.window||r.window===w));"
+        "document.getElementById(id).textContent=JSON.stringify(rs,null,2);}"
+        "document.getElementById('confounders').textContent=JSON.stringify(['event_level_audit.csv','event_window_audit.csv','event_pair_overlap_audit.csv','documented_confounder_audit.csv'].flatMap(k=>d[k]||[]).filter(r=>!e||r.event_id===e||r.event_id_a===e||r.event_id_b===e),null,2);}"
+        "names.forEach(id=>document.getElementById(id).addEventListener('change',render));render();</script>"
+        "</body></html>"
+    )
+    destination = Path(output_path) if output_path is not None else root / "eventecho_demo.html"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(html, encoding="utf-8")
     return destination
+
 
 def write_artifacts(artifacts: dict[str, pd.DataFrame], output_dir: Path, manifest: dict) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
