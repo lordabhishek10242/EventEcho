@@ -2,13 +2,53 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 from collections.abc import Mapping
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 LOGGER = logging.getLogger(__name__)
+
+
+def sha256_file(path: str | Path) -> str:
+    """Return a streaming SHA-256 digest for a file."""
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def load_price_provenance(path: str | Path) -> dict:
+    """Load an adjacent provenance sidecar and verify its checksum.
+
+    A missing sidecar is explicitly labelled unverified; it is never silently
+    promoted to historical-market evidence.
+    """
+    price_path = Path(path)
+    sidecar = price_path.with_name(price_path.name + ".provenance.json")
+    if not sidecar.is_file():
+        return {
+            "classification": "unverified_local_input",
+            "provenance_verified": False,
+            "source_independently_verified": False,
+            "sha256": sha256_file(price_path) if price_path.is_file() else None,
+        }
+    payload = json.loads(sidecar.read_text(encoding="utf-8"))
+    expected = payload.get("sha256")
+    actual = sha256_file(price_path)
+    if not expected or expected != actual:
+        raise ValueError("Price provenance checksum does not match the price file")
+    return {
+        **payload,
+        "sha256": actual,
+        "provenance_verified": True,
+        "source_independently_verified": bool(payload.get("source_independently_verified", False)),
+    }
 
 
 def _extract_price_column(data: pd.DataFrame, field: str, ticker: str) -> pd.Series:
