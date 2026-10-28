@@ -88,6 +88,27 @@ def test_analysis_snapshot_selection_records_exact_input_and_provenance(monkeypa
     )
     frame.index.name = "date"
     frame.to_csv(prices)
+
+    # This test uses a synthetic business-day calendar, not an exchange calendar.
+    # Map all event dates to available fixture sessions so the test exercises
+    # provenance plumbing rather than real-market holiday validation.
+    events_path = tmp_path / "events.csv"
+    events = pd.read_csv("results/event_master.csv")
+    fixture_sessions = pd.DatetimeIndex(dates)
+    for column in ("event_date", "effective_event_date"):
+        if column in events.columns:
+            parsed = pd.to_datetime(events[column], errors="coerce")
+            mapped = []
+            for value in parsed:
+                if pd.isna(value):
+                    mapped.append(value)
+                    continue
+                pos = fixture_sessions.searchsorted(pd.Timestamp(value).normalize(), side="left")
+                pos = min(pos, len(fixture_sessions) - 1)
+                mapped.append(fixture_sessions[pos])
+            events[column] = mapped
+    events.to_csv(events_path, index=False)
+
     provenance = {
         "classification": "historical_market_data",
         "snapshot_id": "fixture-snapshot",
@@ -107,7 +128,7 @@ def test_analysis_snapshot_selection_records_exact_input_and_provenance(monkeypa
     output = tmp_path / "snapshot-analysis"
 
     run_analysis(
-        Path("results/event_master.csv"),
+        events_path,
         output,
         offline=True,
         snapshot_id="fixture-snapshot",
