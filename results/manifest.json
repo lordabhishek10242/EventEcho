@@ -1,0 +1,103 @@
+{
+  "project": "EventEcho",
+  "purpose": "Exploratory quantitative event study and trading simulation",
+  "generated_utc": "2026-10-27T21:36:57.572783+00:00",
+  "event_count": 9,
+  "stock_universe": [
+    "RELIANCE",
+    "TCS",
+    "INFOSYS",
+    "HDFC_BANK",
+    "ITC"
+  ],
+  "benchmark": "Nifty 50 (^NSEI) price index",
+  "trading_holding_sessions": 3,
+  "transaction_cost_bps_per_side": 10,
+  "development_event_ids": [
+    "EVT001",
+    "EVT002",
+    "EVT003",
+    "EVT004",
+    "EVT005",
+    "EVT007"
+  ],
+  "holdout_event_ids": [
+    "EVT008",
+    "EVT009",
+    "EVT006"
+  ],
+  "artifacts": [
+    {
+      "file": "event_master.csv",
+      "rows": 9,
+      "columns": 15,
+      "status": "exported"
+    },
+    {
+      "file": "multi_stock_event_study.csv",
+      "rows": 495,
+      "columns": 8,
+      "status": "exported"
+    },
+    {
+      "file": "multi_stock_car.csv",
+      "rows": 135,
+      "columns": 5,
+      "status": "exported"
+    },
+    {
+      "file": "cross_stock_consistency.csv",
+      "rows": 27,
+      "columns": 8,
+      "status": "exported"
+    },
+    {
+      "file": "trade_candidates.csv",
+      "rows": 45,
+      "columns": 11,
+      "status": "exported"
+    },
+    {
+      "file": "event_trading_results.csv",
+      "rows": 9,
+      "columns": 6,
+      "status": "exported"
+    },
+    {
+      "file": "sample_performance.csv",
+      "rows": 2,
+      "columns": 8,
+      "status": "exported"
+    },
+    {
+      "file": "transaction_cost_sensitivity.csv",
+      "rows": 5,
+      "columns": 6,
+      "status": "exported"
+    },
+    {
+      "file": "final_strategy_assessment.csv",
+      "rows": 7,
+      "columns": 2,
+      "status": "exported"
+    },
+    {
+      "file": "multi_stock_significance.csv",
+      "rows": 135,
+      "columns": 9,
+      "status": "exported"
+    },
+    {
+      "file": "single_stock_event_study.csv",
+      "rows": 66,
+      "columns": 8,
+      "status": "exported"
+    }
+  ],
+  "caveats": [
+    "Selected event sample is small and not representative of all market events.",
+    "Trading simulation is hypothetical and excludes detailed execution frictions.",
+    "Nifty 50 benchmark uses a price index, not a total-return index.",
+    "Statistical tests are exploratory and have methodological limitations."
+  ]
+}

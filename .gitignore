@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environments and local configuration
+.venv/
+venv/
+env/
+.env
+.env.*
+!.env.example
+
+# Notebook/runtime files
+.ipynb_checkpoints/
+
+# Raw market data is user-supplied and may be large or provider-restricted.
+data/*.csv
+data/*.parquet
+data/*.feather
+
+# Editor and OS noise
+.DS_Store
+.vscode/
