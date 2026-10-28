@@ -36,16 +36,19 @@ def estimation_sample(
     event_position = _session_position(dates, event_date)
     event_window_start = event_position - event_window_radius
     end_position = event_window_start - gap_sessions - 1
-    start_position = end_position - estimation_sessions + 1
-    if start_position < 0:
+    if end_position < 0:
         raise ValueError("Insufficient history for requested estimation window")
     columns = [market_column] if stock_column is None else [stock_column, market_column]
-    sample = returns.loc[dates[start_position : end_position + 1], columns].dropna()
-    if len(sample) != estimation_sessions:
+
+    # Missing prices can make some return rows incomplete. Preserve the event
+    # gap, then look farther back as needed to obtain the requested number of
+    # complete observations instead of failing on a fixed-width calendar slice.
+    eligible = returns.loc[dates[: end_position + 1], columns].dropna()
+    if len(eligible) < estimation_sessions:
         raise ValueError(
-            f"Expected {estimation_sessions} complete estimation observations; got {len(sample)}"
+            f"Expected {estimation_sessions} complete estimation observations; got {len(eligible)}"
         )
-    return sample
+    return eligible.tail(estimation_sessions)
 
 
 def fit_market_model(sample: pd.DataFrame, stock_column: str, market_column: str) -> dict:
