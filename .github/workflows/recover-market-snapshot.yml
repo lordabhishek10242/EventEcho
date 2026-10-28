@@ -103,3 +103,9 @@ jobs:
             results/real_market_analysis/
           if-no-files-found: warn
           retention-days: 7
+
+      - name: Fail workflow if acquisition did not complete
+        if: steps.acquire.outcome != 'success'
+        run: |
+          echo "Historical snapshot acquisition failed or was incomplete. See the acquisition step logs and uploaded diagnostics."
+          exit 1
