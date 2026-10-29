@@ -77,6 +77,13 @@ def test_demo_builds_offline_selectable_visual_report_from_analysis_artifacts(tm
             "mean_benchmark_return_pct": 1, "mean_excess_return_pct": 0.8,
             "event_win_rate_pct": 100,
         }],
+        "clustered_strategy_inference.csv": [{
+            "sample": "Holdout", "events_available": 1, "independent_dependency_clusters": 1,
+            "largest_cluster_events": 1, "bootstrap_replicates": 1000,
+            "mean_net_return_pct_point": 1.8, "mean_excess_return_pct_point": 0.8,
+            "mean_excess_return_pct_ci95_lower": -0.2, "mean_excess_return_pct_ci95_upper": 1.2,
+            "benchmark_outperformance_rate_pct_point": 100,
+        }],
     }
     empty_columns = {
         "event_pair_overlap_audit.csv": ["event_id_a", "event_id_b", "overlap_types"],
@@ -100,5 +107,5 @@ def test_demo_builds_offline_selectable_visual_report_from_analysis_artifacts(tm
 
     assert output.exists()
     document = output.read_text(encoding="utf-8")
-    for required in ("eventSelect", "stockSelect", "windowSelect", "eventDetail", "heatmap", "returnChart", "inference", "consistency", "trading", "eventRegister", "eventDependenceAudit", "Event dependence & independence audit", "Pairwise event relationships", "eventTimingSensitivity", "Event timing sensitivity", "eventVolatility", "Realized volatility before vs after events", "categoryEvidence", "Category-level evidence", "provenance", "snapshot-1", "Confidence intervals", "Transaction-cost sensitivity"):
+    for required in ("eventSelect", "stockSelect", "windowSelect", "eventDetail", "heatmap", "returnChart", "inference", "consistency", "trading", "eventRegister", "eventDependenceAudit", "Event dependence & independence audit", "Pairwise event relationships", "eventTimingSensitivity", "Event timing sensitivity", "eventVolatility", "Realized volatility before vs after events", "categoryEvidence", "Category-level evidence", "provenance", "snapshot-1", "Confidence intervals", "Transaction-cost sensitivity", "Holdout uncertainty", "clusteredInference", "Return-convention mismatch", "stocks use Adj Close while the benchmark uses Close"):
         assert required in document

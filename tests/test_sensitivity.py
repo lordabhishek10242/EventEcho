@@ -127,3 +127,25 @@ def test_after_market_timing_sensitivity_never_uses_pre_release_same_day_close()
     assert set(following["scenario_effective_date"]) == {dates[222]}
     assert first["matches_recorded_alignment"].all()
     assert (result["timing_basis"] == "after_market_or_evening_release").all()
+
+
+def test_market_hours_event_marked_not_isolatable_gets_timing_alternatives():
+    from src.event_study import calculate_event_study
+    from src.sensitivity import event_timing_sensitivity
+
+    dates = pd.bdate_range("2023-01-02", periods=300)
+    market = np.sin(np.arange(len(dates)) * 0.17) * 0.01
+    stock = 0.0004 + 1.15 * market + np.cos(np.arange(len(dates)) * 0.31) * 0.001
+    returns = pd.DataFrame({"A": stock, "NIFTY50_RETURN": market}, index=dates)
+    event = pd.DataFrame([{
+        "event_id": "BUDGET", "event_date": dates[220], "effective_event_date": dates[220],
+        "event_time": "Budget presented during market session; intraday timing not modeled",
+        "timing_confidence": "date_verified_intraday_reaction_not_isolatable",
+        "verification_status": "Primary summary confirms presentation date",
+        "headline": "Budget", "category": "Government Policy / Budget", "notes": "",
+    }])
+    _, baseline_cars, _ = calculate_event_study(returns, event, ["A"])
+    result = event_timing_sensitivity(returns, event, ["A"], baseline_cars)
+
+    following = result[result["scenario"] == "following_trading_session"]
+    assert set(following["scenario_effective_date"]) == {dates[221]}

@@ -1,0 +1,11 @@
+rank,event_id,event_date,effective_event_date,category,description,temporal_overlap_partner_count,documented_potential_development_in_window_count,shared_episode_partner_count,same_category_partner_count,unverified_possibility_flag,audit_highlight
+1,EVT010,2025-04-10,2025-04-11,Corporate Earnings,TCS Q4 FY2025 earnings release,3,0,0,4,False,temporal overlap; same category
+2,EVT011,2025-04-17,2025-04-21,Corporate Earnings,Infosys Q4 FY2025 earnings release,3,0,0,4,False,temporal overlap; same category
+3,EVT012,2025-04-19,2025-04-21,Corporate Earnings,HDFC Bank Q4 FY2025 earnings release,3,0,0,4,False,temporal overlap; same category
+4,EVT013,2025-04-25,2025-04-28,Corporate Earnings,Reliance Industries Q4 FY2025 earnings release,3,0,0,4,True,temporal overlap; same category; unverified review caution
+5,EVT007,2023-02-08,2023-02-08,Monetary Policy,RBI raises policy repo rate by 25 basis points,1,0,1,5,True,temporal overlap; shared episode; same category; unverified review caution
+6,EVT017,2024-06-04,2024-06-04,Election / Political Event,2024 Lok Sabha election results counting day,1,0,0,1,True,temporal overlap; same category; unverified review caution
+7,EVT018,2024-05-31,2024-06-03,Economic Release,GDP estimates for Q4 FY2023-24 released,1,0,0,1,False,temporal overlap; same category
+8,EVT019,2023-01-24,2023-01-25,Major Industry Event,Hindenburg Research publishes report on Adani Group,1,0,0,0,True,temporal overlap; unverified review caution
+9,EVT003,2022-05-04,2022-05-04,Monetary Policy,RBI raises repo rate by 40 basis points,0,0,2,5,True,shared episode; same category; unverified review caution
+10,EVT004,2022-06-08,2022-06-08,Monetary Policy,RBI raises repo rate by 50 basis points,0,0,2,5,True,shared episode; same category; unverified review caution

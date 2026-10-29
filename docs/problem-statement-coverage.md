@@ -15,7 +15,7 @@ This matrix maps the EventEcho problem statement to the current repository imple
 | Robustness to estimation-window choices | `src/estimation_sensitivity.py`; 60/100/150-session outputs | Implemented | Explain significance changes and CAR differences; do not select the most favorable specification. |
 | Unseen historical validation | Explicit development/holdout event IDs in `src/config.py`; `src/events.py`; strategy inference outputs | Implemented with limitations | Audit leakage/peeking in analysis choices; small dependent holdout means no reliable edge claim. |
 | Optional ML-based event categorization | No validated event-text classifier required by the current core pipeline | Optional / not a blocker | Add only with labelled data, chronological evaluation, and evidence it improves decisions. |
-| Reproducible run and reviewable results | `scripts/run_analysis.py`; `src/snapshots.py`; manifest and CI workflows | Implemented with data-source limitation | Use the latest successful workflow artifact; distinguish frozen snapshots from live Yahoo Finance data. |
+| Reproducible run and reviewable results | `scripts/run_analysis.py`; `src/snapshots.py`; `scripts/verify_release.py`; manifest and CI workflows | Implemented with data-source limitation | Committed outputs in `results/reproduced/` come from one verified run (see its `manifest.json` and `release_validation.json`); distinguish frozen snapshots from live Yahoo Finance data. |
 | Explain evidence vs causality | Dashboard, robustness ledger, README limitations | Implemented as guardrails | Final presentation must avoid causal wording and clearly show timing/source confidence. |
 
 ## High-priority gaps
@@ -28,13 +28,13 @@ This matrix maps the EventEcho problem statement to the current repository imple
 
 ## Submission acceptance checklist
 
-- [ ] Price levels are aligned to the benchmark session calendar before calculating returns and strategy holding windows; missing stock prices are not filled or bridged.
-- [ ] Snapshot event-eligibility diagnostics use observed benchmark sessions, not the union of all provider dates.
-- [ ] Latest unit tests pass.
-- [ ] Latest historical rebuild passes and the latest artifact/manifest are inspected.
-- [ ] Event-source audit is reflected in generated event metadata without inventing timestamps; unresolved timestamps remain flagged.
-- [ ] Timing sensitivities are reviewed for unresolved and intraday events.
-- [ ] Dashboard tables and figures correspond to the latest run and current 21-event/seven-stock universe.
-- [ ] Statistical significance, economic magnitude, robustness, and causal interpretation are clearly distinguished.
-- [ ] Holdout metrics are reported with uncertainty and no claim of a proven profitable edge.
+- [x] Price levels are aligned to the benchmark session calendar before calculating returns and strategy holding windows; missing stock prices are not filled or bridged.
+- [x] Snapshot event-eligibility diagnostics use observed benchmark sessions, not the union of all provider dates.
+- [x] Latest unit tests pass (118 tests, 2026-10-29).
+- [x] Latest historical rebuild passes (run 40866165972) and its manifest and integrity report are inspected; outputs are committed in `results/reproduced/`.
+- [x] Event-source audit is reflected in generated event metadata without inventing timestamps; unresolved timestamps remain flagged.
+- [x] Timing sensitivities are exported for every unresolved event; the most sensitive cases (EVT019, EVT013) are discussed in the final evidence audit.
+- [x] Dashboard tables and figures correspond to the latest run and current 21-event/seven-stock universe.
+- [x] Statistical significance, economic magnitude, robustness, and causal interpretation are clearly distinguished.
+- [x] Holdout metrics are reported with uncertainty and no claim of a proven profitable edge.
 - [ ] Demo can be explained end-to-end: event registry → trading-session mapping → market model → AR/CAR → inference → robustness/overlap → chronological strategy check.

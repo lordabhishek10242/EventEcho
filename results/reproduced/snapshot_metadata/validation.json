@@ -1,0 +1,1885 @@
+{
+  "status": "complete",
+  "requested_start_inclusive": "2016-01-01 00:00:00",
+  "requested_end_exclusive": "2026-01-01 00:00:00",
+  "observed_date_start": "2016-01-01 00:00:00",
+  "observed_date_end": "2025-12-31 00:00:00",
+  "observed_session_count": 2470,
+  "observed_benchmark_session_count": 2464,
+  "session_calendar_source": "canonical union of observed provider response dates; no weekday calendar inferred",
+  "event_analysis_calendar_source": "observed dates with non-missing benchmark close; stock prices are reindexed to this calendar before returns are computed",
+  "required_tickers": [
+    "RELIANCE",
+    "TCS",
+    "INFOSYS",
+    "HDFC_BANK",
+    "ITC",
+    "ADANI_ENTERPRISES",
+    "ADANI_PORTS",
+    "NIFTY50"
+  ],
+  "price_observations_by_ticker": {
+    "RELIANCE": 2470,
+    "TCS": 2470,
+    "INFOSYS": 2470,
+    "HDFC_BANK": 2470,
+    "ITC": 2470,
+    "ADANI_ENTERPRISES": 2470,
+    "ADANI_PORTS": 2470,
+    "NIFTY50": 2464
+  },
+  "date_coverage_by_ticker": {
+    "RELIANCE": {
+      "first_observed_date": "2016-01-01 00:00:00",
+      "last_observed_date": "2025-12-31 00:00:00",
+      "observed_date_count": 2470
+    },
+    "TCS": {
+      "first_observed_date": "2016-01-01 00:00:00",
+      "last_observed_date": "2025-12-31 00:00:00",
+      "observed_date_count": 2470
+    },
+    "INFOSYS": {
+      "first_observed_date": "2016-01-01 00:00:00",
+      "last_observed_date": "2025-12-31 00:00:00",
+      "observed_date_count": 2470
+    },
+    "HDFC_BANK": {
+      "first_observed_date": "2016-01-01 00:00:00",
+      "last_observed_date": "2025-12-31 00:00:00",
+      "observed_date_count": 2470
+    },
+    "ITC": {
+      "first_observed_date": "2016-01-01 00:00:00",
+      "last_observed_date": "2025-12-31 00:00:00",
+      "observed_date_count": 2470
+    },
+    "ADANI_ENTERPRISES": {
+      "first_observed_date": "2016-01-01 00:00:00",
+      "last_observed_date": "2025-12-31 00:00:00",
+      "observed_date_count": 2470
+    },
+    "ADANI_PORTS": {
+      "first_observed_date": "2016-01-01 00:00:00",
+      "last_observed_date": "2025-12-31 00:00:00",
+      "observed_date_count": 2470
+    },
+    "NIFTY50": {
+      "first_observed_date": "2016-01-04 00:00:00",
+      "last_observed_date": "2025-12-31 00:00:00",
+      "observed_date_count": 2464
+    }
+  },
+  "missing_observations_by_ticker": {
+    "RELIANCE": 0,
+    "TCS": 0,
+    "INFOSYS": 0,
+    "HDFC_BANK": 0,
+    "ITC": 0,
+    "ADANI_ENTERPRISES": 0,
+    "ADANI_PORTS": 0,
+    "NIFTY50": 6
+  },
+  "invalid_observations_by_ticker": {
+    "RELIANCE": 0,
+    "TCS": 0,
+    "INFOSYS": 0,
+    "HDFC_BANK": 0,
+    "ITC": 0,
+    "ADANI_ENTERPRISES": 0,
+    "ADANI_PORTS": 0,
+    "NIFTY50": 0
+  },
+  "benchmark_aligned_observations_by_stock": {
+    "RELIANCE": 2464,
+    "TCS": 2464,
+    "INFOSYS": 2464,
+    "HDFC_BANK": 2464,
+    "ITC": 2464,
+    "ADANI_ENTERPRISES": 2464,
+    "ADANI_PORTS": 2464
+  },
+  "stock_observations_outside_benchmark_calendar": {
+    "RELIANCE": 6,
+    "TCS": 6,
+    "INFOSYS": 6,
+    "HDFC_BANK": 6,
+    "ITC": 6,
+    "ADANI_ENTERPRISES": 6,
+    "ADANI_PORTS": 6
+  },
+  "fatal_errors": [],
+  "warnings": [
+    {
+      "code": "missing_price_observations",
+      "ticker": "NIFTY50",
+      "count": 6
+    }
+  ],
+  "event_eligibility": [
+    {
+      "event_id": "EVT001",
+      "effective_event_date": "2016-11-09 00:00:00",
+      "available": true,
+      "stock_eligibility": {
+        "RELIANCE": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 181,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2016-05-06 00:00:00",
+          "estimation_sample_end": "2016-09-29 00:00:00",
+          "estimation_cutoff": "2016-09-29 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "TCS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 181,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2016-05-06 00:00:00",
+          "estimation_sample_end": "2016-09-29 00:00:00",
+          "estimation_cutoff": "2016-09-29 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "INFOSYS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 181,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2016-05-06 00:00:00",
+          "estimation_sample_end": "2016-09-29 00:00:00",
+          "estimation_cutoff": "2016-09-29 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "HDFC_BANK": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 181,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2016-05-06 00:00:00",
+          "estimation_sample_end": "2016-09-29 00:00:00",
+          "estimation_cutoff": "2016-09-29 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ITC": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 181,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2016-05-06 00:00:00",
+          "estimation_sample_end": "2016-09-29 00:00:00",
+          "estimation_cutoff": "2016-09-29 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_ENTERPRISES": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 181,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2016-05-06 00:00:00",
+          "estimation_sample_end": "2016-09-29 00:00:00",
+          "estimation_cutoff": "2016-09-29 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_PORTS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 181,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2016-05-06 00:00:00",
+          "estimation_sample_end": "2016-09-29 00:00:00",
+          "estimation_cutoff": "2016-09-29 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        }
+      }
+    },
+    {
+      "event_id": "EVT002",
+      "effective_event_date": "2020-03-25 00:00:00",
+      "available": true,
+      "stock_eligibility": {
+        "RELIANCE": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1010,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2019-09-20 00:00:00",
+          "estimation_sample_end": "2020-02-14 00:00:00",
+          "estimation_cutoff": "2020-02-14 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "TCS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1010,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2019-09-20 00:00:00",
+          "estimation_sample_end": "2020-02-14 00:00:00",
+          "estimation_cutoff": "2020-02-14 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "INFOSYS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1010,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2019-09-20 00:00:00",
+          "estimation_sample_end": "2020-02-14 00:00:00",
+          "estimation_cutoff": "2020-02-14 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "HDFC_BANK": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1010,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2019-09-20 00:00:00",
+          "estimation_sample_end": "2020-02-14 00:00:00",
+          "estimation_cutoff": "2020-02-14 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ITC": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1010,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2019-09-20 00:00:00",
+          "estimation_sample_end": "2020-02-14 00:00:00",
+          "estimation_cutoff": "2020-02-14 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_ENTERPRISES": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1010,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2019-09-20 00:00:00",
+          "estimation_sample_end": "2020-02-14 00:00:00",
+          "estimation_cutoff": "2020-02-14 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_PORTS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1010,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2019-09-20 00:00:00",
+          "estimation_sample_end": "2020-02-14 00:00:00",
+          "estimation_cutoff": "2020-02-14 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        }
+      }
+    },
+    {
+      "event_id": "EVT003",
+      "effective_event_date": "2022-05-04 00:00:00",
+      "available": true,
+      "stock_eligibility": {
+        "RELIANCE": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1531,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2021-10-29 00:00:00",
+          "estimation_sample_end": "2022-03-24 00:00:00",
+          "estimation_cutoff": "2022-03-24 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "TCS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1531,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2021-10-29 00:00:00",
+          "estimation_sample_end": "2022-03-24 00:00:00",
+          "estimation_cutoff": "2022-03-24 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "INFOSYS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1531,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2021-10-29 00:00:00",
+          "estimation_sample_end": "2022-03-24 00:00:00",
+          "estimation_cutoff": "2022-03-24 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "HDFC_BANK": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1531,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2021-10-29 00:00:00",
+          "estimation_sample_end": "2022-03-24 00:00:00",
+          "estimation_cutoff": "2022-03-24 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ITC": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1531,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2021-10-29 00:00:00",
+          "estimation_sample_end": "2022-03-24 00:00:00",
+          "estimation_cutoff": "2022-03-24 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_ENTERPRISES": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1531,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2021-10-29 00:00:00",
+          "estimation_sample_end": "2022-03-24 00:00:00",
+          "estimation_cutoff": "2022-03-24 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_PORTS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1531,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2021-10-29 00:00:00",
+          "estimation_sample_end": "2022-03-24 00:00:00",
+          "estimation_cutoff": "2022-03-24 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        }
+      }
+    },
+    {
+      "event_id": "EVT004",
+      "effective_event_date": "2022-06-08 00:00:00",
+      "available": true,
+      "stock_eligibility": {
+        "RELIANCE": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1556,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2021-12-07 00:00:00",
+          "estimation_sample_end": "2022-05-02 00:00:00",
+          "estimation_cutoff": "2022-05-02 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "TCS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1556,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2021-12-07 00:00:00",
+          "estimation_sample_end": "2022-05-02 00:00:00",
+          "estimation_cutoff": "2022-05-02 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "INFOSYS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1556,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2021-12-07 00:00:00",
+          "estimation_sample_end": "2022-05-02 00:00:00",
+          "estimation_cutoff": "2022-05-02 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "HDFC_BANK": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1556,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2021-12-07 00:00:00",
+          "estimation_sample_end": "2022-05-02 00:00:00",
+          "estimation_cutoff": "2022-05-02 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ITC": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1556,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2021-12-07 00:00:00",
+          "estimation_sample_end": "2022-05-02 00:00:00",
+          "estimation_cutoff": "2022-05-02 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_ENTERPRISES": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1556,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2021-12-07 00:00:00",
+          "estimation_sample_end": "2022-05-02 00:00:00",
+          "estimation_cutoff": "2022-05-02 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_PORTS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1556,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2021-12-07 00:00:00",
+          "estimation_sample_end": "2022-05-02 00:00:00",
+          "estimation_cutoff": "2022-05-02 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        }
+      }
+    },
+    {
+      "event_id": "EVT005",
+      "effective_event_date": "2022-08-05 00:00:00",
+      "available": true,
+      "stock_eligibility": {
+        "RELIANCE": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1598,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2022-02-04 00:00:00",
+          "estimation_sample_end": "2022-06-30 00:00:00",
+          "estimation_cutoff": "2022-06-30 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "TCS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1598,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2022-02-04 00:00:00",
+          "estimation_sample_end": "2022-06-30 00:00:00",
+          "estimation_cutoff": "2022-06-30 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "INFOSYS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1598,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2022-02-04 00:00:00",
+          "estimation_sample_end": "2022-06-30 00:00:00",
+          "estimation_cutoff": "2022-06-30 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "HDFC_BANK": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1598,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2022-02-04 00:00:00",
+          "estimation_sample_end": "2022-06-30 00:00:00",
+          "estimation_cutoff": "2022-06-30 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ITC": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1598,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2022-02-04 00:00:00",
+          "estimation_sample_end": "2022-06-30 00:00:00",
+          "estimation_cutoff": "2022-06-30 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_ENTERPRISES": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1598,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2022-02-04 00:00:00",
+          "estimation_sample_end": "2022-06-30 00:00:00",
+          "estimation_cutoff": "2022-06-30 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_PORTS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1598,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2022-02-04 00:00:00",
+          "estimation_sample_end": "2022-06-30 00:00:00",
+          "estimation_cutoff": "2022-06-30 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        }
+      }
+    },
+    {
+      "event_id": "EVT007",
+      "effective_event_date": "2023-02-08 00:00:00",
+      "available": true,
+      "stock_eligibility": {
+        "RELIANCE": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1724,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2022-08-08 00:00:00",
+          "estimation_sample_end": "2023-01-02 00:00:00",
+          "estimation_cutoff": "2023-01-02 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "TCS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1724,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2022-08-08 00:00:00",
+          "estimation_sample_end": "2023-01-02 00:00:00",
+          "estimation_cutoff": "2023-01-02 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "INFOSYS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1724,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2022-08-08 00:00:00",
+          "estimation_sample_end": "2023-01-02 00:00:00",
+          "estimation_cutoff": "2023-01-02 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "HDFC_BANK": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1724,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2022-08-08 00:00:00",
+          "estimation_sample_end": "2023-01-02 00:00:00",
+          "estimation_cutoff": "2023-01-02 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ITC": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1724,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2022-08-08 00:00:00",
+          "estimation_sample_end": "2023-01-02 00:00:00",
+          "estimation_cutoff": "2023-01-02 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_ENTERPRISES": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1724,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2022-08-08 00:00:00",
+          "estimation_sample_end": "2023-01-02 00:00:00",
+          "estimation_cutoff": "2023-01-02 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_PORTS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1724,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2022-08-08 00:00:00",
+          "estimation_sample_end": "2023-01-02 00:00:00",
+          "estimation_cutoff": "2023-01-02 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        }
+      }
+    },
+    {
+      "event_id": "EVT008",
+      "effective_event_date": "2023-10-06 00:00:00",
+      "available": true,
+      "stock_eligibility": {
+        "RELIANCE": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1886,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2023-04-05 00:00:00",
+          "estimation_sample_end": "2023-08-29 00:00:00",
+          "estimation_cutoff": "2023-08-29 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "TCS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1886,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2023-04-05 00:00:00",
+          "estimation_sample_end": "2023-08-29 00:00:00",
+          "estimation_cutoff": "2023-08-29 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "INFOSYS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1886,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2023-04-05 00:00:00",
+          "estimation_sample_end": "2023-08-29 00:00:00",
+          "estimation_cutoff": "2023-08-29 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "HDFC_BANK": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1886,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2023-04-05 00:00:00",
+          "estimation_sample_end": "2023-08-29 00:00:00",
+          "estimation_cutoff": "2023-08-29 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ITC": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1886,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2023-04-05 00:00:00",
+          "estimation_sample_end": "2023-08-29 00:00:00",
+          "estimation_cutoff": "2023-08-29 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_ENTERPRISES": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1886,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2023-04-05 00:00:00",
+          "estimation_sample_end": "2023-08-29 00:00:00",
+          "estimation_cutoff": "2023-08-29 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_PORTS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1886,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2023-04-05 00:00:00",
+          "estimation_sample_end": "2023-08-29 00:00:00",
+          "estimation_cutoff": "2023-08-29 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        }
+      }
+    },
+    {
+      "event_id": "EVT009",
+      "effective_event_date": "2024-10-09 00:00:00",
+      "available": true,
+      "stock_eligibility": {
+        "RELIANCE": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2132,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-04-05 00:00:00",
+          "estimation_sample_end": "2024-09-02 00:00:00",
+          "estimation_cutoff": "2024-09-02 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "TCS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2132,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-04-05 00:00:00",
+          "estimation_sample_end": "2024-09-02 00:00:00",
+          "estimation_cutoff": "2024-09-02 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "INFOSYS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2132,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-04-05 00:00:00",
+          "estimation_sample_end": "2024-09-02 00:00:00",
+          "estimation_cutoff": "2024-09-02 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "HDFC_BANK": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2132,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-04-05 00:00:00",
+          "estimation_sample_end": "2024-09-02 00:00:00",
+          "estimation_cutoff": "2024-09-02 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ITC": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2132,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-04-05 00:00:00",
+          "estimation_sample_end": "2024-09-02 00:00:00",
+          "estimation_cutoff": "2024-09-02 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_ENTERPRISES": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2132,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-04-05 00:00:00",
+          "estimation_sample_end": "2024-09-02 00:00:00",
+          "estimation_cutoff": "2024-09-02 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_PORTS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2132,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-04-05 00:00:00",
+          "estimation_sample_end": "2024-09-02 00:00:00",
+          "estimation_cutoff": "2024-09-02 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        }
+      }
+    },
+    {
+      "event_id": "EVT006",
+      "effective_event_date": "2025-02-01 00:00:00",
+      "available": true,
+      "stock_eligibility": {
+        "RELIANCE": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2212,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-08-05 00:00:00",
+          "estimation_sample_end": "2024-12-27 00:00:00",
+          "estimation_cutoff": "2024-12-27 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "TCS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2212,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-08-05 00:00:00",
+          "estimation_sample_end": "2024-12-27 00:00:00",
+          "estimation_cutoff": "2024-12-27 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "INFOSYS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2212,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-08-05 00:00:00",
+          "estimation_sample_end": "2024-12-27 00:00:00",
+          "estimation_cutoff": "2024-12-27 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "HDFC_BANK": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2212,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-08-05 00:00:00",
+          "estimation_sample_end": "2024-12-27 00:00:00",
+          "estimation_cutoff": "2024-12-27 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ITC": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2212,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-08-05 00:00:00",
+          "estimation_sample_end": "2024-12-27 00:00:00",
+          "estimation_cutoff": "2024-12-27 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_ENTERPRISES": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2212,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-08-05 00:00:00",
+          "estimation_sample_end": "2024-12-27 00:00:00",
+          "estimation_cutoff": "2024-12-27 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_PORTS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2212,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-08-05 00:00:00",
+          "estimation_sample_end": "2024-12-27 00:00:00",
+          "estimation_cutoff": "2024-12-27 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        }
+      }
+    },
+    {
+      "event_id": "EVT010",
+      "effective_event_date": "2025-04-11 00:00:00",
+      "available": true,
+      "stock_eligibility": {
+        "RELIANCE": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2258,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-10 00:00:00",
+          "estimation_sample_end": "2025-03-03 00:00:00",
+          "estimation_cutoff": "2025-03-03 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "TCS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2258,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-10 00:00:00",
+          "estimation_sample_end": "2025-03-03 00:00:00",
+          "estimation_cutoff": "2025-03-03 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "INFOSYS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2258,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-10 00:00:00",
+          "estimation_sample_end": "2025-03-03 00:00:00",
+          "estimation_cutoff": "2025-03-03 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "HDFC_BANK": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2258,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-10 00:00:00",
+          "estimation_sample_end": "2025-03-03 00:00:00",
+          "estimation_cutoff": "2025-03-03 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ITC": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2258,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-10 00:00:00",
+          "estimation_sample_end": "2025-03-03 00:00:00",
+          "estimation_cutoff": "2025-03-03 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_ENTERPRISES": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2258,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-10 00:00:00",
+          "estimation_sample_end": "2025-03-03 00:00:00",
+          "estimation_cutoff": "2025-03-03 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_PORTS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2258,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-10 00:00:00",
+          "estimation_sample_end": "2025-03-03 00:00:00",
+          "estimation_cutoff": "2025-03-03 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        }
+      }
+    },
+    {
+      "event_id": "EVT011",
+      "effective_event_date": "2025-04-21 00:00:00",
+      "available": true,
+      "stock_eligibility": {
+        "RELIANCE": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2262,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-16 00:00:00",
+          "estimation_sample_end": "2025-03-07 00:00:00",
+          "estimation_cutoff": "2025-03-07 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "TCS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2262,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-16 00:00:00",
+          "estimation_sample_end": "2025-03-07 00:00:00",
+          "estimation_cutoff": "2025-03-07 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "INFOSYS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2262,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-16 00:00:00",
+          "estimation_sample_end": "2025-03-07 00:00:00",
+          "estimation_cutoff": "2025-03-07 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "HDFC_BANK": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2262,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-16 00:00:00",
+          "estimation_sample_end": "2025-03-07 00:00:00",
+          "estimation_cutoff": "2025-03-07 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ITC": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2262,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-16 00:00:00",
+          "estimation_sample_end": "2025-03-07 00:00:00",
+          "estimation_cutoff": "2025-03-07 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_ENTERPRISES": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2262,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-16 00:00:00",
+          "estimation_sample_end": "2025-03-07 00:00:00",
+          "estimation_cutoff": "2025-03-07 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_PORTS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2262,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-16 00:00:00",
+          "estimation_sample_end": "2025-03-07 00:00:00",
+          "estimation_cutoff": "2025-03-07 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        }
+      }
+    },
+    {
+      "event_id": "EVT012",
+      "effective_event_date": "2025-04-21 00:00:00",
+      "available": true,
+      "stock_eligibility": {
+        "RELIANCE": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2262,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-16 00:00:00",
+          "estimation_sample_end": "2025-03-07 00:00:00",
+          "estimation_cutoff": "2025-03-07 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "TCS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2262,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-16 00:00:00",
+          "estimation_sample_end": "2025-03-07 00:00:00",
+          "estimation_cutoff": "2025-03-07 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "INFOSYS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2262,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-16 00:00:00",
+          "estimation_sample_end": "2025-03-07 00:00:00",
+          "estimation_cutoff": "2025-03-07 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "HDFC_BANK": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2262,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-16 00:00:00",
+          "estimation_sample_end": "2025-03-07 00:00:00",
+          "estimation_cutoff": "2025-03-07 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ITC": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2262,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-16 00:00:00",
+          "estimation_sample_end": "2025-03-07 00:00:00",
+          "estimation_cutoff": "2025-03-07 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_ENTERPRISES": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2262,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-16 00:00:00",
+          "estimation_sample_end": "2025-03-07 00:00:00",
+          "estimation_cutoff": "2025-03-07 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_PORTS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2262,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-16 00:00:00",
+          "estimation_sample_end": "2025-03-07 00:00:00",
+          "estimation_cutoff": "2025-03-07 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        }
+      }
+    },
+    {
+      "event_id": "EVT013",
+      "effective_event_date": "2025-04-28 00:00:00",
+      "available": true,
+      "stock_eligibility": {
+        "RELIANCE": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2267,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-23 00:00:00",
+          "estimation_sample_end": "2025-03-17 00:00:00",
+          "estimation_cutoff": "2025-03-17 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "TCS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2267,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-23 00:00:00",
+          "estimation_sample_end": "2025-03-17 00:00:00",
+          "estimation_cutoff": "2025-03-17 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "INFOSYS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2267,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-23 00:00:00",
+          "estimation_sample_end": "2025-03-17 00:00:00",
+          "estimation_cutoff": "2025-03-17 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "HDFC_BANK": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2267,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-23 00:00:00",
+          "estimation_sample_end": "2025-03-17 00:00:00",
+          "estimation_cutoff": "2025-03-17 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ITC": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2267,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-23 00:00:00",
+          "estimation_sample_end": "2025-03-17 00:00:00",
+          "estimation_cutoff": "2025-03-17 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_ENTERPRISES": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2267,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-23 00:00:00",
+          "estimation_sample_end": "2025-03-17 00:00:00",
+          "estimation_cutoff": "2025-03-17 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_PORTS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2267,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-10-23 00:00:00",
+          "estimation_sample_end": "2025-03-17 00:00:00",
+          "estimation_cutoff": "2025-03-17 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        }
+      }
+    },
+    {
+      "event_id": "EVT014",
+      "effective_event_date": "2025-05-23 00:00:00",
+      "available": true,
+      "stock_eligibility": {
+        "RELIANCE": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2285,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-11-19 00:00:00",
+          "estimation_sample_end": "2025-04-15 00:00:00",
+          "estimation_cutoff": "2025-04-15 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "TCS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2285,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-11-19 00:00:00",
+          "estimation_sample_end": "2025-04-15 00:00:00",
+          "estimation_cutoff": "2025-04-15 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "INFOSYS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2285,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-11-19 00:00:00",
+          "estimation_sample_end": "2025-04-15 00:00:00",
+          "estimation_cutoff": "2025-04-15 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "HDFC_BANK": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2285,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-11-19 00:00:00",
+          "estimation_sample_end": "2025-04-15 00:00:00",
+          "estimation_cutoff": "2025-04-15 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ITC": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2285,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-11-19 00:00:00",
+          "estimation_sample_end": "2025-04-15 00:00:00",
+          "estimation_cutoff": "2025-04-15 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_ENTERPRISES": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2285,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-11-19 00:00:00",
+          "estimation_sample_end": "2025-04-15 00:00:00",
+          "estimation_cutoff": "2025-04-15 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_PORTS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2285,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-11-19 00:00:00",
+          "estimation_sample_end": "2025-04-15 00:00:00",
+          "estimation_cutoff": "2025-04-15 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        }
+      }
+    },
+    {
+      "event_id": "EVT015",
+      "effective_event_date": "2017-07-03 00:00:00",
+      "available": true,
+      "stock_eligibility": {
+        "RELIANCE": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 341,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2016-12-29 00:00:00",
+          "estimation_sample_end": "2017-05-25 00:00:00",
+          "estimation_cutoff": "2017-05-25 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "TCS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 341,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2016-12-29 00:00:00",
+          "estimation_sample_end": "2017-05-25 00:00:00",
+          "estimation_cutoff": "2017-05-25 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "INFOSYS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 341,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2016-12-29 00:00:00",
+          "estimation_sample_end": "2017-05-25 00:00:00",
+          "estimation_cutoff": "2017-05-25 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "HDFC_BANK": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 341,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2016-12-29 00:00:00",
+          "estimation_sample_end": "2017-05-25 00:00:00",
+          "estimation_cutoff": "2017-05-25 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ITC": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 341,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2016-12-29 00:00:00",
+          "estimation_sample_end": "2017-05-25 00:00:00",
+          "estimation_cutoff": "2017-05-25 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_ENTERPRISES": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 341,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2016-12-29 00:00:00",
+          "estimation_sample_end": "2017-05-25 00:00:00",
+          "estimation_cutoff": "2017-05-25 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_PORTS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 341,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2016-12-29 00:00:00",
+          "estimation_sample_end": "2017-05-25 00:00:00",
+          "estimation_cutoff": "2017-05-25 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        }
+      }
+    },
+    {
+      "event_id": "EVT016",
+      "effective_event_date": "2019-05-23 00:00:00",
+      "available": true,
+      "stock_eligibility": {
+        "RELIANCE": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 804,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2018-11-14 00:00:00",
+          "estimation_sample_end": "2019-04-11 00:00:00",
+          "estimation_cutoff": "2019-04-11 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "TCS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 804,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2018-11-14 00:00:00",
+          "estimation_sample_end": "2019-04-11 00:00:00",
+          "estimation_cutoff": "2019-04-11 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "INFOSYS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 804,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2018-11-14 00:00:00",
+          "estimation_sample_end": "2019-04-11 00:00:00",
+          "estimation_cutoff": "2019-04-11 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "HDFC_BANK": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 804,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2018-11-14 00:00:00",
+          "estimation_sample_end": "2019-04-11 00:00:00",
+          "estimation_cutoff": "2019-04-11 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ITC": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 804,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2018-11-14 00:00:00",
+          "estimation_sample_end": "2019-04-11 00:00:00",
+          "estimation_cutoff": "2019-04-11 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_ENTERPRISES": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 804,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2018-11-14 00:00:00",
+          "estimation_sample_end": "2019-04-11 00:00:00",
+          "estimation_cutoff": "2019-04-11 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_PORTS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 804,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2018-11-14 00:00:00",
+          "estimation_sample_end": "2019-04-11 00:00:00",
+          "estimation_cutoff": "2019-04-11 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        }
+      }
+    },
+    {
+      "event_id": "EVT017",
+      "effective_event_date": "2024-06-04 00:00:00",
+      "available": true,
+      "stock_eligibility": {
+        "RELIANCE": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2045,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2023-11-28 00:00:00",
+          "estimation_sample_end": "2024-04-25 00:00:00",
+          "estimation_cutoff": "2024-04-25 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "TCS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2045,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2023-11-28 00:00:00",
+          "estimation_sample_end": "2024-04-25 00:00:00",
+          "estimation_cutoff": "2024-04-25 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "INFOSYS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2045,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2023-11-28 00:00:00",
+          "estimation_sample_end": "2024-04-25 00:00:00",
+          "estimation_cutoff": "2024-04-25 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "HDFC_BANK": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2045,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2023-11-28 00:00:00",
+          "estimation_sample_end": "2024-04-25 00:00:00",
+          "estimation_cutoff": "2024-04-25 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ITC": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2045,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2023-11-28 00:00:00",
+          "estimation_sample_end": "2024-04-25 00:00:00",
+          "estimation_cutoff": "2024-04-25 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_ENTERPRISES": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2045,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2023-11-28 00:00:00",
+          "estimation_sample_end": "2024-04-25 00:00:00",
+          "estimation_cutoff": "2024-04-25 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_PORTS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2045,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2023-11-28 00:00:00",
+          "estimation_sample_end": "2024-04-25 00:00:00",
+          "estimation_cutoff": "2024-04-25 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        }
+      }
+    },
+    {
+      "event_id": "EVT018",
+      "effective_event_date": "2024-06-03 00:00:00",
+      "available": true,
+      "stock_eligibility": {
+        "RELIANCE": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2044,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2023-11-24 00:00:00",
+          "estimation_sample_end": "2024-04-24 00:00:00",
+          "estimation_cutoff": "2024-04-24 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "TCS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2044,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2023-11-24 00:00:00",
+          "estimation_sample_end": "2024-04-24 00:00:00",
+          "estimation_cutoff": "2024-04-24 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "INFOSYS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2044,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2023-11-24 00:00:00",
+          "estimation_sample_end": "2024-04-24 00:00:00",
+          "estimation_cutoff": "2024-04-24 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "HDFC_BANK": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2044,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2023-11-24 00:00:00",
+          "estimation_sample_end": "2024-04-24 00:00:00",
+          "estimation_cutoff": "2024-04-24 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ITC": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2044,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2023-11-24 00:00:00",
+          "estimation_sample_end": "2024-04-24 00:00:00",
+          "estimation_cutoff": "2024-04-24 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_ENTERPRISES": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2044,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2023-11-24 00:00:00",
+          "estimation_sample_end": "2024-04-24 00:00:00",
+          "estimation_cutoff": "2024-04-24 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_PORTS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2044,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2023-11-24 00:00:00",
+          "estimation_sample_end": "2024-04-24 00:00:00",
+          "estimation_cutoff": "2024-04-24 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        }
+      }
+    },
+    {
+      "event_id": "EVT019",
+      "effective_event_date": "2023-01-25 00:00:00",
+      "available": true,
+      "stock_eligibility": {
+        "RELIANCE": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1715,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2022-07-26 00:00:00",
+          "estimation_sample_end": "2022-12-20 00:00:00",
+          "estimation_cutoff": "2022-12-20 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "TCS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1715,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2022-07-26 00:00:00",
+          "estimation_sample_end": "2022-12-20 00:00:00",
+          "estimation_cutoff": "2022-12-20 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "INFOSYS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1715,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2022-07-26 00:00:00",
+          "estimation_sample_end": "2022-12-20 00:00:00",
+          "estimation_cutoff": "2022-12-20 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "HDFC_BANK": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1715,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2022-07-26 00:00:00",
+          "estimation_sample_end": "2022-12-20 00:00:00",
+          "estimation_cutoff": "2022-12-20 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ITC": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1715,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2022-07-26 00:00:00",
+          "estimation_sample_end": "2022-12-20 00:00:00",
+          "estimation_cutoff": "2022-12-20 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_ENTERPRISES": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1715,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2022-07-26 00:00:00",
+          "estimation_sample_end": "2022-12-20 00:00:00",
+          "estimation_cutoff": "2022-12-20 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_PORTS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 1715,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2022-07-26 00:00:00",
+          "estimation_sample_end": "2022-12-20 00:00:00",
+          "estimation_cutoff": "2022-12-20 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        }
+      }
+    },
+    {
+      "event_id": "EVT020",
+      "effective_event_date": "2024-07-23 00:00:00",
+      "available": true,
+      "stock_eligibility": {
+        "RELIANCE": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2078,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-01-15 00:00:00",
+          "estimation_sample_end": "2024-06-13 00:00:00",
+          "estimation_cutoff": "2024-06-13 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "TCS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2078,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-01-15 00:00:00",
+          "estimation_sample_end": "2024-06-13 00:00:00",
+          "estimation_cutoff": "2024-06-13 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "INFOSYS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2078,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-01-15 00:00:00",
+          "estimation_sample_end": "2024-06-13 00:00:00",
+          "estimation_cutoff": "2024-06-13 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "HDFC_BANK": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2078,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-01-15 00:00:00",
+          "estimation_sample_end": "2024-06-13 00:00:00",
+          "estimation_cutoff": "2024-06-13 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ITC": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2078,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-01-15 00:00:00",
+          "estimation_sample_end": "2024-06-13 00:00:00",
+          "estimation_cutoff": "2024-06-13 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_ENTERPRISES": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2078,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-01-15 00:00:00",
+          "estimation_sample_end": "2024-06-13 00:00:00",
+          "estimation_cutoff": "2024-06-13 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_PORTS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2078,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-01-15 00:00:00",
+          "estimation_sample_end": "2024-06-13 00:00:00",
+          "estimation_cutoff": "2024-06-13 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        }
+      }
+    },
+    {
+      "event_id": "EVT021",
+      "effective_event_date": "2024-09-02 00:00:00",
+      "available": true,
+      "stock_eligibility": {
+        "RELIANCE": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2106,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-02-26 00:00:00",
+          "estimation_sample_end": "2024-07-25 00:00:00",
+          "estimation_cutoff": "2024-07-25 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "TCS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2106,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-02-26 00:00:00",
+          "estimation_sample_end": "2024-07-25 00:00:00",
+          "estimation_cutoff": "2024-07-25 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "INFOSYS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2106,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-02-26 00:00:00",
+          "estimation_sample_end": "2024-07-25 00:00:00",
+          "estimation_cutoff": "2024-07-25 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "HDFC_BANK": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2106,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-02-26 00:00:00",
+          "estimation_sample_end": "2024-07-25 00:00:00",
+          "estimation_cutoff": "2024-07-25 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ITC": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2106,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-02-26 00:00:00",
+          "estimation_sample_end": "2024-07-25 00:00:00",
+          "estimation_cutoff": "2024-07-25 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_ENTERPRISES": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2106,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-02-26 00:00:00",
+          "estimation_sample_end": "2024-07-25 00:00:00",
+          "estimation_cutoff": "2024-07-25 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        },
+        "ADANI_PORTS": {
+          "eligible": true,
+          "estimation_observations_available_before_cutoff": 2106,
+          "estimation_observations_used": 100,
+          "estimation_sample_start": "2024-02-26 00:00:00",
+          "estimation_sample_end": "2024-07-25 00:00:00",
+          "estimation_cutoff": "2024-07-25 00:00:00",
+          "event_window_observations": 11,
+          "required_estimation_observations": 100,
+          "required_event_window_observations": 11
+        }
+      }
+    }
+  ]
+}

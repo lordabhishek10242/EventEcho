@@ -148,16 +148,34 @@ def align_stock_benchmark_returns(
     return aligned
 
 
+def observed_benchmark_prices(benchmark_prices: pd.Series) -> pd.Series:
+    """Return benchmark closes on observed sessions only.
+
+    A wide snapshot CSV is the union of every instrument's provider dates, so
+    the benchmark column can contain empty rows on dates where only stocks were
+    returned. Those dates are not observed benchmark sessions. Keeping them
+    would shift event-session positions and silently differ from the snapshot
+    validation calendar, which is defined on non-missing benchmark closes.
+    """
+    benchmark = pd.to_numeric(benchmark_prices, errors="coerce").copy().sort_index()
+    benchmark.index = pd.DatetimeIndex(benchmark.index).tz_localize(None).normalize()
+    if benchmark.index.has_duplicates:
+        raise ValueError("Price observations contain duplicate normalized dates")
+    return benchmark.dropna()
+
+
 def align_stock_prices_to_benchmark_calendar(
     stock_prices: pd.DataFrame, benchmark_prices: pd.Series
 ) -> pd.DataFrame:
-    """Reindex stock price levels to observed benchmark sessions without filling gaps."""
+    """Reindex stock price levels to observed benchmark sessions without filling gaps.
+
+    Dates with a missing benchmark close are not sessions in this calendar.
+    """
     stocks = stock_prices.copy().sort_index()
-    benchmark = benchmark_prices.copy().sort_index()
     stocks.index = pd.DatetimeIndex(stocks.index).tz_localize(None).normalize()
-    benchmark.index = pd.DatetimeIndex(benchmark.index).tz_localize(None).normalize()
-    if stocks.index.has_duplicates or benchmark.index.has_duplicates:
+    if stocks.index.has_duplicates:
         raise ValueError("Price observations contain duplicate normalized dates")
+    benchmark = observed_benchmark_prices(benchmark_prices)
     if stocks.empty or benchmark.empty:
         raise ValueError("Stock and benchmark prices must both contain observations")
     return stocks.reindex(benchmark.index)
@@ -175,8 +193,7 @@ def calculate_aligned_returns(
     benchmark session from being paired with a one-session benchmark return.
     """
     stocks = align_stock_prices_to_benchmark_calendar(stock_prices, benchmark_prices)
-    benchmark = benchmark_prices.copy().sort_index()
-    benchmark.index = pd.DatetimeIndex(benchmark.index).tz_localize(None).normalize()
+    benchmark = observed_benchmark_prices(benchmark_prices)
     stock_returns = calculate_returns(stocks)
     benchmark_returns = calculate_returns(benchmark).rename("NIFTY50_RETURN")
     return align_stock_benchmark_returns(stock_returns, benchmark_returns)

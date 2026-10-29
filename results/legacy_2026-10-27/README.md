@@ -1,4 +1,8 @@
-# Results Provenance
+# Legacy outputs (2026-10-27) — do not cite
+
+> **Quarantined.** These files are the original 9-event / 5-stock exports from the supplied notebook archive. They predate the 21-event registry, the Close/Close price-return convention and the benchmark-session calendar fix. They are kept only for history. The current results are in [`../reproduced/`](../reproduced/), which carries its own manifest and integrity report.
+
+## Original provenance note
 
 The CSV files and `manifest.json` in this directory were extracted unchanged from `notebook/EventEcho_artifacts.zip`. They are the project's supplied legacy exports, generated in the original environment on 2026-10-27 according to the embedded manifest. They have not been independently regenerated in this checkout because no historical prices were supplied and the Python dependencies were not installed at intake.
 

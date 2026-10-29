@@ -1,0 +1,4 @@
+estimation_sessions,tests_available,unique_events,unique_stocks,conventional_holm_significant_tests,hac_holm_significant_tests,median_absolute_CAR_delta_vs_100_pct,mean_absolute_CAR_delta_vs_100_pct,CAR_correlation_vs_100_session,comparison_basis
+60,441,21,7,12,14,0.5552542347880594,0.8582198101098171,0.9827332378492789,same event-stock-window rows; Holm correction applied within each estimation-window specification
+100,441,21,7,8,10,0.0,9.032559595718238e-17,1.0,same event-stock-window rows; Holm correction applied within each estimation-window specification
+150,441,21,7,11,10,0.32887360206047406,0.5174774033390722,0.9939760519121701,same event-stock-window rows; Holm correction applied within each estimation-window specification
