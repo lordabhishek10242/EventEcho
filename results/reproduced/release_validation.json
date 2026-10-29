@@ -1,8 +1,8 @@
 {
-  "checked_utc": "2026-10-29T16:52:35.181041+00:00",
+  "checked_utc": "2026-10-29T17:45:40.187042+00:00",
   "analysis_dir": "reproduced",
   "dashboard_checked": true,
-  "passed": 55,
+  "passed": 77,
   "failed": 0,
   "checks": [
     {
@@ -41,12 +41,12 @@
     {
       "check": "code commit recorded",
       "passed": true,
-      "detail": "24e723f595abd46116326683f571083deac3dc3b"
+      "detail": "40af04a23729043cc77ff5a828190dcba2dcd74e"
     },
     {
       "check": "manifest artifact row counts match files",
       "passed": true,
-      "detail": 33
+      "detail": 39
     },
     {
       "check": "event IDs unique in output registry",
@@ -317,6 +317,119 @@
       "detail": null
     },
     {
+      "check": "robust tests cover every CAAR group and window",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "KP adjustment never enlarges the BMP statistic when correlation is positive",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "earnings calendar checksum matches manifest",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "every calendar announcement appears once in coverage",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "excluded announcements all give a reason",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "earnings CAR table = included announcements",
+      "passed": true,
+      "detail": {
+        "included": 266,
+        "rows": 266
+      }
+    },
+    {
+      "check": "day 0 is on or after the announcement date",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "earnings split follows the declared holdout start",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "earnings SCAR = CAR / SE (CAR_-1_+1)",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "earnings variance ratio recomputes from SCARs (CAR_-1_+1)",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "earnings mean CAR recomputes (CAR_-1_+1)",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "earnings units = included announcements (CAR_-1_+1)",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "earnings SCAR = CAR / SE (CAR_-3_+3)",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "earnings variance ratio recomputes from SCARs (CAR_-3_+3)",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "earnings mean CAR recomputes (CAR_-3_+3)",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "earnings units = included announcements (CAR_-3_+3)",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "earnings SCAR = CAR / SE (CAR_-5_+5)",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "earnings variance ratio recomputes from SCARs (CAR_-5_+5)",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "earnings mean CAR recomputes (CAR_-5_+5)",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "earnings units = included announcements (CAR_-5_+5)",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "earnings variance-ratio intervals are ordered",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "earnings replication has one row per studied stock",
+      "passed": true,
+      "detail": null
+    },
+    {
       "check": "headline corpus checksum matches manifest",
       "passed": true,
       "detail": "3699710981e04ef3f195952f5fa125ef7da2a0fa56df4e8d42fd6bbd32597253"
@@ -329,12 +442,12 @@
     {
       "check": "dashboard manifest is this run's manifest",
       "passed": true,
-      "detail": "2026-10-29T16:52:33.575337+00:00"
+      "detail": "2026-10-29T17:45:38.145535+00:00"
     },
     {
       "check": "dashboard tables equal shipped CSVs",
       "passed": true,
-      "detail": 28
+      "detail": 32
     },
     {
       "check": "dashboard has no stale adjusted-close disclaimer",
