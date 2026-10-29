@@ -255,3 +255,27 @@ def test_acquisition_cli_reports_provider_unavailable_without_live_network(monke
     captured = capsys.readouterr()
     assert "Snapshot incomplete" in captured.err
     assert "missing_benchmark_data" in captured.err
+
+
+
+def test_event_eligibility_uses_benchmark_sessions_not_union_calendar():
+    dates = pd.to_datetime(["2024-01-01", "2024-01-02", "2024-01-03"])
+    prices = pd.DataFrame(
+        {label: [100.0, 101.0, 102.0] for label in STOCK_TICKERS},
+        index=dates,
+    )
+    prices["NIFTY50"] = [100.0, np.nan, 102.0]
+    events = pd.DataFrame([{
+        "event_id": "EVT_TEST",
+        "effective_event_date": pd.Timestamp("2024-01-02"),
+    }])
+
+    report = validate_market_prices(
+        prices, "2024-01-01", "2024-01-04", events=events
+    )
+
+    event = report["event_eligibility"][0]
+    assert report["observed_session_count"] == 3
+    assert report["observed_benchmark_session_count"] == 2
+    assert event["available"] is False
+    assert event["warning"] == "effective_event_date_not_an_observed_benchmark_session"
