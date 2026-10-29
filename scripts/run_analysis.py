@@ -30,7 +30,7 @@ from src.config import (  # noqa: E402
     START_DATE,
     STOCK_TICKERS,
 )
-from src.data import align_stock_benchmark_returns, calculate_returns, download_prices, load_price_csv, load_price_provenance, sha256_file  # noqa: E402
+from src.data import align_stock_prices_to_benchmark_calendar, calculate_aligned_returns, download_prices, load_price_csv, load_price_provenance, sha256_file  # noqa: E402
 from src.snapshots import resolve_market_snapshot  # noqa: E402
 from src.event_study import calculate_event_study  # noqa: E402
 from src.events import chronological_split, validate_events  # noqa: E402
@@ -121,9 +121,12 @@ def run_analysis(
         stock_prices, benchmark_prices = download_prices(
             STOCK_TICKERS, start_date, end_date, BENCHMARK_TICKER
         )
-    stock_returns = calculate_returns(stock_prices)
-    benchmark_returns = calculate_returns(benchmark_prices).rename("NIFTY50_RETURN")
-    returns = align_stock_benchmark_returns(stock_returns, benchmark_returns)
+    # Align price levels first; only then compute close-to-close returns.
+    # This prevents mismatched stock/benchmark calendars from pairing returns
+    # that span different intervals. Missing prices are never forward-filled.
+    aligned_stock_prices = align_stock_prices_to_benchmark_calendar(stock_prices, benchmark_prices)
+    returns = calculate_aligned_returns(aligned_stock_prices, benchmark_prices)
+    benchmark_returns = returns["NIFTY50_RETURN"]
     stocks = [stock for stock in STOCK_TICKERS if stock in returns.columns]
     if not stocks:
         raise ValueError("No configured stock return series are available")
@@ -154,7 +157,7 @@ def run_analysis(
         events, event_volatility, event_window_audit
     )
     trades = simulate_trades(
-        stock_prices, benchmark_returns, events, stocks, HOLDING_SESSIONS, cost_bps_per_side
+        aligned_stock_prices, benchmark_returns, events, stocks, HOLDING_SESSIONS, cost_bps_per_side
     )
     event_returns = event_portfolio_returns(trades)
     split_events = chronological_split(events, DEVELOPMENT_EVENT_IDS, HOLDOUT_EVENT_IDS)
