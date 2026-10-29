@@ -229,6 +229,7 @@ def verify(directory: Path, registry_path: Path, dashboard_path: Path | None) ->
     classified = _read(directory, "event_headline_classification.csv")
     checks.check("every registry headline is classified once",
                  sorted(classified["event_id"]) == sorted(events["event_id"]) and not classified["event_id"].duplicated().any())
+    _verify_earnings_and_robust(directory, manifest, checks)
     corpus_path = ROOT / str(manifest.get("headline_corpus") or "results/headline_corpus.csv")
     checks.check("headline corpus checksum matches manifest",
                  corpus_path.is_file() and sha256_file(corpus_path) == manifest.get("headline_corpus_sha256"),
@@ -253,6 +254,59 @@ def verify(directory: Path, registry_path: Path, dashboard_path: Path | None) ->
         checks.check("dashboard has no stale adjusted-close disclaimer",
                      "adjusted-close fields" not in document and "dividend conventions differ" not in document)
     return checks
+
+
+def _verify_earnings_and_robust(directory: Path, manifest: dict, checks: Checks) -> None:
+    """Invariants for the issuer-level earnings study and the robust group tests."""
+    robust = _read(directory, "robust_tests_registry.csv")
+    caar_windows = _read(directory, "caar_window_summary.csv")
+    checks.check("robust tests cover every CAAR group and window",
+                 set(zip(robust["group"], robust["window"])) == set(zip(caar_windows["group"], caar_windows["window"])))
+    positive = robust.dropna(subset=["kp_adjusted_t", "bmp_t"])
+    positive = positive[positive["mean_residual_correlation"] >= 0]
+    checks.check("KP adjustment never enlarges the BMP statistic when correlation is positive",
+                 bool((positive["kp_adjusted_t"].abs() <= positive["bmp_t"].abs() + 1e-9).all()))
+    calendar_name = manifest.get("earnings_calendar")
+    if not calendar_name:
+        checks.check("earnings study present", False, "manifest has no earnings_calendar")
+        return
+    calendar_path = ROOT / calendar_name
+    checks.check("earnings calendar checksum matches manifest",
+                 calendar_path.is_file() and sha256_file(calendar_path) == manifest.get("earnings_calendar_sha256"))
+    calendar = pd.read_csv(calendar_path)
+    coverage = _read(directory, "earnings_coverage.csv")
+    events = _read(directory, "earnings_event_car.csv")
+    summary = _read(directory, "earnings_summary.csv")
+    checks.check("every calendar announcement appears once in coverage",
+                 sorted(coverage["earnings_id"]) == sorted(calendar["earnings_id"]))
+    included = set(coverage.loc[coverage["included"], "earnings_id"])
+    checks.check("excluded announcements all give a reason",
+                 bool(coverage.loc[~coverage["included"], "reason"].notna().all()))
+    checks.check("earnings CAR table = included announcements", set(events["earnings_id"]) == included,
+                 {"included": len(included), "rows": len(events)})
+    checks.check("day 0 is on or after the announcement date",
+                 bool((pd.to_datetime(events["day0_session"]) >= pd.to_datetime(events["announcement_date"])).all()))
+    holdout_start = (manifest.get("earnings_design") or {}).get("holdout_start", "2023-01-01")
+    checks.check("earnings split follows the declared holdout start",
+                 bool(((events["announcement_date"] >= holdout_start) == (events["sample"] == "holdout")).all()))
+    everyone = summary[summary["group"] == "All announcements"].set_index("window")
+    for window in CAR_WINDOWS:
+        scar = events[f"{window}_scar"]
+        checks.check(f"earnings SCAR = CAR / SE ({window})",
+                     _close(scar, events[f"{window}_pct"] / events[f"{window}_se_pct"], 1e-9))
+        row = everyone.loc[window]
+        checks.check(f"earnings variance ratio recomputes from SCARs ({window})",
+                     abs(row["variance_ratio"] - float((scar ** 2).mean())) < 1e-9)
+        checks.check(f"earnings mean CAR recomputes ({window})",
+                     abs(row["mean_CAR_pct"] - float(events[f"{window}_pct"].mean())) < 1e-9)
+        checks.check(f"earnings units = included announcements ({window})", int(row["units"]) == len(included))
+    ordered = summary.dropna(subset=["variance_ratio_ci_lower"])
+    checks.check("earnings variance-ratio intervals are ordered",
+                 bool((ordered["variance_ratio_ci_lower"] <= ordered["variance_ratio_ci_upper"]).all()))
+    if (directory / "earnings_replication.csv").is_file():
+        replication = _read(directory, "earnings_replication.csv")
+        checks.check("earnings replication has one row per studied stock",
+                     sorted(replication["stock"]) == sorted(events["stock"].unique()))
 
 
 def main() -> int:

@@ -46,7 +46,8 @@ from src.sensitivity import (  # noqa: E402
 from src.statistics import event_study_significance  # noqa: E402
 from src.clustered_inference import _dependency_clusters, clustered_strategy_inference  # noqa: E402
 from src.headline_classifier import run_headline_classification  # noqa: E402
-from src.pooled_analysis import caar_tables, pattern_generalization, window_choice_tables  # noqa: E402
+from src.pooled_analysis import _group_definitions, caar_tables, pattern_generalization, window_choice_tables  # noqa: E402
+from src.earnings_study import HOLDOUT_START as EARNINGS_HOLDOUT_START, load_earnings_calendar, registry_robust_tests, run_earnings_study  # noqa: E402
 from src.config import STOCK_SECTORS  # noqa: E402
 from src.estimation_sensitivity import estimation_window_sensitivity  # noqa: E402
 from src.robustness_ledger import build_robustness_evidence_ledger  # noqa: E402
@@ -137,6 +138,7 @@ def run_analysis(
     snapshot_id: str | None = None,
     allow_synthetic: bool = False,
     corpus_path: Path | None = DEFAULT_RESULTS_DIR / "headline_corpus.csv",
+    earnings_path: Path | None = DEFAULT_RESULTS_DIR / "earnings_events.csv",
 ) -> dict[str, pd.DataFrame]:
     events = validate_events(pd.read_csv(events_path))
     snapshot_manifest = None
@@ -249,6 +251,21 @@ def run_analysis(
     )
     window_summary, window_agreement = window_choice_tables(significance)
     generalization = pattern_generalization(car_results, events, stocks, DEVELOPMENT_EVENT_IDS, HOLDOUT_EVENT_IDS)
+    # Robust group tests (BMP, Kolari-Pynnonen, Corrado rank) for the same
+    # groups as the CAAR tables.
+    robust_registry = registry_robust_tests(
+        returns, events, stocks, clusters,
+        _group_definitions(events, stocks, event_window_audit, DEVELOPMENT_EVENT_IDS, HOLDOUT_EVENT_IDS),
+        ESTIMATION_SESSIONS, GAP_SESSIONS, EVENT_WINDOW_RADIUS,
+    )
+    earnings_outputs = {}
+    if earnings_path is not None and Path(earnings_path).is_file():
+        earnings_calendar = load_earnings_calendar(earnings_path, list(STOCK_TICKERS))
+        # Only stocks with a return series in this run can be studied.
+        earnings_calendar = earnings_calendar[earnings_calendar["stock"].isin(stocks)].reset_index(drop=True)
+        earnings_outputs = run_earnings_study(
+            returns, earnings_calendar, events, ESTIMATION_SESSIONS, GAP_SESSIONS, EVENT_WINDOW_RADIUS
+        )
     headline_outputs = {}
     if corpus_path is not None and Path(corpus_path).is_file():
         headline_outputs = run_headline_classification(pd.read_csv(corpus_path), events)
@@ -283,6 +300,8 @@ def run_analysis(
         "window_choice_summary.csv": window_summary,
         "window_choice_agreement.csv": window_agreement,
         "pattern_generalization.csv": generalization,
+        "robust_tests_registry.csv": robust_registry,
+        **earnings_outputs,
         **headline_outputs,
     }
     if not covid_sensitivity.empty:
@@ -310,6 +329,15 @@ def run_analysis(
         "stock_sectors": {stock: STOCK_SECTORS.get(stock) for stock in stocks},
         "headline_corpus": _portable_input_path(Path(corpus_path)) if headline_outputs else None,
         "headline_corpus_sha256": sha256_file(corpus_path) if headline_outputs else None,
+        "earnings_calendar": _portable_input_path(Path(earnings_path)) if earnings_outputs else None,
+        "earnings_calendar_sha256": sha256_file(earnings_path) if earnings_outputs else None,
+        "earnings_design": {
+            "unit": "one company on its own results day",
+            "day0": "first NIFTY 50 session on or after the announcement date",
+            "main_window": "CAR_-1_+1",
+            "main_measure": "event-induced variance ratio (mean SCAR squared)",
+            "holdout_start": str(EARNINGS_HOLDOUT_START.date()),
+        } if earnings_outputs else None,
         "estimation_sessions": ESTIMATION_SESSIONS,
         "gap_sessions": GAP_SESSIONS,
         "event_window_sessions": EVENT_WINDOW_RADIUS,

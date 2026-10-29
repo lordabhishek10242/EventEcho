@@ -109,3 +109,38 @@ def test_demo_builds_offline_selectable_visual_report_from_analysis_artifacts(tm
     document = output.read_text(encoding="utf-8")
     for required in ("eventSelect", "stockSelect", "windowSelect", "eventDetail", "heatmap", "returnChart", "inference", "consistency", "trading", "eventRegister", "eventDependenceAudit", "Event dependence & independence audit", "Pairwise event relationships", "eventTimingSensitivity", "Event timing sensitivity", "eventVolatility", "Realized volatility before vs after events", "categoryEvidence", "Category-level evidence", "provenance", "snapshot-1", "Confidence intervals", "Transaction-cost sensitivity", "Holdout uncertainty", "clusteredInference", "Return-convention mismatch", "stocks use Adj Close while the benchmark uses Close"):
         assert required in document
+
+
+def test_key_findings_are_computed_from_the_tables():
+    from src.reporting import key_findings
+
+    datasets = {
+        "multi_stock_significance.csv": [
+            {"event_id": "E1", "stock": "A", "window": "CAR_-1_+1", "CAR_pct": -20.0,
+             "significant_after_holm_5pct": True, "hac_significant_after_holm_5pct": True},
+            {"event_id": "E2", "stock": "B", "window": "CAR_-1_+1", "CAR_pct": 1.0,
+             "significant_after_holm_5pct": False, "hac_significant_after_holm_5pct": False},
+        ],
+        "earnings_summary.csv": [
+            {"group": "All announcements", "window": "CAR_-1_+1", "units": 250, "variance_ratio": 3.4,
+             "variance_ratio_ci_lower": 2.5, "variance_ratio_ci_upper": 4.6, "variance_ratio_null_expectation": 1.02,
+             "mean_abs_CAR_pct": 3.1, "mean_CAR_pct": 0.1, "bmp_p_value": 0.5},
+        ],
+        "earnings_replication.csv": [{"stock": "A", "replicates": True}, {"stock": "B", "replicates": False}],
+        "clustered_strategy_inference.csv": [
+            {"sample": "Holdout", "mean_excess_return_pct_ci95_lower": -0.3, "mean_excess_return_pct_ci95_upper": 0.4},
+        ],
+    }
+    findings = {f["title"]: f for f in key_findings({}, datasets)}
+    assert findings["Unusual moves after strict correction"]["value"] == "1 of 2 tests"
+    assert "E1 A -20.0%" in findings["Unusual moves after strict correction"]["detail"]
+    earnings = findings["Results days: 250 company announcements"]
+    assert earnings["value"] == "3.4x normal variance"
+    assert "1 of 2 stocks" in earnings["detail"]
+    assert "includes zero" in findings["Hypothetical trading rule (holdout)"]["detail"]
+
+
+def test_key_findings_skip_missing_tables():
+    from src.reporting import key_findings
+
+    assert key_findings({}, {}) == []
