@@ -35,7 +35,7 @@ def validate_events(events: pd.DataFrame) -> pd.DataFrame:
     confidence = result["timing_confidence"].fillna("").astype(str).str.lower()
     has_clock = event_time.str.contains(r"(?<!\d)(?:[01]?\d|2[0-3]):[0-5]\d(?!\d)", regex=True)
     context_only = event_time.str.contains(
-        r"management comments|not the exact|context|intraday timing varies|exact intraday|approval time",
+        r"management comments|not the exact|context|intraday timing varies|exact intraday|approval time|board approved|board approval|approved results",
         case=False, regex=True,
     )
     result["timestamp_evidence_status"] = "date_only_or_qualitative_time"
