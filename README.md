@@ -6,7 +6,7 @@ This repository includes a modular Python implementation, the original research 
 
 ## Research Universe
 
-- Stocks: Reliance Industries (`RELIANCE.NS`), TCS (`TCS.NS`), Infosys (`INFY.NS`), HDFC Bank (`HDFCBANK.NS`), and ITC (`ITC.NS`).
+- Stocks: Reliance Industries (`RELIANCE.NS`), TCS (`TCS.NS`), Infosys (`INFY.NS`), HDFC Bank (`HDFCBANK.NS`), ITC (`ITC.NS`), Adani Enterprises (`ADANIENT.NS`), and Adani Ports (`ADANIPORTS.NS`).
 - Benchmark: Nifty 50 (`^NSEI`) close, a **price index**, not a total-return index.
 - Intended price period: 2016-01-01 through 2025-12-31 (provider end date is exclusive); actual dates depend on data availability.
 - Events: 19 selected records in the expanded event master spanning policy/tax reform, monetary policy, corporate earnings, election results, GDP release, and a company-specific industry event. This remains a small, selected sample rather than a representative event population. Records are selected by event relevance and source availability, not by observed return direction.
@@ -16,7 +16,7 @@ Event dates, effective dates, source links, episode IDs, timing confidence, and 
 
 ## Audit Summary
 
-The original notebook has 143 cells and contains data acquisition, returns, event definitions/alignment, event-specific OLS models, abnormal returns, CAR inference, a COVID-period sensitivity check, cross-stock analysis, trading simulation, chronological evaluation, and Kaggle-path artifact export. Its cells are not executed in the supplied notebook metadata. The attached artifact archive contains 11 result CSVs and a manifest, but no raw historical prices. The modular pipeline was successfully run on 2026-10-27 into `results/reproduced/`; it fetched the same 2016-01-04 to 2025-12-31 sample dates from Yahoo Finance.
+The original notebook has 143 cells and contains data acquisition, returns, event definitions/alignment, event-specific OLS models, abnormal returns, CAR inference, a COVID-period sensitivity check, cross-stock analysis, trading simulation, chronological evaluation, and Kaggle-path artifact export. Its cells are not executed in the supplied notebook metadata. The attached artifact archive contains 11 result CSVs and a manifest, but no raw historical prices. The modular pipeline is run by GitHub Actions against a frozen market-data snapshot; use the latest successful run artifact and its manifest rather than stale checked-in metrics.
 
 The downloadable analysis is a workflow artifact tied to a specific run and snapshot manifest. Older artifacts may reflect earlier event/stock universes; always use the latest successful workflow artifact and its manifest when citing counts or metrics. Registry or methodology changes on main trigger a fresh snapshot acquisition and rebuild. The single-stock file is a Reliance-focused export; the current multi-stock analysis is generated from the 19-event registry and seven-stock universe after the latest successful rebuild.
 
@@ -31,7 +31,7 @@ src/events.py          Event validation, session alignment, sample labels
 src/event_study.py     Estimation samples, OLS market model, AR and CAR
 src/statistics.py      Approximate CAR inference and Holm correction
 src/trading.py         Long-only trades, costs, benchmark, event aggregation
-src/sensitivity.py     Transaction-cost and extreme-market sensitivities
+src/sensitivity.py     Transaction-cost, extreme-market, and event-timing sensitivities
 src/reporting.py       Non-empty CSV exports and run manifest
 scripts/run_analysis.py  Repository-root command-line workflow
 tests/                 Network-free synthetic tests
@@ -58,7 +58,7 @@ Default run: load the preserved event master and fetch market data through `yfin
 python scripts/run_analysis.py --verbose
 ```
 
-For reproducible/offline input, provide a wide CSV with a `date` column, one column per stock (`RELIANCE`, `TCS`, `INFOSYS`, `HDFC_BANK`, `ITC`), and `NIFTY50` benchmark close. Missing cells may be blank. The input file is ignored by Git because it may be large or subject to provider terms.
+For reproducible/offline input, provide a wide CSV with a `date` column, one column per stock (`RELIANCE`, `TCS`, `INFOSYS`, `HDFC_BANK`, `ITC`, `ADANI_ENTERPRISES`, `ADANI_PORTS`), and `NIFTY50` benchmark close. Missing cells may be blank. The input file is ignored by Git because it may be large or subject to provider terms.
 
 ```bash
 mkdir -p data
