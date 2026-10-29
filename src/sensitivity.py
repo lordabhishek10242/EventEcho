@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pandas as pd
 
+from .event_study import calculate_event_study
 from .trading import event_portfolio_returns
 
 
@@ -92,4 +93,106 @@ def extreme_market_sensitivity(
                     else "complete_window_no_extreme_days_excluded"
                 ),
             })
+    return pd.DataFrame(rows)
+
+
+
+def event_timing_sensitivity(
+    returns: pd.DataFrame,
+    events: pd.DataFrame,
+    stock_columns: list[str],
+    recorded_car_results: pd.DataFrame,
+    estimation_sessions: int = 100,
+    gap_sessions: int = 20,
+    event_window_radius: int = 5,
+) -> pd.DataFrame:
+    """Compare first-session versus following-session alignment for uncertain events.
+
+    This is a timing robustness diagnostic, not an automatic correction. Events
+    whose source/timing metadata explicitly signals pending, unverified, assumed,
+    or otherwise unresolved timing are included. For a non-trading announcement
+    date, the first scenario is the first trading session on or after that date;
+    it is not labelled as a same-day market reaction.
+    """
+    required = {"event_id", "event_date", "effective_event_date"}
+    missing = required - set(events.columns)
+    if missing:
+        raise ValueError(f"events is missing required columns: {sorted(missing)}")
+    if recorded_car_results.empty:
+        raise ValueError("recorded_car_results must not be empty")
+
+    dates = pd.DatetimeIndex(returns.index).tz_localize(None).normalize().unique().sort_values()
+    if len(dates) < 2:
+        raise ValueError("At least two trading sessions are required")
+    keywords = (
+        "pending", "unverified", "not_in_master", "not in master",
+        "check_required", "required", "assumption", "review",
+        "not_release_timestamp", "not separately confirmed", "not reported",
+    )
+    rows: list[dict] = []
+    for _, event in events.iterrows():
+        metadata = " ".join(
+            str(event.get(column, "")) for column in (
+                "event_time", "timing_confidence", "verification_status", "notes"
+            )
+        ).casefold()
+        if not any(keyword in metadata for keyword in keywords):
+            continue
+
+        event_id = str(event["event_id"])
+        announcement_date = pd.Timestamp(event["event_date"]).tz_localize(None).normalize()
+        first_position = int(dates.searchsorted(announcement_date, side="left"))
+        if first_position >= len(dates) - 1:
+            continue
+        first_session = dates[first_position]
+        following_session = dates[first_position + 1]
+        announcement_date_is_session = announcement_date in dates
+        recorded_effective = pd.Timestamp(event["effective_event_date"]).tz_localize(None).normalize()
+        baseline = recorded_car_results[recorded_car_results["event_id"] == event_id]
+
+        for scenario, scenario_date in (
+            ("first_session_on_or_after_announcement", first_session),
+            ("following_trading_session", following_session),
+        ):
+            scenario_events = event.to_frame().T.copy()
+            scenario_events.loc[:, "effective_event_date"] = scenario_date
+            _, scenario_cars, _ = calculate_event_study(
+                returns,
+                scenario_events,
+                stock_columns,
+                estimation_sessions,
+                gap_sessions,
+                event_window_radius,
+            )
+            for _, car in scenario_cars.iterrows():
+                base = baseline[
+                    (baseline["stock"] == car["stock"])
+                    & (baseline["window"] == car["window"])
+                ]
+                recorded_car = float(base.iloc[0]["CAR"]) if not base.empty and pd.notna(base.iloc[0]["CAR"]) else float("nan")
+                scenario_car = float(car["CAR"]) if pd.notna(car["CAR"]) else float("nan")
+                rows.append({
+                    "event_id": event_id,
+                    "headline": event.get("headline", ""),
+                    "category": event.get("category", ""),
+                    "announcement_date": announcement_date,
+                    "announcement_date_is_trading_session": bool(announcement_date_is_session),
+                    "recorded_effective_event_date": recorded_effective,
+                    "timing_confidence": event.get("timing_confidence", ""),
+                    "scenario": scenario,
+                    "scenario_effective_date": scenario_date,
+                    "matches_recorded_alignment": bool(scenario_date == recorded_effective),
+                    "stock": car["stock"],
+                    "window": car["window"],
+                    "scenario_CAR": scenario_car,
+                    "scenario_CAR_pct": scenario_car * 100,
+                    "recorded_CAR": recorded_car,
+                    "recorded_CAR_pct": recorded_car * 100,
+                    "delta_vs_recorded_CAR_pct": (
+                        (scenario_car - recorded_car) * 100
+                        if pd.notna(scenario_car) and pd.notna(recorded_car)
+                        else float("nan")
+                    ),
+                    "interpretation": "Timing sensitivity only; not a corrected estimate or causal effect.",
+                })
     return pd.DataFrame(rows)
