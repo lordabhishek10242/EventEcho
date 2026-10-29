@@ -71,6 +71,10 @@ The CLI refuses offline runs without local prices, fails clearly if an explicitl
 
 The new `notebooks/EventEcho.ipynb` displays the supplied archived tables for review. The original notebook is retained unchanged at `notebook/notebook5b4a79ed78.ipynb`; its hardcoded `/kaggle/working` export location applies only to its original execution environment.
 
+## Estimation-window robustness
+
+The run also exports `estimation_window_sensitivity.csv` and `estimation_window_sensitivity_summary.csv`. The market model is re-estimated with 60, 100, and 150 pre-event sessions, holding the event gap and event windows fixed. The dashboard reports CAR correlation and absolute CAR changes versus the 100-session baseline, plus conventional and HAC Holm-significance counts for each specification. Holm correction is applied within each specification; the comparison is a pre-specified robustness check, not a search for the most favorable p-value.
+
 ## Dependence-aware strategy uncertainty
 
 `clustered_strategy_inference.csv` reports percentile intervals from a cluster bootstrap for development and chronological holdout strategy metrics. Events are placed in the same dependence cluster when their event-study windows overlap or the registry assigns the same `episode_id`; whole connected clusters are resampled rather than individual events. This avoids treating known overlapping windows or explicitly shared episodes as independent bootstrap units.
