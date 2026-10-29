@@ -148,6 +148,21 @@ def align_stock_benchmark_returns(
     return aligned
 
 
+def align_stock_prices_to_benchmark_calendar(
+    stock_prices: pd.DataFrame, benchmark_prices: pd.Series
+) -> pd.DataFrame:
+    """Reindex stock price levels to observed benchmark sessions without filling gaps."""
+    stocks = stock_prices.copy().sort_index()
+    benchmark = benchmark_prices.copy().sort_index()
+    stocks.index = pd.DatetimeIndex(stocks.index).tz_localize(None).normalize()
+    benchmark.index = pd.DatetimeIndex(benchmark.index).tz_localize(None).normalize()
+    if stocks.index.has_duplicates or benchmark.index.has_duplicates:
+        raise ValueError("Price observations contain duplicate normalized dates")
+    if stocks.empty or benchmark.empty:
+        raise ValueError("Stock and benchmark prices must both contain observations")
+    return stocks.reindex(benchmark.index)
+
+
 def calculate_aligned_returns(
     stock_prices: pd.DataFrame, benchmark_prices: pd.Series
 ) -> pd.DataFrame:
@@ -159,18 +174,9 @@ def calculate_aligned_returns(
     observed prices. This prevents a stock return spanning a holiday/missing
     benchmark session from being paired with a one-session benchmark return.
     """
-    stocks = stock_prices.copy().sort_index()
+    stocks = align_stock_prices_to_benchmark_calendar(stock_prices, benchmark_prices)
     benchmark = benchmark_prices.copy().sort_index()
-    stocks.index = pd.DatetimeIndex(stocks.index).tz_localize(None).normalize()
     benchmark.index = pd.DatetimeIndex(benchmark.index).tz_localize(None).normalize()
-    if stocks.index.has_duplicates or benchmark.index.has_duplicates:
-        raise ValueError("Price observations contain duplicate normalized dates")
-    if stocks.empty or benchmark.empty:
-        raise ValueError("Stock and benchmark prices must both contain observations")
-
-    # Benchmark sessions define the common market calendar. Reindexing leaves
-    # absent stock observations as NaN rather than filling or bridging gaps.
-    stocks = stocks.reindex(benchmark.index)
     stock_returns = calculate_returns(stocks)
     benchmark_returns = calculate_returns(benchmark).rename("NIFTY50_RETURN")
     return align_stock_benchmark_returns(stock_returns, benchmark_returns)
