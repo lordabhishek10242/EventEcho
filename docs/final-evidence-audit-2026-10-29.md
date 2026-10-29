@@ -2,7 +2,7 @@
 
 ## Status
 
-This audit covers the committed outputs in [`results/reproduced/`](../results/reproduced/). They were produced by GitHub Actions **Historical Rebuild run 40865554350** on branch `release/final-competition-2026-10-29`, code commit `7ba2166`, by re-analysing offline the frozen price snapshot `eventecho-historical-40848349737` (downloaded by run 40848349737 on 2026-10-29 09:17 UTC). The run's own integrity report is [`results/reproduced/release_validation.json`](../results/reproduced/release_validation.json).
+This audit covers the committed outputs in [`results/reproduced/`](../results/reproduced/). They were produced by GitHub Actions **Historical Rebuild run 40866165972** on branch `release/final-competition-2026-10-29`, code commit `9aa95c9`, by re-analysing offline the frozen price snapshot `eventecho-historical-40848349737` (downloaded by run 40848349737 on 2026-10-29 09:17 UTC). The run's own integrity report is [`results/reproduced/release_validation.json`](../results/reproduced/release_validation.json).
 
 The result set is an **exploratory** event study and a **hypothetical** strategy check. It is not evidence of a trading edge and not evidence that the events caused the price moves.
 
@@ -48,7 +48,7 @@ Every number below was read from the committed CSVs of that run. They agree with
 - Time context only, not a release timestamp: 2 (EVT011 management call time; EVT012 board approval time on a Saturday).
 - Date only or qualitative time: 8. No time recorded: 9.
 - So **19 of 21 events still need timestamp review.** No timestamp was inferred from price moves.
-- Timing sensitivity matters. For EVT019 (Hindenburg report), moving Day 0 from 2023-01-25 to 2023-01-24 changes the CAR(−1,+1) of Adani Enterprises from −18.8% to −2.6%, and of Adani Ports from −20.3% to −7.3%. For EVT013 (Reliance results), same-day vs next-session CAR(−1,+1) is +5.2% vs +6.9%. Event-specific claims for these events depend on the timing assumption.
+- Timing sensitivity matters. For EVT019 (Hindenburg report), moving Day 0 from 2023-01-25 to 2023-01-24 changes the CAR(−1,+1) of Adani Enterprises from −18.8% to −2.6%, and of Adani Ports from −20.3% to −7.3%. For EVT013 (Reliance results), same-day vs next-session CAR(−1,+1) is +5.2% vs +6.9%. For EVT020 (Budget presented during market hours on 2024-07-23), Reliance CAR(−1,+1) is −3.2% with the same-day Day 0 and about 0.0% with the next session. Event-specific claims for these events depend on the timing assumption. `event_timing_sensitivity.csv` covers 17 events (714 rows).
 
 ## Overlap and dependence (computed from this run)
 
@@ -89,12 +89,12 @@ Mean excess return is negative at every cost level on the full sample, and the h
 
 | Check | Result |
 |---|---|
-| Unit and regression tests (`python -m pytest -q`) | 117 passed locally (Python 3.13); also run inside the CI rebuild (Python 3.11) |
+| Unit and regression tests (`python -m pytest -q`) | 118 passed locally (Python 3.13); also run inside the CI rebuild (Python 3.11) |
 | `scripts/verify_release.py` on the committed outputs | 47 of 47 checks passed (in CI and again locally) |
 | Dashboard JavaScript | syntax check passed; headless run over all 126 filter combinations with no script errors, no "NaN"/"undefined", no raw HTML text |
 | Dashboard layout | screenshots at 1440 px and 390 px wide; no horizontal page overflow |
 | Dashboard ↔ CSV | embedded manifest and every embedded table equal the shipped files |
-| Run-to-run repeatability | two CI runs on the same snapshot (40864534684 and 40865554350) gave identical text fields and counts; numeric values differ by at most about 1e-14 (floating-point rounding) |
+| Run-to-run repeatability | three CI runs on the same snapshot (40864534684, 40865554350, 40866165972) gave identical text fields and counts; numeric values differ by at most about 1e-14 (floating-point rounding). The last run also adds the EVT020 timing rows, by design. |
 
 ## Release checklist
 

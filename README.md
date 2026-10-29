@@ -4,7 +4,7 @@ EventEcho is a reproducible **event study** of Indian stocks. It asks: around im
 
 It is an evidence explorer, not a prediction engine. Results show **association**, not cause.
 
-> **Current verified result set:** [`results/reproduced/`](results/reproduced/) — one CI run (Historical Rebuild run 40865554350) on frozen snapshot `eventecho-historical-40848349737`, with its [manifest](results/reproduced/manifest.json), [integrity report](results/reproduced/release_validation.json) and [dashboard](results/reproduced/eventecho_demo.html).
+> **Current verified result set:** [`results/reproduced/`](results/reproduced/) — one CI run (Historical Rebuild run 40866165972) on frozen snapshot `eventecho-historical-40848349737`, with its [manifest](results/reproduced/manifest.json), [integrity report](results/reproduced/release_validation.json) and [dashboard](results/reproduced/eventecho_demo.html).
 > Read the [final evidence audit](docs/final-evidence-audit-2026-10-29.md) before quoting any number.
 
 ## Questions the project answers
@@ -42,7 +42,7 @@ It is an evidence explorer, not a prediction engine. Results show **association*
 
 Details: [timing, overlap and return convention](docs/event-timing-overlap-return-convention.md), [event source audit](docs/event-source-and-validation-audit.md), [problem-statement coverage](docs/problem-statement-coverage.md).
 
-## Main findings (run 40865554350)
+## Main findings (run 40866165972)
 
 - 8 of 441 CAR tests are significant after Holm correction (conventional); 10 with HAC. Across 60/100/150-session models the counts change (conventional 12/8/11, HAC 14/10/10).
 - 7 results are significant in all three model settings. All 7 have an attribution caveat: 6 involve Adani stocks around the Hindenburg report (or the RBI decision whose window overlaps it), and 1 is ITC around the COVID lockdown.

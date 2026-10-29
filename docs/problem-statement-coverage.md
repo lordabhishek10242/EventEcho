@@ -30,8 +30,8 @@ This matrix maps the EventEcho problem statement to the current repository imple
 
 - [x] Price levels are aligned to the benchmark session calendar before calculating returns and strategy holding windows; missing stock prices are not filled or bridged.
 - [x] Snapshot event-eligibility diagnostics use observed benchmark sessions, not the union of all provider dates.
-- [x] Latest unit tests pass (117 tests, 2026-10-29).
-- [x] Latest historical rebuild passes (run 40865554350) and its manifest and integrity report are inspected; outputs are committed in `results/reproduced/`.
+- [x] Latest unit tests pass (118 tests, 2026-10-29).
+- [x] Latest historical rebuild passes (run 40866165972) and its manifest and integrity report are inspected; outputs are committed in `results/reproduced/`.
 - [x] Event-source audit is reflected in generated event metadata without inventing timestamps; unresolved timestamps remain flagged.
 - [x] Timing sensitivities are exported for every unresolved event; the most sensitive cases (EVT019, EVT013) are discussed in the final evidence audit.
 - [x] Dashboard tables and figures correspond to the latest run and current 21-event/seven-stock universe.
