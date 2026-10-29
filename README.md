@@ -18,7 +18,7 @@ Event dates, effective dates, source links, episode IDs, timing confidence, and 
 
 The original notebook has 143 cells and contains data acquisition, returns, event definitions/alignment, event-specific OLS models, abnormal returns, CAR inference, a COVID-period sensitivity check, cross-stock analysis, trading simulation, chronological evaluation, and Kaggle-path artifact export. Its cells are not executed in the supplied notebook metadata. The attached artifact archive contains 11 result CSVs and a manifest, but no raw historical prices. The modular pipeline was successfully run on 2026-10-27 into `results/reproduced/`; it fetched the same 2016-01-04 to 2025-12-31 sample dates from Yahoo Finance.
 
-The downloadable analysis is a workflow artifact tied to a specific run and snapshot manifest. Older artifacts may reflect earlier event/stock universes; always use the latest successful workflow artifact and its manifest when citing counts or metrics. Registry or methodology changes on main trigger a fresh snapshot acquisition and rebuild. The single-stock file is a Reliance-focused export; the current multi-stock analysis is generated from the 19-event registry and seven-stock universe after the latest successful rebuild.
+The downloadable analysis is a workflow artifact tied to a specific run and snapshot manifest. Older artifacts may reflect earlier event/stock universes; always use the latest successful workflow artifact and its manifest when citing counts or metrics. Registry or methodology changes on main trigger a fresh snapshot acquisition and rebuild. The single-stock file is a Reliance-focused export; the current multi-stock analysis is generated from the 21-event registry and seven-stock universe after the latest successful rebuild.
 
 Implementation risks addressed in the reusable code include per-stock missing-value handling, explicit estimation-window completeness, complete-window CAR reporting, trading-session-based event windows, matching benchmark holding periods, and parameter uncertainty in the approximate CAR standard error. The original notebook used a 100-session training window ending at Day -20. Since the event window begins on Day -5, that leaves only 14 omitted sessions (Days -19 through -6), not a 20-session gap. The modular implementation uses the specified 20 omitted sessions (Days -25 through -6); legacy CAR estimates are therefore not method-identical. Further limitations are listed below.
 
@@ -70,6 +70,12 @@ python scripts/run_analysis.py --prices data/prices.csv --offline --output-dir r
 The CLI refuses offline runs without local prices, fails clearly if an explicitly supplied input path is missing or no usable stock/benchmark data is available, and writes a run-specific `manifest.json`. Repository inputs are recorded as repository-relative paths; external input paths are recorded by filename to avoid machine-specific paths. Network calls are not made by tests.
 
 The new `notebooks/EventEcho.ipynb` displays the supplied archived tables for review. The original notebook is retained unchanged at `notebook/notebook5b4a79ed78.ipynb`; its hardcoded `/kaggle/working` export location applies only to its original execution environment.
+
+## Dependence-aware strategy uncertainty
+
+`clustered_strategy_inference.csv` reports percentile intervals from a cluster bootstrap for development and chronological holdout strategy metrics. Events are placed in the same dependence cluster when their event-study windows overlap or the registry assigns the same `episode_id`; whole connected clusters are resampled rather than individual events. This avoids treating known overlapping windows or explicitly shared episodes as independent bootstrap units.
+
+The intervals are still exploratory: the event universe is small and selected, clusters can be few or uneven, and this procedure does not establish causality or guarantee out-of-sample profitability. Read it alongside `sample_performance.csv`, overlap audits, transaction-cost sensitivity, and the frozen snapshot manifest. Do not treat a positive point estimate as evidence of a reliable edge when its uncertainty is wide or the holdout contains few independent clusters.
 
 ## Methodology
 
