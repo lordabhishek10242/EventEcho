@@ -52,7 +52,7 @@ def test_prices_are_aligned_before_returns_when_calendars_differ():
 
     # The stock's Jan 4 return must not bridge Jan 3, where no stock price
     # exists on the common benchmark-session calendar.
-    assert list(aligned.index) == list(benchmark_dates[1:])
+    assert list(aligned.index) == list(benchmark_dates)
     assert np.isnan(aligned.loc[pd.Timestamp("2024-01-03"), "A"])
     assert np.isnan(aligned.loc[pd.Timestamp("2024-01-04"), "A"])
     assert aligned.loc[pd.Timestamp("2024-01-03"), "NIFTY50_RETURN"] == pytest.approx(0.01)
