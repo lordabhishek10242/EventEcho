@@ -26,6 +26,42 @@ def validate_events(events: pd.DataFrame) -> pd.DataFrame:
     for column in ("headline", "category", "source_name", "source_url"):
         if result[column].isna().any() or result[column].astype(str).str.strip().eq("").any():
             raise ValueError(f"{column} must be present for every event")
+
+    # Provenance URLs and event dates do not, by themselves, prove a clock time.
+    # Preserve unknowns explicitly; never infer timestamps from market moves.
+    if "event_time" not in result.columns:
+        result["event_time"] = ""
+    event_time = result["event_time"].fillna("").astype(str).str.strip()
+    confidence = result["timing_confidence"].fillna("").astype(str).str.lower()
+    has_clock = event_time.str.contains(r"(?<!\d)(?:[01]?\d|2[0-3]):[0-5]\d(?!\d)", regex=True)
+    context_only = event_time.str.contains(
+        r"management comments|not the exact|context|intraday timing varies|exact intraday|approval time",
+        case=False, regex=True,
+    )
+    result["timestamp_evidence_status"] = "date_only_or_qualitative_time"
+    result.loc[event_time.eq(""), "timestamp_evidence_status"] = "unresolved_missing_clock_time"
+    result.loc[has_clock & context_only, "timestamp_evidence_status"] = "time_context_not_release_timestamp"
+    result.loc[
+        has_clock & ~context_only & confidence.str.contains(r"confirmed|verified", regex=True),
+        "timestamp_evidence_status",
+    ] = "clock_time_recorded_source_status_claims_verified"
+    result["timestamp_review_required"] = ~result["timestamp_evidence_status"].eq(
+        "clock_time_recorded_source_status_claims_verified"
+    )
+
+    timing_text = (event_time + " " + result["notes"].fillna("").astype(str)).str.lower()
+    result["event_timing_class"] = "session_timing_unresolved"
+    result.loc[
+        timing_text.str.contains(r"after trading hours|after.market|after-close|evening|midnight|17:30", regex=True),
+        "event_timing_class",
+    ] = "after_close_or_nontrading_day"
+    result.loc[
+        timing_text.str.contains(r"during market session|intraday|counting day|results evolve|exact intraday", regex=True),
+        "event_timing_class",
+    ] = "intraday_event_exposed"
+    # The current 21-event registry is selected/exploratory, not a pre-registered
+    # confirmatory sample. This is a claim guard, not an event exclusion.
+    result["inference_scope"] = "exploratory_selected_event_not_preregistered"
     return result
 
 
