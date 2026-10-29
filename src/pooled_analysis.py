@@ -291,6 +291,6 @@ def pattern_generalization(
                 "development_value": np.nan, "holdout_value": np.nan,
                 "development_n": len(size), "holdout_n": len(size),
                 "statistic": float(rho), "p_value": float(p), "replicated": bool(p < 0.05 and rho > 0),
-                "interpretation": f"Rank correlation of each stock's average |CAR| between samples is {rho:.2f} (n={len(size)} stocks, p = {p:.2f}).",
+                "interpretation": f"Rank correlation of each stock's average |CAR| between samples is {rho:.2f} (n={len(size)} stocks, p = {p:.2f}). This mainly shows that volatile stocks move more in any period; it is not evidence of a repeatable event effect.",
             })
     return pd.DataFrame(rows)
