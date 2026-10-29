@@ -79,7 +79,7 @@ jobs:
       - name: Package frozen snapshot
         if: steps.acquire.outcome == 'success'
         env:
-          SNAPSHOT_ID: ${{ inputs.snapshot_id }}
+          SNAPSHOT_ID: ${{ inputs.snapshot_id || 'eventecho_historical_2016_2025' }}
         run: |
           tar -czf "${SNAPSHOT_ID}.tar.gz" -C data/snapshots "$SNAPSHOT_ID"
           sha256sum "${SNAPSHOT_ID}.tar.gz" > "${SNAPSHOT_ID}.tar.gz.sha256"
@@ -87,7 +87,7 @@ jobs:
       - name: Run offline event study
         if: steps.acquire.outcome == 'success'
         env:
-          SNAPSHOT_ID: ${{ inputs.snapshot_id }}
+          SNAPSHOT_ID: ${{ inputs.snapshot_id || 'eventecho_historical_2016_2025' }}
         run: |
           python scripts/run_analysis.py \
             --snapshot-id "$SNAPSHOT_ID" \
@@ -112,10 +112,10 @@ jobs:
         with:
           name: eventecho-recovery-${{ inputs.snapshot_id || 'eventecho_historical_2016_2025' }}
           path: |
-            ${{ inputs.snapshot_id }}.tar.gz
-            ${{ inputs.snapshot_id }}.tar.gz.sha256
-            data/snapshots/${{ inputs.snapshot_id }}/manifest.json
-            data/snapshots/${{ inputs.snapshot_id }}/validation.json
+            ${{ inputs.snapshot_id || 'eventecho_historical_2016_2025' }}.tar.gz
+            ${{ inputs.snapshot_id || 'eventecho_historical_2016_2025' }}.tar.gz.sha256
+            data/snapshots/${{ inputs.snapshot_id || 'eventecho_historical_2016_2025' }}/manifest.json
+            data/snapshots/${{ inputs.snapshot_id || 'eventecho_historical_2016_2025' }}/validation.json
             results/real_market_analysis/
           if-no-files-found: warn
           retention-days: 7
