@@ -1,0 +1,299 @@
+{
+  "checked_utc": "2026-10-29T11:20:44.170067+00:00",
+  "analysis_dir": "reproduced",
+  "dashboard_checked": true,
+  "passed": 47,
+  "failed": 0,
+  "checks": [
+    {
+      "check": "manifest records Close/Close price fields",
+      "passed": true,
+      "detail": {
+        "stock_field": "Close",
+        "benchmark_field": "Close",
+        "source": "snapshot adjustment_policy"
+      }
+    },
+    {
+      "check": "snapshot adjustment policy agrees with run price fields",
+      "passed": true,
+      "detail": {
+        "yfinance_auto_adjust": false,
+        "stock_adjustment": "close-price",
+        "stock_field": "Close",
+        "stock_interpretation": "Yahoo Finance Close; dividends are excluded. Corporate-action/split handling follows provider Close-series semantics.",
+        "benchmark_adjustment": "price-index-close",
+        "benchmark_field": "Close",
+        "benchmark_interpretation": "NIFTY 50 price-index close; not a total-return index",
+        "actions_downloaded": false
+      }
+    },
+    {
+      "check": "manifest identifies frozen historical snapshot",
+      "passed": true,
+      "detail": "eventecho-historical-40848349737"
+    },
+    {
+      "check": "price checksum recorded",
+      "passed": true,
+      "detail": "4d23f6b004e94bcaf0b21f6485f226d44845c8a5c28995de67999126d308c5bf"
+    },
+    {
+      "check": "code commit recorded",
+      "passed": true,
+      "detail": "2998fbb8e845b0ab3d3874e7871950a505e2a53c"
+    },
+    {
+      "check": "manifest artifact row counts match files",
+      "passed": true,
+      "detail": 24
+    },
+    {
+      "check": "event IDs unique in output registry",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "output registry covers the source registry",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "check": "stock universe is the configured universe",
+      "passed": true,
+      "detail": [
+        "RELIANCE",
+        "TCS",
+        "INFOSYS",
+        "HDFC_BANK",
+        "ITC",
+        "ADANI_ENTERPRISES",
+        "ADANI_PORTS"
+      ]
+    },
+    {
+      "check": "daily panel keys unique",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "abnormal = actual - expected",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "CAR keys unique",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "CAR panel has one row per event x stock x window",
+      "passed": true,
+      "detail": {
+        "rows": 441,
+        "expected": 441
+      }
+    },
+    {
+      "check": "CAR equals sum of abnormal returns over the full window (missing when incomplete)",
+      "passed": true,
+      "detail": {
+        "complete_CAR_rows": 441
+      }
+    },
+    {
+      "check": "one significance row per complete CAR",
+      "passed": true,
+      "detail": {
+        "both": 441,
+        "left_only": 0,
+        "right_only": 0
+      }
+    },
+    {
+      "check": "significance CAR_pct equals CAR x 100",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "conventional Holm p-values recompute over the full test family",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "HAC Holm p-values recompute over the full test family",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "raw p <= Holm p",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "estimation lengths are 60/100/150",
+      "passed": true,
+      "detail": [
+        60,
+        100,
+        150
+      ]
+    },
+    {
+      "check": "100-session sensitivity rows equal the baseline inference",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "every estimation length covers the same event-stock-window keys",
+      "passed": true,
+      "detail": {
+        "60": 441,
+        "100": 441,
+        "150": 441
+      }
+    },
+    {
+      "check": "Holm recomputes within the 60-session family",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "Holm recomputes within the 100-session family",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "Holm recomputes within the 150-session family",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "CAR-window overlap is symmetric",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "overlap counts match partner lists",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "pair audit and event audit agree on overlapping CAR-window pairs",
+      "passed": true,
+      "detail": {
+        "pairs": 8
+      }
+    },
+    {
+      "check": "cost charged once on entry and once on exit",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "entry strictly after Day 0 and exit after entry",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "one trade per event and stock",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "event portfolio return is the equal-weight mean of stock trades",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "event excess = portfolio net - benchmark",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "manifest split equals configured split",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "development events all precede holdout events",
+      "passed": true,
+      "detail": {
+        "last_development": "2023-02-08",
+        "first_holdout": "2023-10-06"
+      }
+    },
+    {
+      "check": "Development summary recomputes from event results",
+      "passed": true,
+      "detail": {
+        "events": 9
+      }
+    },
+    {
+      "check": "Development bootstrap point estimate matches sample summary",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "Development bootstrap interval is ordered",
+      "passed": true,
+      "detail": {
+        "lower_pp": -1.97183591117706,
+        "upper_pp": 0.8256888311606531,
+        "clusters": 6
+      }
+    },
+    {
+      "check": "Holdout summary recomputes from event results",
+      "passed": true,
+      "detail": {
+        "events": 12
+      }
+    },
+    {
+      "check": "Holdout bootstrap point estimate matches sample summary",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "Holdout bootstrap interval is ordered",
+      "passed": true,
+      "detail": {
+        "lower_pp": -0.2629085227892759,
+        "upper_pp": 0.3781119455889588,
+        "clusters": 8
+      }
+    },
+    {
+      "check": "baseline cost row equals all-event mean net return",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "cost scenarios differ from gross by exactly 2 x cost",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "dashboard embeds a data payload",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "dashboard manifest is this run's manifest",
+      "passed": true,
+      "detail": "2026-10-29T11:20:42.038855+00:00"
+    },
+    {
+      "check": "dashboard tables equal shipped CSVs",
+      "passed": true,
+      "detail": 20
+    },
+    {
+      "check": "dashboard has no stale adjusted-close disclaimer",
+      "passed": true,
+      "detail": null
+    }
+  ]
+}
