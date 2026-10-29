@@ -58,3 +58,40 @@ def test_incomplete_event_window_is_not_reported_as_car():
     assert np.isnan(row["original_CAR"])
     assert np.isnan(row["sensitivity_CAR"])
     assert row["sensitivity_status"] == "incomplete_original_window"
+
+
+
+def test_event_timing_sensitivity_compares_first_and_following_sessions():
+    from src.event_study import calculate_event_study
+    from src.sensitivity import event_timing_sensitivity
+
+    dates = pd.bdate_range("2023-01-02", periods=300)
+    market = np.sin(np.arange(len(dates)) * 0.17) * 0.01
+    stock = 0.0004 + 1.15 * market + np.cos(np.arange(len(dates)) * 0.31) * 0.001
+    returns = pd.DataFrame({"A": stock, "NIFTY50_RETURN": market}, index=dates)
+    event = pd.DataFrame([{
+        "event_id": "E1",
+        "event_date": dates[220],
+        "effective_event_date": dates[221],
+        "event_time": "",
+        "timing_confidence": "time_unverified",
+        "verification_status": "Primary source date verified; exact time pending",
+        "headline": "Example earnings release",
+        "category": "Corporate Earnings",
+        "notes": "Timing pending.",
+    }])
+    _, baseline_cars, _ = calculate_event_study(returns, event, ["A"])
+    result = event_timing_sensitivity(returns, event, ["A"], baseline_cars)
+
+    assert len(result) == 6
+    assert set(result["scenario"]) == {
+        "first_session_on_or_after_announcement",
+        "following_trading_session",
+    }
+    first = result[result["scenario"] == "first_session_on_or_after_announcement"]
+    following = result[result["scenario"] == "following_trading_session"]
+    assert set(first["scenario_effective_date"]) == {dates[220]}
+    assert set(following["scenario_effective_date"]) == {dates[221]}
+    assert first["announcement_date_is_trading_session"].all()
+    assert following["matches_recorded_alignment"].all()
+    assert np.allclose(following["delta_vs_recorded_CAR_pct"], 0.0)

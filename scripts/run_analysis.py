@@ -36,7 +36,9 @@ from src.event_study import calculate_event_study  # noqa: E402
 from src.events import chronological_split, validate_events  # noqa: E402
 from src.event_audit import audit_event_windows, build_event_relationship_audits  # noqa: E402
 from src.reporting import write_artifacts  # noqa: E402
-from src.sensitivity import extreme_market_sensitivity, transaction_cost_sensitivity  # noqa: E402
+from src.sensitivity import (  # noqa: E402
+    event_timing_sensitivity, extreme_market_sensitivity, transaction_cost_sensitivity,
+)
 from src.statistics import event_study_significance  # noqa: E402
 from src.trading import event_portfolio_returns, simulate_trades, summarize_samples  # noqa: E402
 
@@ -170,6 +172,9 @@ def run_analysis(
         ],
     })
     covid_sensitivity = extreme_market_sensitivity(event_study, "EVT002") if "EVT002" in set(events.event_id) else pd.DataFrame()
+    timing_sensitivity = event_timing_sensitivity(
+        returns, events, stocks, car_results, ESTIMATION_SESSIONS, GAP_SESSIONS, EVENT_WINDOW_RADIUS
+    )
 
     artifacts = {
         "event_master.csv": events,
@@ -190,6 +195,8 @@ def run_analysis(
     }
     if not covid_sensitivity.empty:
         artifacts["covid_extreme_day_sensitivity.csv"] = covid_sensitivity
+    if not timing_sensitivity.empty:
+        artifacts["event_timing_sensitivity.csv"] = timing_sensitivity
     manifest = {
         "purpose": "Freshly generated exploratory event study and hypothetical trading simulation",
         "input_events": _portable_input_path(events_path),
