@@ -85,4 +85,4 @@ def test_2024_election_counting_event_uses_primary_eci_press_note():
     assert row["source_url"] == "https://elections24.eci.gov.in/docs/NuSOkXHRFY.pdf"
     assert row["event_date"] == "2024-06-04"
     assert "counting day" in row["headline"].lower()
-    assert "Official ECI" in row["notes"]
+    assert "Election Commission of India" in row["source_name"]
