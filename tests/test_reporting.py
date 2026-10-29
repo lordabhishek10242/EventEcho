@@ -61,6 +61,9 @@ def test_demo_builds_offline_selectable_visual_report_from_analysis_artifacts(tm
             "pre_event_observations": 20, "post_event_observations": 20,
         }],
         "event_window_audit.csv": [{"event_id": "E1", "event_window_start": "2023-12-26", "event_window_end": "2024-01-09", "event_window_overlap_event_ids": ""}],
+        "event_level_audit.csv": [{"event_id": "E1", "event_window_overlap_event_ids": "", "shared_episode_partner_ids": "", "same_category_partner_ids": "", "unverified_possibility_flag": False, "potential_confounder_explanation": "No configured overlap detected."}],
+        "event_pair_overlap_audit.csv": [],
+        "event_relationship_highlights.csv": [{"rank": 1, "event_id": "E1", "audit_highlight": "no overlap flagged"}],
         "event_level_audit.csv": [{"event_id": "E1", "temporal_overlap_partner_count": 0, "potential_confounder_explanation": "none"}],
         "event_pair_overlap_audit.csv": [],
         "documented_confounder_audit.csv": [],
@@ -94,5 +97,5 @@ def test_demo_builds_offline_selectable_visual_report_from_analysis_artifacts(tm
 
     assert output.exists()
     document = output.read_text(encoding="utf-8")
-    for required in ("eventSelect", "stockSelect", "windowSelect", "eventDetail", "heatmap", "returnChart", "inference", "consistency", "trading", "eventRegister", "provenance", "snapshot-1", "Confidence intervals", "Transaction-cost sensitivity"):
+    for required in ("eventSelect", "stockSelect", "windowSelect", "eventDetail", "heatmap", "returnChart", "inference", "consistency", "trading", "eventRegister", "eventDependenceAudit", "Event dependence & independence audit", "Pairwise event relationships", "provenance", "snapshot-1", "Confidence intervals", "Transaction-cost sensitivity"):
         assert required in document
