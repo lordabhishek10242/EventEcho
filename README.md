@@ -50,6 +50,18 @@ results/               Supplied legacy CSV exports and provenance note
 results/reproduced/    Fresh Yahoo Finance run from the modular CLI
 ```
 
+## Full historical rebuild
+
+Run the end-to-end acquisition, analysis, and demo workflow locally with:
+
+```bash
+python scripts/rebuild_historical.py
+```
+
+This downloads the configured daily price history, freezes a uniquely named snapshot with raw responses, provenance and checksums, runs the analysis offline from that snapshot, and builds `results/reproduced/eventecho_demo.html`. The analysis will refuse to treat an incomplete acquisition as a successful historical snapshot. The command needs network access for acquisition; the resulting snapshot can then be reused offline with `scripts/run_analysis.py --snapshot-id <snapshot-id> --offline`.
+
+The **Historical Rebuild** GitHub Actions workflow runs this process on relevant changes to `main` or manually via Actions → Historical Rebuild → Run workflow. It uploads the frozen snapshot, result tables, manifest and dashboard as a seven-day artifact. Each run has a unique snapshot ID so a prior snapshot is not silently overwritten.
+
 ## Installation and Execution
 
 Python 3.10 or later is recommended.
