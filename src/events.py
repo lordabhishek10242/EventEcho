@@ -49,6 +49,28 @@ def validate_events(events: pd.DataFrame) -> pd.DataFrame:
         "clock_time_recorded_source_status_claims_verified"
     )
 
+    # Normalize only explicit IST clock times whose source-status metadata says
+    # verified/confirmed and which are not merely call/approval context.
+    clock_token = event_time.str.extract(
+        r"((?:[01]?\d|2[0-3]):[0-5]\d)", expand=False
+    )
+    explicit_ist = event_time.str.contains(r"\bIST\b|India Standard Time", case=False, regex=True)
+    timestamp_ok = (
+        result["timestamp_evidence_status"].eq("clock_time_recorded_source_status_claims_verified")
+        & explicit_ist & clock_token.notna()
+    )
+    result["event_timestamp_ist"] = pd.NA
+    result.loc[timestamp_ok, "event_timestamp_ist"] = (
+        result.loc[timestamp_ok, "event_date"].dt.strftime("%Y-%m-%d")
+        + "T" + clock_token.loc[timestamp_ok] + ":00+05:30"
+    )
+    result["timestamp_semantics"] = "exact_publication_timestamp_not_established"
+    result.loc[
+        result["timestamp_evidence_status"].eq("time_context_not_release_timestamp"),
+        "timestamp_semantics",
+    ] = "contextual_schedule_or_board_approval_not_release_timestamp"
+    result.loc[timestamp_ok, "timestamp_semantics"] = "source_status_verified_publication_time_IST"
+
     timing_text = (event_time + " " + result.get("notes", pd.Series("", index=result.index)).fillna("").astype(str)).str.lower()
     result["event_timing_class"] = "session_timing_unresolved"
     result.loc[
