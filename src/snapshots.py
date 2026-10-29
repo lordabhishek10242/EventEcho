@@ -24,7 +24,7 @@ from .config import (
 from .data import _extract_price_column, calculate_returns, load_price_provenance, sha256_file
 
 SNAPSHOT_SCHEMA_VERSION = 1
-STOCK_FIELD = "Adj Close"
+STOCK_FIELD = "Close"
 BENCHMARK_FIELD = "Close"
 FREQUENCY = "1d"
 LARGE_JUMP_THRESHOLD = 0.40
@@ -277,15 +277,15 @@ def create_market_snapshot(
     root: str | Path = DEFAULT_DATA_DIR / "snapshots",
     frequency: str = FREQUENCY,
     source: str = "Yahoo Finance via yfinance",
-    stock_adjustment: str = "adjusted-close",
+    stock_adjustment: str = "close-price",
     benchmark_adjustment: str = "price-index-close",
 ) -> dict:
     """Acquire, validate, and freeze one snapshot without replacing prior data.
 
     ``download_fn`` is injectable for deterministic tests; production defaults
-    to an explicit yfinance request with auto_adjust disabled. Stocks use Adj
-    Close and the benchmark uses Close to preserve the established analysis
-    convention. Provider end dates are exclusive.
+    to an explicit yfinance request with auto_adjust disabled. Stocks and the
+    benchmark both use Close, excluding dividends on both sides. Provider end
+    dates are exclusive.
     """
     snapshot_id = _safe_snapshot_id(snapshot_id)
     start = pd.Timestamp(start_date).normalize()
@@ -294,9 +294,9 @@ def create_market_snapshot(
         raise ValueError("start_date must be earlier than exclusive end_date")
     if frequency != "1d":
         raise ValueError("Only daily ('1d') snapshots are currently supported")
-    if stock_adjustment != "adjusted-close" or benchmark_adjustment != "price-index-close":
-        raise ValueError("Supported policy is stock adjusted-close and benchmark price-index-close")
-    stock_field = STOCK_FIELD if stock_adjustment == "adjusted-close" else None
+    if stock_adjustment != "close-price" or benchmark_adjustment != "price-index-close":
+        raise ValueError("Supported policy is stock close-price and benchmark price-index-close")
+    stock_field = STOCK_FIELD if stock_adjustment == "close-price" else None
     benchmark_field = BENCHMARK_FIELD if benchmark_adjustment == "price-index-close" else None
 
     base = Path(root)
@@ -388,7 +388,7 @@ def create_market_snapshot(
             "yfinance_auto_adjust": False,
             "stock_adjustment": stock_adjustment,
             "stock_field": stock_field,
-            "stock_interpretation": "Yahoo Finance adjusted close, including provider adjustments for distributions/splits where supplied",
+            "stock_interpretation": "Yahoo Finance Close; dividends are excluded. Corporate-action/split handling follows provider Close-series semantics.",
             "benchmark_adjustment": benchmark_adjustment,
             "benchmark_field": benchmark_field,
             "benchmark_interpretation": "NIFTY 50 price-index close; not a total-return index",
@@ -404,7 +404,7 @@ def create_market_snapshot(
         "limitations": [
             "Yahoo Finance data can be revised after retrieval.",
             "The snapshot checksum guarantees byte identity, not provider correctness or independent source verification.",
-            "Stock adjusted close and benchmark price-index close have different dividend conventions.",
+            "Stock Close and benchmark price-index Close are both price-return series; dividends are excluded from both.",
             "Daily data cannot resolve intraday announcement timing.",
         ],
     }
