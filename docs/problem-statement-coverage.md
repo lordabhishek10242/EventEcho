@@ -5,7 +5,7 @@ This matrix maps the EventEcho problem statement to the current repository imple
 | Problem-statement requirement | Repository evidence | Status | Remaining acceptance check |
 |---|---|---|---|
 | Corporate earnings, policy changes, economic releases, major industry events | `results/event_master.csv`; `src/config.py`; event registry validation | Implemented with selected 21-event registry | Verify source/date/time fields; this is not a representative event universe. |
-| Actual stock returns vs benchmark | `src/data.py`; `src/event_study.py`; `multi_stock_event_study.csv` output | Implemented; shared-session alignment required | Align price levels to benchmark sessions before calculating returns; never pair returns spanning different intervals. Explain adjusted-stock-close vs Nifty price-close dividend mismatch. |
+| Actual stock returns vs benchmark | `src/data.py`; `src/event_study.py`; `multi_stock_event_study.csv` output | Implemented; shared-session alignment required | Align price levels to benchmark sessions before calculating returns and define strategy holding periods on that same calendar; never pair returns spanning different intervals. Explain adjusted-stock-close vs Nifty price-close dividend mismatch. |
 | Expected returns and abnormal returns | `src/event_study.py`; market-model outputs | Implemented | Keep OLS one-factor assumptions explicit. |
 | CAR across multiple event windows | `src/config.py`; CAR outputs for (−1,+1), (−3,+3), (−5,+5) | Implemented | Check completeness and timing sensitivity for each important event. |
 | Statistical significance and uncertainty | `src/statistics.py`; HAC/Newey–West inference; Holm correction | Implemented, approximate | Do not imply exact finite-sample correction; mention multiplicity and dependence. |
@@ -28,7 +28,7 @@ This matrix maps the EventEcho problem statement to the current repository imple
 
 ## Submission acceptance checklist
 
-- [ ] Price levels are aligned to the benchmark session calendar before calculating returns; missing stock prices are not filled or bridged.
+- [ ] Price levels are aligned to the benchmark session calendar before calculating returns and strategy holding windows; missing stock prices are not filled or bridged.
 - [ ] Latest unit tests pass.
 - [ ] Latest historical rebuild passes and the latest artifact/manifest are inspected.
 - [ ] Event-source audit is reflected in the event master without inventing timestamps.
