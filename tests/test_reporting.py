@@ -64,6 +64,7 @@ def test_demo_builds_offline_selectable_visual_report_from_analysis_artifacts(tm
         "event_level_audit.csv": [{"event_id": "E1", "event_window_overlap_event_ids": "", "shared_episode_partner_ids": "", "same_category_partner_ids": "", "unverified_possibility_flag": False, "potential_confounder_explanation": "No configured overlap detected."}],
         "event_pair_overlap_audit.csv": [],
         "event_relationship_highlights.csv": [{"rank": 1, "event_id": "E1", "audit_highlight": "no overlap flagged"}],
+        "event_timing_sensitivity.csv": [{"event_id": "E1", "stock": "A", "window": "CAR_-1_+1", "scenario": "first_session_on_or_after_announcement", "scenario_effective_date": "2024-01-02", "recorded_effective_event_date": "2024-01-02", "scenario_CAR_pct": 1, "recorded_CAR_pct": 1, "delta_vs_recorded_CAR_pct": 0, "announcement_date_is_trading_session": True}],
         "event_level_audit.csv": [{"event_id": "E1", "temporal_overlap_partner_count": 0, "potential_confounder_explanation": "none"}],
         "event_pair_overlap_audit.csv": [],
         "documented_confounder_audit.csv": [],
@@ -97,5 +98,5 @@ def test_demo_builds_offline_selectable_visual_report_from_analysis_artifacts(tm
 
     assert output.exists()
     document = output.read_text(encoding="utf-8")
-    for required in ("eventSelect", "stockSelect", "windowSelect", "eventDetail", "heatmap", "returnChart", "inference", "consistency", "trading", "eventRegister", "eventDependenceAudit", "Event dependence & independence audit", "Pairwise event relationships", "provenance", "snapshot-1", "Confidence intervals", "Transaction-cost sensitivity"):
+    for required in ("eventSelect", "stockSelect", "windowSelect", "eventDetail", "heatmap", "returnChart", "inference", "consistency", "trading", "eventRegister", "eventDependenceAudit", "Event dependence & independence audit", "Pairwise event relationships", "eventTimingSensitivity", "Event timing sensitivity", "provenance", "snapshot-1", "Confidence intervals", "Transaction-cost sensitivity"):
         assert required in document
