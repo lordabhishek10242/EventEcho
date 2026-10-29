@@ -5,7 +5,9 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 from pathlib import Path
+import subprocess
 import sys
 
 import pandas as pd
@@ -31,7 +33,7 @@ from src.config import (  # noqa: E402
     STOCK_TICKERS,
 )
 from src.data import align_stock_prices_to_benchmark_calendar, calculate_aligned_returns, download_prices, load_price_csv, load_price_provenance, sha256_file  # noqa: E402
-from src.snapshots import resolve_market_snapshot  # noqa: E402
+from src.snapshots import BENCHMARK_FIELD, STOCK_FIELD, resolve_market_snapshot  # noqa: E402
 from src.event_study import calculate_event_study  # noqa: E402
 from src.events import chronological_split, validate_events  # noqa: E402
 from src.event_audit import audit_event_windows, build_event_relationship_audits  # noqa: E402
@@ -72,6 +74,43 @@ def _cross_stock_consistency(car_results: pd.DataFrame) -> pd.DataFrame:
         )
         .reset_index()
     )
+
+
+def _code_commit() -> str | None:
+    """Identify the code revision that produced the run, when it can be known."""
+    commit = os.environ.get("GITHUB_SHA")
+    if commit:
+        return commit
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(ROOT), "rev-parse", "HEAD"],
+            check=True, capture_output=True, text=True, timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return result.stdout.strip() or None
+
+
+def resolve_price_fields(provenance: dict | None, downloaded: bool) -> dict:
+    """Return the price fields actually used, and refuse a conflicting input.
+
+    The manifest's return-convention statement must describe the data that was
+    analysed. A snapshot or sidecar that records a different field (for example
+    an older Adj Close snapshot) is rejected instead of being labelled Close.
+    Inputs that record no policy are reported as not recorded, never guessed.
+    """
+    if downloaded:
+        return {"stock_field": STOCK_FIELD, "benchmark_field": BENCHMARK_FIELD, "source": "live provider download"}
+    policy = (provenance or {}).get("adjustment_policy") or {}
+    stock_field, benchmark_field = policy.get("stock_field"), policy.get("benchmark_field")
+    if stock_field is None and benchmark_field is None:
+        return {"stock_field": None, "benchmark_field": None, "source": "not recorded by the input provenance"}
+    if stock_field != STOCK_FIELD or benchmark_field != BENCHMARK_FIELD:
+        raise ValueError(
+            "Input price-field policy does not match the configured Close/Close price-return "
+            f"convention: stock={stock_field!r}, benchmark={benchmark_field!r}"
+        )
+    return {"stock_field": stock_field, "benchmark_field": benchmark_field, "source": "snapshot adjustment_policy"}
 
 
 def _single_stock_export(event_study: pd.DataFrame, stock: str) -> pd.DataFrame:
@@ -121,6 +160,7 @@ def run_analysis(
         stock_prices, benchmark_prices = download_prices(
             STOCK_TICKERS, start_date, end_date, BENCHMARK_TICKER
         )
+    price_fields = resolve_price_fields(provenance, downloaded=prices_path is None)
     # Align price levels first; only then compute close-to-close returns.
     # This prevents mismatched stock/benchmark calendars from pairing returns
     # that span different intervals. Missing prices are never forward-filled.
@@ -236,7 +276,15 @@ def run_analysis(
         "event_count": int(events.event_id.nunique()),
         "stock_universe": stocks,
         "benchmark": f"{BENCHMARK_TICKER} price index; not a total-return index",
-        "return_convention": "Close-to-close price returns for stocks and Nifty price index; dividends are excluded from both sides, so this is not a total-return comparison.",
+        "return_convention": (
+            "Close-to-close price returns for stocks and Nifty price index; dividends are excluded from both sides, so this is not a total-return comparison."
+            if price_fields["stock_field"] is not None else
+            "Price fields were not recorded by the input provenance; the return convention cannot be confirmed for this run."
+        ),
+        "price_fields": price_fields,
+        "analysis_calendar": "Observed NIFTY 50 sessions with a non-missing close; stock prices are reindexed to these sessions before returns are computed, and missing prices are never filled.",
+        "benchmark_sessions_used": int(len(returns.index)),
+        "code_commit": _code_commit(),
         "estimation_sessions": ESTIMATION_SESSIONS,
         "gap_sessions": GAP_SESSIONS,
         "event_window_sessions": EVENT_WINDOW_RADIUS,

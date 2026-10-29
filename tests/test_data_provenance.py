@@ -115,7 +115,7 @@ def test_analysis_snapshot_selection_records_exact_input_and_provenance(monkeypa
         "source": "mock provider fixture",
         "provider": "test provider",
         "retrieved_at_utc": "2026-01-01T00:00:00+00:00",
-        "adjustment_policy": {"stock_field": "Adj Close", "benchmark_field": "Close"},
+        "adjustment_policy": {"stock_field": "Close", "benchmark_field": "Close"},
         "sha256": sha256_file(prices),
         "provenance_verified": True,
         "source_independently_verified": False,
@@ -142,6 +142,11 @@ def test_analysis_snapshot_selection_records_exact_input_and_provenance(monkeypa
     assert manifest["real_market_evidence"] is True
     assert manifest["source_independently_verified"] is False
     assert "frozen local copy" in manifest["provider_note"]
+    assert manifest["price_fields"]["stock_field"] == "Close"
+    assert manifest["price_fields"]["benchmark_field"] == "Close"
+    assert "not a total-return comparison" in manifest["return_convention"]
+    assert manifest["benchmark_sessions_used"] > 0
+    assert "code_commit" in manifest
     assert "not independently verified" in manifest["provider_note"]
     for artifact_name in ("event_volatility.csv", "category_car_summary.csv", "category_volatility_summary.csv"):
         artifact = output / artifact_name

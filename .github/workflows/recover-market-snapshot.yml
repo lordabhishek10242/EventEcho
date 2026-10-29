@@ -104,6 +104,10 @@ jobs:
             --analysis-dir results/real_market_analysis \
             --output results/real_market_analysis/eventecho_demo.html
 
+      - name: Verify output integrity and dashboard agreement
+        if: steps.acquire.outcome == 'success'
+        run: python scripts/verify_release.py --analysis-dir results/real_market_analysis
+
       - name: Re-run tests after analysis
         if: steps.acquire.outcome == 'success'
         run: python -m pytest -q

@@ -2,6 +2,17 @@ name: Historical Rebuild
 
 on:
   workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: "Optional: reuse the frozen snapshot uploaded by this earlier Historical Rebuild run instead of downloading new prices"
+        required: false
+        default: ""
+        type: string
+      publish_results:
+        description: "Commit the verified outputs to the dispatched branch (never allowed on main)"
+        required: false
+        default: false
+        type: boolean
   push:
     branches: ["main"]
     paths:
@@ -18,6 +29,12 @@ jobs:
   acquire-analyze-demo:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: write   # used only by the guarded publish step on non-main branches
+      actions: read     # needed to download a frozen snapshot from an earlier run
+    env:
+      SOURCE_RUN_ID: ${{ inputs.source_run_id || '' }}
+      SNAPSHOT_ID: ${{ inputs.source_run_id && format('eventecho-historical-{0}', inputs.source_run_id) || format('eventecho-historical-{0}', github.run_id) }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -33,18 +50,58 @@ jobs:
           python -m pip install -r requirements.txt
       - name: Run network-free tests
         run: python -m pytest -q
+
+      - name: Download frozen snapshot from earlier run
+        if: env.SOURCE_RUN_ID != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: eventecho-historical-rebuild-${{ env.SOURCE_RUN_ID }}
+          run-id: ${{ env.SOURCE_RUN_ID }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: downloaded-artifact
+      - name: Analyze the frozen snapshot offline and build dashboard
+        if: env.SOURCE_RUN_ID != ''
+        run: |
+          test -f "downloaded-artifact/data/snapshots/$SNAPSHOT_ID/manifest.json" || { echo "Frozen snapshot $SNAPSHOT_ID not found in artifact"; exit 1; }
+          mkdir -p data/snapshots
+          cp -R "downloaded-artifact/data/snapshots/$SNAPSHOT_ID" "data/snapshots/$SNAPSHOT_ID"
+          # Checksums of every snapshot file are re-verified before analysis.
+          python scripts/run_analysis.py --snapshot-id "$SNAPSHOT_ID" --offline --output-dir results/reproduced --verbose
+          python scripts/build_demo.py --analysis-dir results/reproduced --output results/reproduced/eventecho_demo.html
+
       - name: Acquire frozen snapshot, rebuild analysis, and create dashboard
+        if: env.SOURCE_RUN_ID == ''
         run: |
           python scripts/rebuild_historical.py \
-            --snapshot-id "eventecho-historical-${{ github.run_id }}" \
+            --snapshot-id "$SNAPSHOT_ID" \
             --output-dir results/reproduced
+
+      - name: Verify output integrity and dashboard agreement
+        run: python scripts/verify_release.py --analysis-dir results/reproduced
+
       - name: Upload snapshot, tables, manifest, and dashboard
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: eventecho-historical-rebuild-${{ github.run_id }}
           path: |
-            data/snapshots/eventecho-historical-${{ github.run_id }}/
+            data/snapshots/${{ env.SNAPSHOT_ID }}/
             results/reproduced/
           if-no-files-found: warn
           retention-days: 7
+
+      - name: Publish verified outputs to the dispatched branch
+        if: success() && github.event_name == 'workflow_dispatch' && inputs.publish_results && github.ref_name != github.event.repository.default_branch
+        run: |
+          # Raw provider prices stay out of Git (see .gitignore); only derived
+          # tables, the run manifest, the integrity report, the dashboard and
+          # the snapshot's own manifest/validation metadata are committed.
+          mkdir -p results/reproduced/snapshot_metadata
+          cp "data/snapshots/$SNAPSHOT_ID/manifest.json" results/reproduced/snapshot_metadata/manifest.json
+          cp "data/snapshots/$SNAPSHOT_ID/validation.json" results/reproduced/snapshot_metadata/validation.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A results/reproduced
+          if git diff --cached --quiet; then echo "No output changes to publish"; exit 0; fi
+          git commit -m "results: publish verified historical rebuild (run ${{ github.run_id }}, snapshot $SNAPSHOT_ID)"
+          git push origin "HEAD:${{ github.ref_name }}"

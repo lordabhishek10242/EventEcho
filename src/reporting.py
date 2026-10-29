@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html as html_lib
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -35,6 +36,121 @@ ARTIFACT_DESCRIPTIONS = {
     "category_volatility_summary.csv": "Episode-level category volatility summaries with overlap and sample-size diagnostics.",
 }
 
+
+def _truthy(value: object) -> bool | None:
+    """Parse CSV booleans; return None when the value is unset."""
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return None
+    text = str(value).strip().lower()
+    if text in {"true", "1", "yes"}:
+        return True
+    if text in {"false", "0", "no"}:
+        return False
+    return None
+
+
+def _number(value: object) -> float | None:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return None if pd.isna(number) else number
+
+
+def price_convention_summary(manifest: dict) -> dict:
+    """Describe the stock/benchmark price fields recorded for this exact run.
+
+    Reads the run manifest's ``price_fields`` first and the snapshot
+    provenance ``adjustment_policy`` second. Nothing is assumed: a missing
+    record is reported as not recorded instead of a default label.
+    """
+    fields = manifest.get("price_fields") or {}
+    policy = (manifest.get("input_data_provenance") or {}).get("adjustment_policy") or {}
+    stock = fields.get("stock_field") or policy.get("stock_field")
+    benchmark = fields.get("benchmark_field") or policy.get("benchmark_field")
+    if not stock or not benchmark:
+        return {
+            "stock_field": stock, "benchmark_field": benchmark, "status": "not_recorded",
+            "note": "The run manifest does not record both price fields, so the return convention cannot be confirmed for this dashboard.",
+        }
+    if str(stock).strip().lower() == str(benchmark).strip().lower():
+        adjusted = str(stock).strip().lower() in {"adj close", "adjusted close"}
+        note = f"Both stocks and the benchmark use the {stock} field, so both sides are measured on the same price basis."
+        if not adjusted:
+            note += " These are price returns: dividends are excluded on both sides, so this is not a total shareholder return comparison."
+        return {"stock_field": stock, "benchmark_field": benchmark, "status": "consistent", "note": note}
+    return {
+        "stock_field": stock, "benchmark_field": benchmark, "status": "mismatch",
+        "note": f"Return-convention mismatch: stocks use {stock} while the benchmark uses {benchmark}. Stock-versus-benchmark comparisons mix different dividend treatments.",
+    }
+
+
+def dashboard_evidence(manifest: dict, datasets: dict[str, list[dict]]) -> dict:
+    """Pre-compute dashboard evidence from the run's own tables.
+
+    Everything here is derived from the manifest and CSVs embedded in the same
+    page, so the summary cannot drift from the downloadable outputs. Three
+    different overlap notions are kept apart: computed CAR-window overlap,
+    computed volatility-window overlap, and the broad manual registry flag.
+    """
+    audit = datasets.get("event_window_audit.csv", [])
+    events = datasets.get("event_master.csv", [])
+    pairs = datasets.get("event_pair_overlap_audit.csv", [])
+    car_overlap = sorted(str(r["event_id"]) for r in audit if (_number(r.get("event_window_overlap_count")) or 0) > 0)
+    vol_overlap = sorted(str(r["event_id"]) for r in audit if (_number(r.get("volatility_window_overlap_count")) or 0) > 0)
+    master = [_truthy(r.get("overlap_flag")) for r in events]
+    timing: dict[str, int] = {}
+    for row in events:
+        key = str(row.get("timestamp_evidence_status") or "not_recorded")
+        timing[key] = timing.get(key, 0) + 1
+    review = sum(1 for r in events if _truthy(r.get("timestamp_review_required")) is not False)
+
+    intervals = []
+    for row in datasets.get("clustered_strategy_inference.csv", []):
+        lower = _number(row.get("mean_excess_return_pct_ci95_lower"))
+        upper = _number(row.get("mean_excess_return_pct_ci95_upper"))
+        if lower is None or upper is None:
+            status = "not_available"
+        else:
+            status = "includes_zero" if lower <= 0 <= upper else "excludes_zero"
+        intervals.append({"sample": row.get("sample"), "ci_lower_pp": lower, "ci_upper_pp": upper, "interval_status": status})
+    return {
+        "price_convention": price_convention_summary(manifest),
+        "run": {
+            "snapshot_id": manifest.get("snapshot_id"),
+            "generated_utc": manifest.get("generated_utc"),
+            "code_commit": manifest.get("code_commit"),
+            "prices_sha256": (manifest.get("input_checksums_sha256") or {}).get("prices"),
+        },
+        "overlap": {
+            "car_window_overlap_event_ids": car_overlap,
+            "volatility_window_overlap_event_ids": vol_overlap,
+            "car_window_overlap_pairs": sum(1 for r in pairs if (_number(r.get("overlapping_session_count")) or 0) > 0),
+            "registry_flag_true": sum(1 for v in master if v is True),
+            "registry_flag_false": sum(1 for v in master if v is False),
+            "registry_flag_unset": sum(1 for v in master if v is None),
+        },
+        "timing": {"by_evidence_status": timing, "review_required": review, "events": len(events)},
+        "strategy_intervals": intervals,
+    }
+
+
+def _holdout_warning_html(intervals: list[dict]) -> str:
+    """Render a visible warning when the holdout excess-return interval includes zero."""
+    holdout = next((row for row in intervals if row.get("sample") == "Holdout"), None)
+    if holdout is None or holdout["interval_status"] == "not_available":
+        return '<div class="noteBox">Holdout cluster-bootstrap interval is not available in this run.</div>'
+    lower, upper = holdout["ci_lower_pp"], holdout["ci_upper_pp"]
+    if holdout["interval_status"] == "includes_zero":
+        return (
+            '<div class="noteBox"><strong>Warning: the holdout 95% interval includes zero</strong> '
+            f"({lower:+.2f} to {upper:+.2f} pp). The data are consistent with no excess return; "
+            "no reliable trading edge is established.</div>"
+        )
+    return (
+        f'<div class="noteBox">The holdout 95% interval ({lower:+.2f} to {upper:+.2f} pp) excludes zero, '
+        "but cluster counts are small and the event sample is hand-selected, so this remains exploratory evidence, not proof of an edge.</div>"
+    )
 
 
 def build_demo_dashboard(analysis_dir: str | Path, output_path: str | Path | None = None) -> Path:
@@ -70,7 +186,8 @@ def build_demo_dashboard(analysis_dir: str | Path, output_path: str | Path | Non
             except pd.errors.EmptyDataError:
                 datasets[name] = []
 
-    payload = json.dumps({"manifest": manifest, "datasets": datasets}, default=str)
+    evidence = dashboard_evidence(manifest, datasets)
+    payload = json.dumps({"manifest": manifest, "datasets": datasets, "evidence": evidence}, default=str)
     payload = payload.replace("</", "<\\/")
     title = "EventEcho | Historical Event Study"
     template = r'''<!doctype html>
@@ -87,24 +204,31 @@ header{display:flex;gap:24px;align-items:flex-start;justify-content:space-betwee
 .chart{width:100%;height:auto;display:block;overflow:visible}.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--muted);margin-top:7px}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}.eventcard{padding:13px;border:1px solid #2c3a51;background:#101a2b;border-radius:10px;margin:8px 0}.eventtitle{font-weight:700}.eventmeta{font-size:11px;color:var(--muted);margin-top:4px}.noteBox{border-left:3px solid var(--amber);padding:11px 13px;background:#2a241a;color:#f0d9aa;border-radius:0 8px 8px 0;font-size:12px;margin-top:12px}.footer{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);font-size:11px;color:var(--muted)}
 @media(max-width:900px){header{display:block}.snapshot{margin-top:16px}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.layout{grid-template-columns:1fr}.wide{grid-column:auto}}@media(max-width:520px){main{padding:18px 12px 40px}.metrics{gap:8px}.metric{padding:12px}.metric .value{font-size:22px}.field,select{width:100%}.controls{display:grid;grid-template-columns:1fr}}
 </style></head><body><main>
-<header><div><div class="eyebrow">Quantitative research workspace / India equities</div><h1>EventEcho</h1><div class="sub">Explore stock reactions around selected policy and macroeconomic events. Compare abnormal returns against a market-model expectation, inspect uncertainty, and audit event timing and overlap. This is an evidence explorer, not a prediction engine.</div></div><div class="snapshot"><strong>FROZEN HISTORICAL SNAPSHOT</strong><span id="snapshotId">__SNAPSHOT__</span><br><span id="period"></span><br><span id="source"></span></div></header>
+<header><div><div class="eyebrow">Quantitative research workspace / India equities</div><h1>EventEcho</h1><div class="sub">Explore stock reactions around selected policy and macroeconomic events. Compare abnormal returns against a market-model expectation, inspect uncertainty, and audit event timing and overlap. This is an evidence explorer, not a prediction engine.</div></div><div class="snapshot"><strong>FROZEN HISTORICAL SNAPSHOT</strong><span id="snapshotId">__SNAPSHOT__</span><br><span id="period"></span><br><span id="source"></span><br><span id="runInfo">Generated __GENERATED__ · code __COMMIT__</span></div></header>
 <div class="metrics" id="metrics"></div>
 <section class="panel controls"><div class="field"><label for="eventSelect">Event</label><select id="eventSelect"></select></div><div class="field"><label for="stockSelect">Stock</label><select id="stockSelect"></select></div><div class="field"><label for="windowSelect">CAR window</label><select id="windowSelect"></select></div><div class="field"><label for="sampleSelect">Trading sample</label><select id="sampleSelect"><option value="all">All events</option><option value="Development">Development</option><option value="Holdout">Holdout</option></select></div></section>
 <div class="layout">
 <section class="panel"><h2>CAR heatmap</h2><p class="small">Cumulative abnormal return by event and stock. Colors encode direction and magnitude; values are percentages.</p><div id="heatmap"></div></section>
 <section class="panel"><h2>Selected event</h2><div id="eventDetail"></div><h3 style="margin-top:16px">Return response around Day 0</h3><div id="returnChart"></div><div class="legend"><span><i class="dot" style="background:#83b8ff"></i>Daily abnormal return</span><span><i class="dot" style="background:#63d9b0"></i>Cumulative abnormal return</span></div></section>
-<section class="panel wide"><h2>Inference & uncertainty</h2><p class="small">Confidence intervals and Holm-adjusted p-values are approximate under the current model assumptions. Statistical significance is not causality.</p><div id="inference"></div></section>\n<section class="panel wide"><h2>Estimation-window robustness</h2><p class="small">The market model is re-fit with 60, 100, and 150 pre-event sessions while keeping the 20-session gap and event windows fixed. Holm correction is performed separately within each specification. Treat changes as sensitivity, not a search for the most significant result.</p><div id="estimationWindowSensitivity"></div></section>\n<section class="panel wide"><h2>Robustness evidence ledger</h2><p class="small">Lists findings that are HAC-Holm significant in at least one estimation-window specification. “Stable” means significant in all three tested lengths; event overlap, shared episodes, and timing/source cautions are shown separately. Stable significance does not establish causality.</p><div id="robustnessLedger"></div></section>
+<section class="panel wide"><h2>Inference & uncertainty</h2><p class="small">Confidence intervals and Holm-adjusted p-values are approximate under the current model assumptions. Statistical significance is not causality.</p><div id="inference"></div></section>
+<section class="panel wide"><h2>Estimation-window robustness</h2><p class="small">The market model is re-fit with 60, 100, and 150 pre-event sessions while keeping the 20-session gap and event windows fixed. Holm correction is performed separately within each specification. Treat changes as sensitivity, not a search for the most significant result.</p><div id="estimationWindowSensitivity"></div></section>
+<section class="panel wide"><h2>Robustness evidence ledger</h2><p class="small">Lists findings that are HAC-Holm significant in at least one estimation-window specification. “Stable” means significant in all three tested lengths; event overlap, shared episodes, and timing/source cautions are shown separately. Stable significance does not establish causality.</p><div id="robustnessLedger"></div></section>
 <section class="panel"><h2>Across-stock consistency</h2><p class="small">Do stocks move in the same direction around this event?</p><div id="consistency"></div></section>
-<section class="panel"><h2>Hypothetical trading diagnostic</h2><p class="small">Exploratory close-to-close rule; not an investable backtest.</p><div id="trading"></div><div id="costs" style="margin-top:12px"></div></section>
-<section class="panel wide"><h2>Holdout uncertainty</h2><p class="small">Cluster-bootstrap intervals resample dependent event clusters. A holdout interval that crosses zero does not establish a reliable excess-return edge.</p><div id="clusteredInference"></div></section>
-<section class="panel wide"><h2>Event register</h2><div id="eventRegister"></div></section>\n<section class="panel wide"><h2>Event dependence & independence audit</h2><p class="small">Temporal overlap is calculated on trading sessions. Shared episode IDs and categories are metadata-based clustering warnings—not evidence of causality. Pending source/timing checks remain review cautions.</p><div id="eventDependenceAudit"></div></section>\n<section class="panel wide"><h2>Event timing sensitivity</h2><p class="small">For unresolved timing, compare plausible session alignments. If the context indicates an after-market/evening release, the first scenario is strictly the next available session—never the same-day close that preceded publication. For other uncertain timestamps, compare the first session on/after the date with the following session. This is a robustness diagnostic, not an automatic date correction.</p><div id="eventTimingSensitivity"></div></section>\n<section class="panel wide"><h2>Realized volatility before vs after events</h2><p class="small">Realized stock and benchmark volatility use non-overlapping trading-session windows −20:−1 and +1:+20, excluding Day 0. Annualization uses √252. Event-window market-model residual volatility is shown separately and is not the same as realized stock volatility.</p><div id="eventVolatility"></div></section>\n<section class="panel wide"><h2>Category-level evidence</h2><p class="small">Category summaries average stocks within each event and then aggregate within episodes. Overlapping event windows are excluded. A category needs at least three independent episodes to receive a numeric summary; “insufficient independent episodes” is an honest data limitation, not a zero effect.</p><div id="categoryEvidence"></div></section>
-<section class="panel wide"><h2>Data provenance & interpretation limits</h2><div id="provenance"></div><div class="noteBox">Daily data cannot isolate intraday reactions to market-hours announcements. The sample contains only a small, hand-selected set of events; overlapping news and shared macro episodes weaken independence. Do not interpret these associations as causal effects or future returns.</div></section>
+<section class="panel"><h2>Hypothetical trading diagnostic</h2><p class="small">Hypothetical, exploratory rule; not an investable backtest and not live trading performance.</p><p class="small" id="tradingRule"></p><div id="trading"></div><div id="costs" style="margin-top:12px"></div></section>
+<section class="panel wide"><h2>Holdout uncertainty</h2><p class="small">Cluster-bootstrap intervals resample dependent event clusters. A holdout interval that crosses zero does not establish a reliable excess-return edge. Excess returns are in percentage points (pp) versus NIFTY 50.</p><div id="holdoutWarning">__HOLDOUT_WARNING__</div><div id="clusteredInference"></div></section>
+<section class="panel wide"><h2>Event register</h2><div id="eventRegister"></div></section>
+<section class="panel wide"><h2>Event dependence & independence audit</h2><p class="small">Temporal overlap is calculated on trading sessions. Shared episode IDs and categories are metadata-based clustering warnings—not evidence of causality. Pending source/timing checks remain review cautions.</p><div id="eventDependenceAudit"></div></section>
+<section class="panel wide"><h2>Event timing sensitivity</h2><p class="small">For unresolved timing, compare plausible session alignments. If the context indicates an after-market/evening release, the first scenario is strictly the next available session—never the same-day close that preceded publication. For other uncertain timestamps, compare the first session on/after the date with the following session. This is a robustness diagnostic, not an automatic date correction.</p><div id="eventTimingSensitivity"></div></section>
+<section class="panel wide"><h2>Realized volatility before vs after events</h2><p class="small">Realized stock and benchmark volatility use non-overlapping trading-session windows −20:−1 and +1:+20, excluding Day 0. Annualization uses √252. Event-window market-model residual volatility is shown separately and is not the same as realized stock volatility.</p><div id="eventVolatility"></div></section>
+<section class="panel wide"><h2>Category-level evidence</h2><p class="small">Category summaries average stocks within each event and then aggregate within episodes. Overlapping event windows are excluded. A category needs at least three independent episodes to receive a numeric summary; “insufficient independent episodes” is an honest data limitation, not a zero effect.</p><div id="categoryEvidence"></div></section>
+<section class="panel wide"><h2>Data provenance & interpretation limits</h2><div class="noteBox" id="priceConvention" data-status="__CONVENTION_STATUS__">__CONVENTION_NOTE__</div><div id="provenance"></div><div class="noteBox">Daily data cannot isolate intraday reactions to market-hours announcements. The sample contains only a small, hand-selected set of events; overlapping news and shared macro episodes weaken independence. Do not interpret these associations as causal effects or future returns.</div></section>
 </div><div class="footer">EventEcho research prototype · Data provider and timestamps are recorded in the manifest. Confirm event timing and primary sources before presenting results. No investment advice.</div>
 <script id="eventecho-data" type="application/json">__PAYLOAD__</script>
 <script>
 (function(){
 "use strict";
-var root=JSON.parse(document.getElementById("eventecho-data").textContent),d=root.datasets||{},m=root.manifest||{};
+var root=JSON.parse(document.getElementById("eventecho-data").textContent),d=root.datasets||{},m=root.manifest||{},ev=root.evidence||{};
+var windowAudit=d["event_window_audit.csv"]||[];
 var events=d["event_master.csv"]||[],cars=d["multi_stock_car.csv"]||[],study=d["multi_stock_event_study.csv"]||[],sig=d["multi_stock_significance.csv"]||[],cons=d["cross_stock_consistency.csv"]||[],trades=d["event_trading_results.csv"]||[],samples=d["sample_performance.csv"]||[],costs=d["transaction_cost_sensitivity.csv"]||[],clusteredInference=d["clustered_strategy_inference.csv"]||[],covid=d["covid_extreme_day_sensitivity.csv"]||[],estimationSensitivity=d["estimation_window_sensitivity_summary.csv"]||[],robustnessLedger=d["robustness_evidence_ledger.csv"]||[];
 var $=function(id){return document.getElementById(id);};
 var esc=function(v){return String(v==null?"—":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});};
@@ -132,10 +256,13 @@ var stocks=uniq(rows.map(function(r){return r.stock;})),ids=uniq(rows.map(functi
 var html='<div class="tablewrap"><table><thead><tr><th>Event</th>'+stocks.map(function(s){return '<th>'+esc(s)+'</th>';}).join("")+'</tr></thead><tbody>';
 ids.forEach(function(id){html+='<tr><td>'+esc(id)+'</td>';stocks.forEach(function(s){var r=rows.find(function(x){return x.event_id===id&&x.stock===s;});var v=r?num(r.CAR)*100:null;var alpha=v===null?0:Math.min(.78,Math.abs(v)/25);var color=v===null?"#202b3d":v>=0?"rgba(40,178,135,"+alpha+")":"rgba(226,87,111,"+alpha+")";html+='<td style="background:'+color+'">'+(v===null?"—":signed(v))+'</td>';});html+='</tr>';});html+='</tbody></table></div>';$("heatmap").innerHTML=html;
 }
+function auditFor(id){return windowAudit.find(function(r){return r.event_id===id;})||null;}
+function registryFlag(v){var t=String(v==null?"":v).toLowerCase();return t==="true"?"True":t==="false"?"False":"Unset";}
+function pp(v){var n=num(v);return n===null?"—":(n>0?"+":"")+n.toFixed(2)+" pp";}
 function eventDetail(){
-var e=selectedEvent(selected().e),overlap=String(e.overlap_flag).toLowerCase()==="true";
+var e=selectedEvent(selected().e),w=auditFor(e.event_id),carPartners=w?String(w.event_window_overlap_event_ids||""):"";
 var url=e.source_url?'<a href="'+esc(e.source_url)+'" target="_blank" rel="noopener noreferrer">Open recorded source ↗</a>':"No source URL recorded";
-$("eventDetail").innerHTML='<div class="eventcard"><div class="eventtitle">'+esc(e.headline||e.event_id)+'</div><div class="eventmeta">'+esc(e.event_id)+' · '+esc(e.category)+' · Announced '+esc(e.event_date)+' · Effective '+esc(e.effective_event_date)+'</div><p>'+esc(e.notes||"No event note recorded.")+'</p><div>'+ (overlap?'<span class="pill warn">Overlap flagged</span>':'<span class="pill">No overlap flag recorded</span>')+' <span class="pill">'+esc(e.timing_confidence||"Timing ungraded")+'</span></div><p class="small">'+url+'</p></div>';
+$("eventDetail").innerHTML='<div class="eventcard"><div class="eventtitle">'+esc(e.headline||e.event_id)+'</div><div class="eventmeta">'+esc(e.event_id)+' · '+esc(e.category)+' · Announced '+esc(e.event_date)+' · Effective '+esc(e.effective_event_date)+'</div><p>'+esc(e.notes||"No event note recorded.")+'</p><div>'+ (w===null?'<span class="pill">CAR-window overlap not audited</span>':carPartners?'<span class="pill warn">CAR window overlaps '+esc(carPartners.split(";").join(", "))+'</span>':'<span class="pill good">No CAR-window overlap</span>')+' <span class="pill">Registry flag: '+registryFlag(e.overlap_flag)+'</span> <span class="pill">'+esc(e.timing_confidence||"Timing ungraded")+'</span> <span class="pill">'+esc(e.timestamp_evidence_status||"Timestamp evidence not graded")+'</span></div><p class="small">'+url+'</p></div>';
 }
 function chart(){
 var q=selected(),rows=study.filter(function(r){return r.event_id===q.e&&(q.s==="all"||r.stock===q.s);});
@@ -160,7 +287,9 @@ svg+='<text x="12" y="12" fill="#9eacc3" font-size="10">Return (%)</text></svg>'
 function inference(){
 var q=selected(),rows=sig.filter(function(r){return r.event_id===q.e&&(q.s==="all"||r.stock===q.s)&&r.window===q.w;});
 rows.sort(function(a,b){return (num(a.holm_p_value)||1)-(num(b.holm_p_value)||1);});
-$("inference").innerHTML=table(["Event","Stock","Window","CAR","95% CI","Raw p","Holm p","Holm < 0.05"],rows.map(function(r){return [esc(r.event_id),esc(r.stock),esc(r.window),signed(r.CAR_pct),signed(r.ci_lower_pct)+" to "+signed(r.ci_upper_pct),num(r.raw_p_value)===null?"—":Number(r.raw_p_value).toPrecision(3),num(r.holm_p_value)===null?"—":Number(r.holm_p_value).toPrecision(3),String(r.significant_after_holm_5pct).toLowerCase()==="true"?'<span class="pill good">Yes</span>':'No'];}));
+var p3=function(v){return num(v)===null?"—":Number(v).toPrecision(3);},yes=function(v){return String(v).toLowerCase()==="true"?'<span class="pill good">Yes</span>':"No";};
+$("inference").innerHTML=table(["Event","Stock","Window","CAR","95% CI (conventional)","Raw p","Holm p","Holm < 0.05","95% CI (HAC)","HAC raw p","HAC Holm p","HAC Holm < 0.05"],rows.map(function(r){return [esc(r.event_id),esc(r.stock),esc(r.window),signed(r.CAR_pct),signed(r.ci_lower_pct)+" to "+signed(r.ci_upper_pct),p3(r.raw_p_value),p3(r.holm_p_value),yes(r.significant_after_holm_5pct),signed(r.hac_ci_lower_pct)+" to "+signed(r.hac_ci_upper_pct),p3(r.hac_raw_p_value),p3(r.hac_holm_p_value),yes(r.hac_significant_after_holm_5pct)];}))+
+'<p class="small">Holm family: all '+sig.length+' complete event × stock × window CAR tests, corrected separately for the conventional and HAC p-values. HAC is a robustness check for serial correlation in the estimation window, not a fix for event-induced variance or overlapping events. All tests are exploratory.</p>';
 }
 function consistency(){
 var q=selected(),rows=cons.filter(function(r){return r.event_id===q.e&&r.window===q.w;});
@@ -168,20 +297,23 @@ $("consistency").innerHTML=table(["Window","Mean CAR","Median CAR","Across-stock
 }
 function trading(){
 var q=selected(),rows=trades.filter(function(r){return (q.sample==="all"||r.sample===q.sample)&&(!q.e||r.event_id===q.e);});
-$("trading").innerHTML=table(["Event","Sample","Net return","Benchmark","Excess","Stocks"],rows.map(function(r){return [esc(r.event_id),esc(r.sample),signed(num(r.portfolio_net_return)*100),signed(num(r.benchmark_return)*100),signed(num(r.excess_return)*100),esc(r.stocks_traded)];}));
+$("tradingRule").textContent="Rule: buy each configured stock at the close of the first session after Day 0, sell "+(m.holding_sessions==null?"N":m.holding_sessions)+" sessions later at the close, equal-weight stocks within each event, and subtract "+(m.transaction_cost_bps_per_side==null?"the configured":m.transaction_cost_bps_per_side)+" bps per side (one entry and one exit). Benchmark: NIFTY 50 over the same sessions.";
+$("trading").innerHTML=table(["Event","Sample","Net return","Benchmark return","Excess (pp)","Stocks"],rows.map(function(r){return [esc(r.event_id),esc(r.sample),signed(num(r.portfolio_net_return)*100),signed(num(r.benchmark_return)*100),pp(num(r.excess_return)*100),esc(r.stocks_traded)];}));
 var ss=samples.filter(function(r){return q.sample==="all"||r.sample===q.sample;});
-$("costs").innerHTML='<h3>Chronological sample summary</h3>'+table(["Sample","Events","Mean net","Mean excess","Benchmark beat rate"],ss.map(function(r){return [esc(r.sample),esc(r.number_of_events),signed(r.mean_net_return_pct),signed(r.mean_excess_return_pct),pct(r.benchmark_outperformance_rate_pct)];}));
-var cc=costs.map(function(r){return [esc(r.cost_bps_per_side),signed(r.avg_net_return_pct),signed(r.avg_excess_return_pct)];});
-$("costs").innerHTML+='<h3 style="margin-top:12px">Transaction-cost sensitivity</h3>'+table(["Cost / side (bps)","Mean net return","Mean excess return"],cc);
+$("costs").innerHTML='<h3>Chronological sample summary</h3>'+table(["Sample","Events","Mean net return","Mean excess (pp)","Share of events beating benchmark"],ss.map(function(r){return [esc(r.sample),esc(r.number_of_events),signed(r.mean_net_return_pct),pp(r.mean_excess_return_pct),pct(r.benchmark_outperformance_rate_pct)];}));
+var cc=costs.map(function(r){return [esc(r.cost_bps_per_side),signed(r.avg_net_return_pct),pp(r.avg_excess_return_pct)];});
+$("costs").innerHTML+='<h3 style="margin-top:12px">Transaction-cost sensitivity</h3>'+table(["Cost / side (bps)","Mean net return (all events)","Mean excess (pp)"],cc);
 }
 function register(){
-var rows=events.map(function(e){var flag=String(e.overlap_flag).toLowerCase()==="true";return ['<strong>'+esc(e.event_id)+'</strong>',esc(e.event_date),esc(e.effective_event_date),esc(e.category),esc(e.episode_id),flag?'<span class="pill warn">Flagged</span>':'No flag',esc(e.verification_status)];});
-$("eventRegister").innerHTML=table(["ID","Announced","Effective","Category","Episode","Overlap","Recorded status"],rows);
+var rows=events.map(function(e){var w=auditFor(e.event_id),partners=w?String(w.event_window_overlap_event_ids||""):null;return ['<strong>'+esc(e.event_id)+'</strong>',esc(e.event_date),esc(e.effective_event_date),esc(e.category),esc(e.episode_id),partners===null?"Not audited":partners?'<span class="pill warn">'+esc(partners)+'</span>':"None",registryFlag(e.overlap_flag),esc(e.event_time||"Not recorded"),esc(e.timestamp_evidence_status),esc(e.verification_status)];});
+$("eventRegister").innerHTML=table(["ID","Announced","Effective Day 0","Category","Episode","CAR-window overlap (computed)","Registry overlap flag (manual)","Recorded time","Timestamp evidence","Recorded status"],rows)+'<p class="small">“CAR-window overlap” is computed from shared trading sessions in the ±'+esc(m.event_window_sessions)+'-session windows. The registry flag is a broader manual review flag and is not the same measure. A source URL is provenance, not proof of an exact publication time.</p>';
 }
 function eventDependenceAudit(){
 var q=selected(),levels=d["event_level_audit.csv"]||[],pairs=d["event_pair_overlap_audit.csv"]||[];
 var eventRows=levels.filter(function(r){return !q.e||r.event_id===q.e;});
-$("eventDependenceAudit").innerHTML='<h3>Selected event diagnostics</h3>'+table(["Event","CAR-window partners","Shared episode partners","Same-category partners","Potential sourced developments","Review caution","Audit interpretation"],eventRows.map(function(r){return [esc(r.event_id),esc(r.event_window_overlap_event_ids||"none"),esc(r.shared_episode_partner_ids||"none"),esc(r.same_category_partner_ids||"none"),esc(r.documented_potential_development_in_window_count||0),String(r.unverified_possibility_flag).toLowerCase()==="true"?"Review needed":"No text-based caution detected",esc(r.potential_confounder_explanation||"")];}));
+var ov=ev.overlap||{},tm=ev.timing||{};
+var summary='<div class="metrics">'+metric("Events with CAR-window overlap",(ov.car_window_overlap_event_ids||[]).length,(ov.car_window_overlap_pairs||0)+" overlapping event pairs (computed)")+metric("Events with volatility-window overlap",(ov.volatility_window_overlap_event_ids||[]).length,"−20:−1 / +1:+20 windows (computed)")+metric("Registry overlap flag",(ov.registry_flag_true||0)+" / "+(ov.registry_flag_false||0)+" / "+(ov.registry_flag_unset||0),"True / False / unset (manual, broader)")+metric("Timestamp review required",(tm.review_required||0)+" of "+(tm.events||0),"Events without a verified exact release time")+'</div>';
+$("eventDependenceAudit").innerHTML=summary+'<h3>Selected event diagnostics</h3>'+table(["Event","CAR-window partners","Shared episode partners","Same-category partners","Potential sourced developments","Review caution","Audit interpretation"],eventRows.map(function(r){return [esc(r.event_id),esc(r.event_window_overlap_event_ids||"none"),esc(r.shared_episode_partner_ids||"none"),esc(r.same_category_partner_ids||"none"),esc(r.documented_potential_development_in_window_count||0),String(r.unverified_possibility_flag).toLowerCase()==="true"?"Review needed":"No text-based caution detected",esc(r.potential_confounder_explanation||"")];}));
 var pairRows=pairs.filter(function(r){return !q.e||r.event_id_a===q.e||r.event_id_b===q.e;});
 $("eventDependenceAudit").innerHTML+='<h3 style="margin-top:14px">Pairwise event relationships</h3>'+table(["Event A","Event B","Shared sessions","Shared episode","Same category","Flags","Explanation"],pairRows.map(function(r){return [esc(r.event_id_a),esc(r.event_id_b),esc(r.overlapping_session_count),String(r.shared_episode_id).toLowerCase()==="true"?"Yes":"No",String(r.same_category).toLowerCase()==="true"?"Yes":"No",esc(r.overlap_types),esc(r.explanation)];}));
 }
@@ -209,34 +341,30 @@ $("categoryEvidence").innerHTML='<h3>CAR by category and window</h3>'+table(["Ca
 $("categoryEvidence").innerHTML+='<h3 style="margin-top:14px">Volatility by category</h3>'+table(["Category","Metric","Status","Independent episodes","Mean","Median","Overlapping events excluded","Events in master"],vol.map(function(r){var isPct=String(r.metric||"").indexOf("_pct")>=0;return [esc(r.category),esc(r.metric),esc(r.status),esc(r.independent_episodes),isPct?pct(num(r.mean_value)):num(r.mean_value)===null?"—":Number(r.mean_value).toFixed(2),isPct?pct(num(r.median_value)):num(r.median_value)===null?"—":Number(r.median_value).toFixed(2),esc(r.excluded_overlapping_events),esc(r.category_event_count_in_master)];}));
 }
 function provenance(){
-var p=m.input_data_provenance||{},checks=m.input_checksums_sha256||{},policy=p.adjustment_policy||{};
-var stockField=String(policy.stock_field||"unknown"),benchmarkField=String(policy.benchmark_field||"unknown");
-var sameField=stockField.toLowerCase()===benchmarkField.toLowerCase();
-var conventionNote=sameField
-?("Return convention: both stock and benchmark use "+stockField+" price fields. Dividends are excluded unless the source field explicitly includes them; this is not automatically a total-return comparison.")
-:("Return-convention mismatch: stocks use "+stockField+" while the benchmark uses "+benchmarkField+". Interpret stock/benchmark comparisons cautiously; these series do not share the same price-field convention.");
+var p=m.input_data_provenance||{},checks=m.input_checksums_sha256||{},pc=ev.price_convention||{};
+var stockField=pc.stock_field||"Not recorded",benchmarkField=pc.benchmark_field||"Not recorded";
 $("provenance").innerHTML='<div class="tablewrap"><table><tbody>'+
-[['Snapshot ID',m.snapshot_id],['Period',(m.period_start||"—")+" to "+(m.period_end||"—")],['Provider',p.source||p.provider],['Retrieved UTC',p.retrieved_at_utc],['Benchmark',m.benchmark],['Price input',m.input_prices],['Stock price field',stockField],['Benchmark price field',benchmarkField],['Return convention',m.return_convention||"Not specified"],['Price SHA-256',checks.prices],['Estimation sessions',m.estimation_sessions],['Gap sessions',m.gap_sessions],['Event-window radius',m.event_window_sessions],['Event sources independently verified',m.source_independently_verified]].map(function(r){return '<tr><td>'+esc(r[0])+'</td><td style="text-align:left;white-space:normal;overflow-wrap:anywhere">'+esc(r[1])+'</td></tr>';}).join("")+
-'</tbody></table></div><p class="small">'+esc(conventionNote)+' The manifest records provenance but does not independently validate every event source.</p>';
+[['Snapshot ID',m.snapshot_id],['Period',(m.period_start||"—")+" to "+(m.period_end||"—")],['Provider',p.source||p.provider],['Retrieved UTC',p.retrieved_at_utc],['Benchmark',m.benchmark],['Price input',m.input_prices],['Stock price field',stockField],['Benchmark price field',benchmarkField],['Return convention',m.return_convention||"Not recorded"],['Analysis calendar',m.analysis_calendar||"Not recorded"],['Benchmark sessions used',m.benchmark_sessions_used],['Price SHA-256',checks.prices],['Generated UTC',m.generated_utc],['Code commit',m.code_commit||"Not recorded"],['Estimation sessions',m.estimation_sessions],['Gap sessions',m.gap_sessions],['Event-window radius',m.event_window_sessions],['Event sources independently verified',m.source_independently_verified]].map(function(r){return '<tr><td>'+esc(r[0])+'</td><td style="text-align:left;white-space:normal;overflow-wrap:anywhere">'+esc(r[1])+'</td></tr>';}).join("")+
+'</tbody></table></div><p class="small">'+esc(m.provider_note||"")+' The checksum proves these are the same downloaded bytes; it does not prove the provider values are correct. A later download from the provider may differ. Event sources are recorded but not independently verified by this pipeline.</p>';
 }
 function renderClusteredInference(){
 var rows=clusteredInference;
 if(!rows.length){$("clusteredInference").innerHTML='<div class="empty">Cluster-bootstrap output is not present in this analysis artifact.</div>';return;}
 var rendered=rows.map(function(r){
 var lower=num(r.mean_excess_return_pct_ci95_lower),upper=num(r.mean_excess_return_pct_ci95_upper);
-var crossesZero=lower!==null&&upper!==null&&lower<=0&&upper>=0;
-return [esc(r.sample),esc(r.events_available),esc(r.independent_dependency_clusters),esc(r.largest_cluster_events),signed(r.mean_net_return_pct_point),signed(r.mean_excess_return_pct_point),signed(lower)+" to "+signed(upper),pct(r.benchmark_outperformance_rate_pct_point),crossesZero?'<span class="pill warn">Includes zero</span>':'<span class="pill good">Excludes zero</span>'];
+var status=lower===null||upper===null?"not_available":lower<=0&&upper>=0?"includes_zero":"excludes_zero";
+return [esc(r.sample),esc(r.events_available),esc(r.independent_dependency_clusters),esc(r.largest_cluster_events),signed(r.mean_net_return_pct_point),pp(r.mean_excess_return_pct_point),pp(lower)+" to "+pp(upper),pct(r.benchmark_outperformance_rate_pct_point)+" ["+pct(r.benchmark_outperformance_rate_pct_ci95_lower,0)+" to "+pct(r.benchmark_outperformance_rate_pct_ci95_upper,0)+"]",status==="includes_zero"?'<span class="pill warn">Includes zero</span>':status==="excludes_zero"?'<span class="pill good">Excludes zero</span>':'<span class="pill">Not available</span>'];
 });
-$("clusteredInference").innerHTML=table(["Sample","Events","Dependency clusters","Largest cluster","Mean net return","Mean excess return","95% CI: excess return","Benchmark outperformance","Inference"],rendered)+
+$("clusteredInference").innerHTML=table(["Sample","Events","Dependency clusters","Largest cluster","Mean net return","Mean excess (pp)","95% CI: mean excess","Share beating benchmark [95% CI]","Interval vs zero"],rendered)+
 '<p class="small">Bootstrap replicates: '+esc(rows[0].bootstrap_replicates||"—")+'. Cluster counts are small, so interval estimates remain exploratory. These metrics are not evidence of causality or a deployable trading strategy.</p>';
 }
 function render(){
 var q=selected(),eventRows=study.filter(function(r){return r.event_id===q.e;}),testRows=sig.filter(function(r){return !q.e||r.event_id===q.e;});
 var significant=testRows.filter(function(r){return String(r.significant_after_holm_5pct).toLowerCase()==="true";}).length;
-var obs=study.length,carCount=cars.length;
+var obs=study.length,carCount=cars.filter(function(r){return num(r.CAR)!==null;}).length;
 $("metrics").innerHTML=metric("Historical events",m.event_count||events.length,"Selected event master")+
 metric("Stock-event-day rows",obs.toLocaleString(),"Actual, expected and abnormal returns")+
-metric("CAR estimates",carCount.toLocaleString(),"Three windows where complete")+
+metric("Complete CAR estimates",carCount.toLocaleString(),"Of "+cars.length+" event × stock × window rows")+
 metric("Holm-significant in selected event",significant.toString(),"Of "+testRows.length+" tests in current event filter");
 heatmap();eventDetail();chart();inference();estimationWindowSensitivity();robustnessEvidenceLedger();consistency();trading();renderClusteredInference();register();eventDependenceAudit();eventTimingSensitivity();eventVolatility();categoryEvidence();provenance();
 }
@@ -246,7 +374,12 @@ render();
 </script></main></body></html>'''
     html = (
         template.replace("__TITLE__", title)
-        .replace("__SNAPSHOT__", str(manifest.get("snapshot_id", "unavailable")))
+        .replace("__SNAPSHOT__", html_lib.escape(str(manifest.get("snapshot_id", "unavailable"))))
+        .replace("__GENERATED__", html_lib.escape(str(manifest.get("generated_utc") or "time not recorded")))
+        .replace("__COMMIT__", html_lib.escape(str(manifest.get("code_commit") or "not recorded")[:12]))
+        .replace("__CONVENTION_STATUS__", html_lib.escape(evidence["price_convention"]["status"]))
+        .replace("__CONVENTION_NOTE__", html_lib.escape(evidence["price_convention"]["note"]))
+        .replace("__HOLDOUT_WARNING__", _holdout_warning_html(evidence["strategy_intervals"]))
         .replace("__PAYLOAD__", payload)
     )
     destination = Path(output_path) if output_path is not None else root / "eventecho_demo.html"
