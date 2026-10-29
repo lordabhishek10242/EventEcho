@@ -24,6 +24,8 @@ ARTIFACT_DESCRIPTIONS = {
     "transaction_cost_sensitivity.csv": "Strategy summary metrics at configured per-side cost levels.",
     "final_strategy_assessment.csv": "Selected headline trading metrics at the configured base cost.",
     "multi_stock_significance.csv": "Conventional and Newey-West/HAC-sensitivity CAR inference, each with Holm-adjusted p-values.",
+    "estimation_window_sensitivity.csv": "Per-event, stock, and CAR-window inference at 60-, 100-, and 150-session market-model estimation lengths.",
+    "estimation_window_sensitivity_summary.csv": "Summary of CAR stability and Holm-significance counts across pre-specified estimation-window lengths.",
     "single_stock_event_study.csv": "Reliance subset of the generated multi-stock daily event-study output.",
     "covid_extreme_day_sensitivity.csv": "EVT002 extreme-day diagnostics; partial-window sums are not reported as comparable CARs.",
     "event_timing_sensitivity.csv": "Alternative first-session versus following-session CARs for events with unresolved timing metadata.",
@@ -50,7 +52,7 @@ def build_demo_dashboard(analysis_dir: str | Path, output_path: str | Path | Non
 
     names = (
         "event_master.csv", "multi_stock_event_study.csv", "multi_stock_car.csv",
-        "multi_stock_significance.csv", "cross_stock_consistency.csv",
+        "multi_stock_significance.csv", "estimation_window_sensitivity_summary.csv", "cross_stock_consistency.csv",
         "event_window_audit.csv", "event_level_audit.csv", "event_pair_overlap_audit.csv",
         "event_relationship_highlights.csv", "event_timing_sensitivity.csv",
         "event_volatility.csv", "category_car_summary.csv", "category_volatility_summary.csv",
@@ -90,7 +92,7 @@ header{display:flex;gap:24px;align-items:flex-start;justify-content:space-betwee
 <div class="layout">
 <section class="panel"><h2>CAR heatmap</h2><p class="small">Cumulative abnormal return by event and stock. Colors encode direction and magnitude; values are percentages.</p><div id="heatmap"></div></section>
 <section class="panel"><h2>Selected event</h2><div id="eventDetail"></div><h3 style="margin-top:16px">Return response around Day 0</h3><div id="returnChart"></div><div class="legend"><span><i class="dot" style="background:#83b8ff"></i>Daily abnormal return</span><span><i class="dot" style="background:#63d9b0"></i>Cumulative abnormal return</span></div></section>
-<section class="panel wide"><h2>Inference & uncertainty</h2><p class="small">Confidence intervals and Holm-adjusted p-values are approximate under the current model assumptions. Statistical significance is not causality.</p><div id="inference"></div></section>
+<section class="panel wide"><h2>Inference & uncertainty</h2><p class="small">Confidence intervals and Holm-adjusted p-values are approximate under the current model assumptions. Statistical significance is not causality.</p><div id="inference"></div></section>\n<section class="panel wide"><h2>Estimation-window robustness</h2><p class="small">The market model is re-fit with 60, 100, and 150 pre-event sessions while keeping the 20-session gap and event windows fixed. Holm correction is performed separately within each specification. Treat changes as sensitivity, not a search for the most significant result.</p><div id="estimationWindowSensitivity"></div></section>
 <section class="panel"><h2>Across-stock consistency</h2><p class="small">Do stocks move in the same direction around this event?</p><div id="consistency"></div></section>
 <section class="panel"><h2>Hypothetical trading diagnostic</h2><p class="small">Exploratory close-to-close rule; not an investable backtest.</p><div id="trading"></div><div id="costs" style="margin-top:12px"></div></section>
 <section class="panel wide"><h2>Event register</h2><div id="eventRegister"></div></section>\n<section class="panel wide"><h2>Event dependence & independence audit</h2><p class="small">Temporal overlap is calculated on trading sessions. Shared episode IDs and categories are metadata-based clustering warnings—not evidence of causality. Pending source/timing checks remain review cautions.</p><div id="eventDependenceAudit"></div></section>\n<section class="panel wide"><h2>Event timing sensitivity</h2><p class="small">For unresolved timing, compare plausible session alignments. If the context indicates an after-market/evening release, the first scenario is strictly the next available session—never the same-day close that preceded publication. For other uncertain timestamps, compare the first session on/after the date with the following session. This is a robustness diagnostic, not an automatic date correction.</p><div id="eventTimingSensitivity"></div></section>\n<section class="panel wide"><h2>Realized volatility before vs after events</h2><p class="small">Realized stock and benchmark volatility use non-overlapping trading-session windows −20:−1 and +1:+20, excluding Day 0. Annualization uses √252. Event-window market-model residual volatility is shown separately and is not the same as realized stock volatility.</p><div id="eventVolatility"></div></section>\n<section class="panel wide"><h2>Category-level evidence</h2><p class="small">Category summaries average stocks within each event and then aggregate within episodes. Overlapping event windows are excluded. A category needs at least three independent episodes to receive a numeric summary; “insufficient independent episodes” is an honest data limitation, not a zero effect.</p><div id="categoryEvidence"></div></section>
@@ -101,7 +103,7 @@ header{display:flex;gap:24px;align-items:flex-start;justify-content:space-betwee
 (function(){
 "use strict";
 var root=JSON.parse(document.getElementById("eventecho-data").textContent),d=root.datasets||{},m=root.manifest||{};
-var events=d["event_master.csv"]||[],cars=d["multi_stock_car.csv"]||[],study=d["multi_stock_event_study.csv"]||[],sig=d["multi_stock_significance.csv"]||[],cons=d["cross_stock_consistency.csv"]||[],trades=d["event_trading_results.csv"]||[],samples=d["sample_performance.csv"]||[],costs=d["transaction_cost_sensitivity.csv"]||[],covid=d["covid_extreme_day_sensitivity.csv"]||[];
+var events=d["event_master.csv"]||[],cars=d["multi_stock_car.csv"]||[],study=d["multi_stock_event_study.csv"]||[],sig=d["multi_stock_significance.csv"]||[],cons=d["cross_stock_consistency.csv"]||[],trades=d["event_trading_results.csv"]||[],samples=d["sample_performance.csv"]||[],costs=d["transaction_cost_sensitivity.csv"]||[],covid=d["covid_extreme_day_sensitivity.csv"]||[],estimationSensitivity=d["estimation_window_sensitivity_summary.csv"]||[];
 var $=function(id){return document.getElementById(id);};
 var esc=function(v){return String(v==null?"—":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});};
 var num=function(v){var n=Number(v);return Number.isFinite(n)?n:null;};
@@ -185,6 +187,9 @@ function eventTimingSensitivity(){
 var q=selected(),rows=(d["event_timing_sensitivity.csv"]||[]).filter(function(r){return (!q.e||r.event_id===q.e)&&(!q.s||q.s==="all"||r.stock===q.s)&&(!q.w||r.window===q.w);});
 $("eventTimingSensitivity").innerHTML=table(["Event","Stock","Window","Timing basis","Scenario","Scenario Day 0","Recorded Day 0","Scenario CAR","Recorded CAR","Delta vs recorded"],rows.map(function(r){return [esc(r.event_id),esc(r.stock),esc(r.window),esc(r.timing_basis),esc(r.scenario),esc(r.scenario_effective_date),esc(r.recorded_effective_event_date),signed(r.scenario_CAR_pct),signed(r.recorded_CAR_pct),signed(r.delta_vs_recorded_CAR_pct)];}));
 }
+function estimationWindowSensitivity(){
+$("estimationWindowSensitivity").innerHTML=table(["Estimation sessions","Tests","Events","Stocks","Conventional Holm significant","HAC Holm significant","Median |CAR change vs 100|","Mean |CAR change vs 100|","CAR correlation vs 100"],estimationSensitivity.map(function(r){return [esc(r.estimation_sessions),esc(r.tests_available),esc(r.unique_events),esc(r.unique_stocks),esc(r.conventional_holm_significant_tests),esc(r.hac_holm_significant_tests),pct(r.median_absolute_CAR_delta_vs_100_pct),pct(r.mean_absolute_CAR_delta_vs_100_pct),num(r.CAR_correlation_vs_100_session)===null?"—":Number(r.CAR_correlation_vs_100_session).toFixed(3)];}));
+}
 function eventVolatility(){
 var q=selected(),rows=(d["event_volatility.csv"]||[]).filter(function(r){return (!q.e||r.event_id===q.e)&&(!q.s||q.s==="all"||r.stock===q.s);});function volPct(v){var n=num(v);return n===null?"—":pct(n*100);}
 $("eventVolatility").innerHTML=table(["Event","Stock","Pre window","Post window","Pre annualized vol","Post annualized vol","Volatility change","Post/pre ratio","Pre/Post n","Comparison status","Benchmark pre/post vol","Event-window residual SD"],rows.map(function(r){return [esc(r.event_id),esc(r.stock),esc(r.pre_event_window),esc(r.post_event_window),volPct(r.pre_event_realized_volatility_annualized),volPct(r.post_event_realized_volatility_annualized),signed(num(r.realized_volatility_percentage_change)),num(r.post_to_pre_realized_volatility_ratio)===null?"—":Number(r.post_to_pre_realized_volatility_ratio).toFixed(2),esc(r.pre_event_observations)+"/"+esc(r.post_event_observations),esc(r.volatility_comparison_status),volPct(r.benchmark_pre_event_realized_volatility_annualized)+" / "+volPct(r.benchmark_post_event_realized_volatility_annualized),volPct(r.event_window_market_model_residual_volatility_daily)];}));
@@ -208,7 +213,7 @@ $("metrics").innerHTML=metric("Historical events",m.event_count||events.length,"
 metric("Stock-event-day rows",obs.toLocaleString(),"Actual, expected and abnormal returns")+
 metric("CAR estimates",carCount.toLocaleString(),"Three windows where complete")+
 metric("Holm-significant in selected event",significant.toString(),"Of "+testRows.length+" tests in current event filter");
-heatmap();eventDetail();chart();inference();consistency();trading();register();eventDependenceAudit();eventTimingSensitivity();eventVolatility();categoryEvidence();provenance();
+heatmap();eventDetail();chart();inference();estimationWindowSensitivity();consistency();trading();register();eventDependenceAudit();eventTimingSensitivity();eventVolatility();categoryEvidence();provenance();
 }
 ["eventSelect","stockSelect","windowSelect","sampleSelect"].forEach(function(id){$(id).addEventListener("change",render);});
 render();
