@@ -43,3 +43,24 @@ def test_context_time_is_not_mislabelled_as_release_timestamp():
 
     assert result.loc[0, "timestamp_evidence_status"] == "time_context_not_release_timestamp"
     assert bool(result.loc[0, "timestamp_review_required"])
+
+
+
+def test_verified_ist_publication_time_is_normalized_with_timezone():
+    events = pd.DataFrame([{
+        "event_id": "E3",
+        "event_date": "2024-05-31",
+        "effective_event_date": "2024-06-03",
+        "event_time": "17:30 IST official PIB publication",
+        "headline": "GDP release",
+        "category": "Economic Release",
+        "source_name": "Press Information Bureau",
+        "source_url": "https://example.com/gdp",
+        "episode_id": "GDP",
+        "timing_confidence": "high_after_market_release_time_confirmed",
+    }])
+
+    result = validate_events(events)
+
+    assert result.loc[0, "event_timestamp_ist"] == "2024-05-31T17:30:00+05:30"
+    assert result.loc[0, "timestamp_semantics"] == "source_status_verified_publication_time_IST"
