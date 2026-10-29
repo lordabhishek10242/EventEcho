@@ -106,13 +106,14 @@ def event_timing_sensitivity(
     gap_sessions: int = 20,
     event_window_radius: int = 5,
 ) -> pd.DataFrame:
-    """Compare first-session versus following-session alignment for uncertain events.
+    """Compare plausible session alignments for events with unresolved timing.
 
-    This is a timing robustness diagnostic, not an automatic correction. Events
-    whose source/timing metadata explicitly signals pending, unverified, assumed,
-    or otherwise unresolved timing are included. For a non-trading announcement
-    date, the first scenario is the first trading session on or after that date;
-    it is not labelled as a same-day market reaction.
+    If the source/context indicates an after-market or evening announcement,
+    the first scenario is strictly the next available trading session. It must
+    never use the same-day close, which occurred before the information became
+    public. Otherwise compare the first session on/after the announcement date
+    with the following session. This is a timing robustness diagnostic, not an
+    automatic correction or causal estimate.
     """
     required = {"event_id", "event_date", "effective_event_date"}
     missing = required - set(events.columns)
@@ -124,10 +125,16 @@ def event_timing_sensitivity(
     dates = pd.DatetimeIndex(returns.index).tz_localize(None).normalize().unique().sort_values()
     if len(dates) < 2:
         raise ValueError("At least two trading sessions are required")
-    keywords = (
+    unresolved_keywords = (
         "pending", "unverified", "not_in_master", "not in master",
         "check_required", "required", "assumption", "review",
         "not_release_timestamp", "not separately confirmed", "not reported",
+    )
+    after_market_tokens = (
+        "after trading hours", "after-market", "after market",
+        "after-close", "after close", "evening announcement",
+        "announced in the evening", "made in the evening", "16:15 ist",
+        "scheduled 16:15",
     )
     rows: list[dict] = []
     for _, event in events.iterrows():
@@ -136,24 +143,40 @@ def event_timing_sensitivity(
                 "event_time", "timing_confidence", "verification_status", "notes"
             )
         ).casefold()
-        if not any(keyword in metadata for keyword in keywords):
+        if not any(keyword in metadata for keyword in unresolved_keywords):
             continue
 
         event_id = str(event["event_id"])
         announcement_date = pd.Timestamp(event["event_date"]).tz_localize(None).normalize()
-        first_position = int(dates.searchsorted(announcement_date, side="left"))
+        announcement_date_is_session = announcement_date in dates
+        after_market_announcement = any(token in metadata for token in after_market_tokens)
+
+        # A known after-market release cannot be assigned to that day's close.
+        # If the calendar date itself is a session, move strictly past it; if
+        # it is a weekend/holiday, searchsorted(left) already gives next session.
+        side = "right" if after_market_announcement and announcement_date_is_session else "left"
+        first_position = int(dates.searchsorted(announcement_date, side=side))
         if first_position >= len(dates) - 1:
             continue
         first_session = dates[first_position]
         following_session = dates[first_position + 1]
-        announcement_date_is_session = announcement_date in dates
         recorded_effective = pd.Timestamp(event["effective_event_date"]).tz_localize(None).normalize()
         baseline = recorded_car_results[recorded_car_results["event_id"] == event_id]
 
-        for scenario, scenario_date in (
-            ("first_session_on_or_after_announcement", first_session),
-            ("following_trading_session", following_session),
-        ):
+        if after_market_announcement:
+            timing_basis = "after_market_or_evening_release"
+            scenarios = (
+                ("first_session_after_announcement", first_session),
+                ("following_session_after_first", following_session),
+            )
+        else:
+            timing_basis = "intraday_or_exact_release_time_unresolved"
+            scenarios = (
+                ("first_session_on_or_after_announcement", first_session),
+                ("following_trading_session", following_session),
+            )
+
+        for scenario, scenario_date in scenarios:
             scenario_events = event.to_frame().T.copy()
             scenario_events.loc[:, "effective_event_date"] = scenario_date
             _, scenario_cars, _ = calculate_event_study(
@@ -169,7 +192,11 @@ def event_timing_sensitivity(
                     (baseline["stock"] == car["stock"])
                     & (baseline["window"] == car["window"])
                 ]
-                recorded_car = float(base.iloc[0]["CAR"]) if not base.empty and pd.notna(base.iloc[0]["CAR"]) else float("nan")
+                recorded_car = (
+                    float(base.iloc[0]["CAR"])
+                    if not base.empty and pd.notna(base.iloc[0]["CAR"])
+                    else float("nan")
+                )
                 scenario_car = float(car["CAR"]) if pd.notna(car["CAR"]) else float("nan")
                 rows.append({
                     "event_id": event_id,
@@ -179,6 +206,7 @@ def event_timing_sensitivity(
                     "announcement_date_is_trading_session": bool(announcement_date_is_session),
                     "recorded_effective_event_date": recorded_effective,
                     "timing_confidence": event.get("timing_confidence", ""),
+                    "timing_basis": timing_basis,
                     "scenario": scenario,
                     "scenario_effective_date": scenario_date,
                     "matches_recorded_alignment": bool(scenario_date == recorded_effective),

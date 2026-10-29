@@ -95,3 +95,35 @@ def test_event_timing_sensitivity_compares_first_and_following_sessions():
     assert first["announcement_date_is_trading_session"].all()
     assert following["matches_recorded_alignment"].all()
     assert np.allclose(following["delta_vs_recorded_CAR_pct"], 0.0)
+
+
+def test_after_market_timing_sensitivity_never_uses_pre_release_same_day_close():
+    from src.event_study import calculate_event_study
+    from src.sensitivity import event_timing_sensitivity
+
+    dates = pd.bdate_range("2023-01-02", periods=300)
+    market = np.sin(np.arange(len(dates)) * 0.13) * 0.008
+    stock = 0.0002 + 0.9 * market + np.cos(np.arange(len(dates)) * 0.23) * 0.001
+    returns = pd.DataFrame({"A": stock, "NIFTY50_RETURN": market}, index=dates)
+    event = pd.DataFrame([{
+        "event_id": "E_AFTER",
+        "event_date": dates[220],
+        "effective_event_date": dates[221],
+        "event_time": "After trading hours",
+        "timing_confidence": "after_market_time_not_in_master",
+        "verification_status": "Exact release timestamp pending",
+        "headline": "Example after-market release",
+        "category": "Corporate Earnings",
+        "notes": "Release after close; exact timestamp pending.",
+    }])
+    _, baseline_cars, _ = calculate_event_study(returns, event, ["A"])
+    result = event_timing_sensitivity(returns, event, ["A"], baseline_cars)
+
+    first = result[result["scenario"] == "first_session_after_announcement"]
+    following = result[result["scenario"] == "following_session_after_first"]
+    assert len(first) == 3
+    assert len(following) == 3
+    assert set(first["scenario_effective_date"]) == {dates[221]}
+    assert set(following["scenario_effective_date"]) == {dates[222]}
+    assert first["matches_recorded_alignment"].all()
+    assert (result["timing_basis"] == "after_market_or_evening_release").all()
