@@ -133,7 +133,10 @@ The legacy figures below are reported by the supplied `results/` CSVs and embedd
 
 The legacy outputs do not show consistent out-of-sample benchmark outperformance. These figures are included for artifact traceability; the original notebook's outputs and archive have not been independently validated against their original raw data.
 
-## Fresh Run (2026-10-27)
+## Historical baseline run (2026-10-27; superseded)
+
+> **Historical traceability note:** The figures in this subsection are from an earlier 9-event/5-stock baseline run. They are not the current expanded result set. For the current 21-event/seven-stock run, use the [latest successful historical rebuild workflow](https://github.com/lordabhishek10242/EventEcho/actions/runs/40837512955) and its artifact/manifest. Do not combine the counts or metrics across runs.
+
 
 The modular CLI successfully downloaded market history through Yahoo Finance and generated 12 non-empty artifacts under `results/reproduced/` for 9 events, 5 stocks, and dates 2016-01-04 through 2025-12-31. This is a fresh calculation using provider data available at run time, not an exact reproduction from a frozen price snapshot.
 
