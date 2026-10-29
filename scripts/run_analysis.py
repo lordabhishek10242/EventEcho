@@ -43,6 +43,7 @@ from src.sensitivity import (  # noqa: E402
 )
 from src.statistics import event_study_significance  # noqa: E402
 from src.clustered_inference import clustered_strategy_inference  # noqa: E402
+from src.estimation_sensitivity import estimation_window_sensitivity  # noqa: E402
 from src.trading import event_portfolio_returns, simulate_trades, summarize_samples  # noqa: E402
 
 LOGGER = logging.getLogger("eventecho")
@@ -130,6 +131,10 @@ def run_analysis(
         returns, events, stocks, ESTIMATION_SESSIONS, GAP_SESSIONS, EVENT_WINDOW_RADIUS
     )
     significance = event_study_significance(event_study, car_results, models)
+    estimation_window_details, estimation_window_summary = estimation_window_sensitivity(
+        returns, events, stocks, window_lengths=(60, 100, 150),
+        gap_sessions=GAP_SESSIONS, event_window_radius=EVENT_WINDOW_RADIUS,
+    )
     consistency = _cross_stock_consistency(car_results)
     # Explicitly audit overlapping event windows and shared episode/category metadata.
     # These are dependence warnings, not claims that events caused one another.
@@ -207,6 +212,8 @@ def run_analysis(
         "transaction_cost_sensitivity.csv": cost_sensitivity,
         "final_strategy_assessment.csv": assessment,
         "multi_stock_significance.csv": significance,
+        "estimation_window_sensitivity.csv": estimation_window_details,
+        "estimation_window_sensitivity_summary.csv": estimation_window_summary,
         "single_stock_event_study.csv": _single_stock_export(event_study, "RELIANCE"),
     }
     if not covid_sensitivity.empty:
