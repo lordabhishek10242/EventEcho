@@ -17,6 +17,7 @@ env/
 .ipynb_checkpoints/
 
 # Raw market data is user-supplied and may be large or provider-restricted.
+data/snapshots/
 data/*.csv
 data/*.parquet
 data/*.feather
