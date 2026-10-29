@@ -27,7 +27,11 @@ Do not claim that clustering identifies which event caused a price move. The 21-
 
 The default Yahoo Finance acquisition now uses Close for both stocks and the Nifty 50 benchmark, rather than stock Adj Close against index Close. This is a consistent price-return convention: dividends are excluded on both sides. It is not a total-return comparison and must not be described as total shareholder return. The benchmark remains a price index. A future total-return analysis should use a reliable Nifty 50 TRI series and stock total-return data from a compatible, documented source.
 
-For local CSV inputs, the pipeline cannot infer whether columns are raw close, split-adjusted close, dividend-adjusted close, or TRI. The user must label the source and convention in the provenance sidecar; the pipeline preserves the supplied values and does not silently transform them.
+For local CSV inputs, the pipeline cannot infer whether columns are raw close, split-adjusted close, dividend-adjusted close, or TRI. The user must label the source and convention in the provenance sidecar (`adjustment_policy.stock_field` / `benchmark_field`); the pipeline preserves the supplied values and does not silently transform them. The run manifest records the fields actually used in `price_fields`. A sidecar or snapshot that records any field other than Close/Close is refused, and an input that records no fields is reported as "not recorded" rather than labelled Close. The dashboard's convention statement is generated from this manifest record.
+
+## Session calendar
+
+The wide snapshot `prices.csv` is the union of every provider's dates, so the NIFTY 50 column can be empty on a date that only stocks returned. The analysis calendar is the set of observed NIFTY 50 sessions (non-missing close); empty benchmark rows are not sessions. Stock prices are reindexed to this calendar before returns are computed, so a stock return and a benchmark return on the same row always cover the same interval. This matches the snapshot validation calendar used for event eligibility. The number of sessions used is recorded as `benchmark_sessions_used` in the run manifest.
 
 ## Acceptance checks
 

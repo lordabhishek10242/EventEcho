@@ -197,3 +197,23 @@ def test_dashboard_payload_matches_csv_outputs_and_run_identity(tmp_path):
     assert payload["evidence"]["run"]["snapshot_id"] == "snap-1"
     assert "snap-1" in document and "abc123def456" in document
     assert payload["evidence"]["timing"]["review_required"] == 2
+
+
+def test_dashboard_script_never_turns_missing_numbers_into_zero(tmp_path):
+    # Number(null) is 0 in JavaScript; the parser must return null instead,
+    # and percentages must not be computed as num(x)*100 on missing values.
+    _write_analysis(tmp_path)
+    document = build_demo_dashboard(tmp_path).read_text(encoding="utf-8")
+    script = re.search(r"<script>(.*?)</script>", document, re.S).group(1)
+    assert 'if(v===null||v===undefined||(typeof v==="string"&&v.trim()===""))return null;' in script
+    assert not re.search(r"num\([^()]*\)\*100", script)
+
+
+def test_dashboard_table_cells_escape_text_and_only_render_explicit_html(tmp_path):
+    _write_analysis(tmp_path)
+    document = build_demo_dashboard(tmp_path).read_text(encoding="utf-8")
+    script = re.search(r"<script>(.*?)</script>", document, re.S).group(1)
+    assert 'v.__html!==undefined?v.__html' in script
+    # Status pills are passed as explicit HTML, so they render as badges.
+    assert "raw(status===\"includes_zero\"?'<span class=\"pill warn\">Includes zero</span>'" in script
+    assert "Generated 2026-10-29 00:00 UTC" in document

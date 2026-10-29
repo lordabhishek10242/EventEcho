@@ -1,14 +1,30 @@
-# Reproduced Results Directory — Provenance Warning
+# Current release outputs
 
-**The CSVs currently committed in this directory are legacy outputs and are not the current 2026-10-29 competition result set.**
+Every file in this folder comes from **one** analysis run. The CI workflow
+*Historical Rebuild* generated them and committed them here only after
+`scripts/verify_release.py` passed.
 
-Their manifest was generated on 2026-10-27 and records a 9-event analysis with an older stock/return setup. The latest successful historical rebuild is GitHub Actions run [40848349737](https://github.com/lordabhishek10242/EventEcho/actions/runs/40848349737), commit `e89bf416445435a3cd0c651a61d0f44a79a31793`. Its artifact contains the frozen snapshot, 21-event / 7-stock results, updated manifest, sensitivity outputs, and demo HTML.
+How to check which run you are looking at:
 
-Until these committed files are regenerated from the frozen snapshot, please:
+| File | What it tells you |
+|---|---|
+| `manifest.json` | Run time (`generated_utc`), code commit (`code_commit`), snapshot ID, price SHA-256, price fields, calendar, parameters, development/holdout split, and the row count of every table. |
+| `release_validation.json` | Result of every integrity check on these exact files (CAR sums, Holm recomputation, cost arithmetic, sample summaries, overlap symmetry, dashboard = CSVs). |
+| `snapshot_metadata/manifest.json`, `snapshot_metadata/validation.json` | The frozen price snapshot's own provenance and data-quality diagnostics. |
+| `eventecho_demo.html` | The dashboard. It embeds this folder's manifest and CSVs, so it works offline. |
 
-1. Do not cite the CSVs here as the latest result set.
-2. Use the latest successful historical-rebuild workflow artifact for the demo and final report.
-3. Compare its `results/reproduced/manifest.json` with the snapshot manifest before quoting metrics.
-4. Prefer an offline rebuild from the frozen snapshot to preserve exact reproducibility.
+The raw provider prices (`data/snapshots/<snapshot-id>/prices.csv`) are not
+committed, because Yahoo Finance data may be subject to provider terms. They are
+kept in the workflow artifact of the run that downloaded them. With that
+snapshot in `data/snapshots/`, the same tables can be rebuilt offline:
 
-See [the final evidence audit](../docs/final-evidence-audit-2026-10-29.md) for current coverage, metrics, limitations, and the release checklist.
+```bash
+python scripts/run_analysis.py --snapshot-id <snapshot-id> --offline --output-dir results/reproduced
+python scripts/build_demo.py --analysis-dir results/reproduced
+python scripts/verify_release.py --analysis-dir results/reproduced
+```
+
+The 2026-10-27 legacy exports are kept separately in
+[`../legacy_2026-10-27/`](../legacy_2026-10-27/) and must not be cited as
+current results. See [the final evidence audit](../../docs/final-evidence-audit-2026-10-29.md)
+for the verified figures and their limits.
