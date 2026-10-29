@@ -25,6 +25,7 @@ ARTIFACT_DESCRIPTIONS = {
     "multi_stock_significance.csv": "Approximate CAR inference with Holm-adjusted p-values.",
     "single_stock_event_study.csv": "Reliance subset of the generated multi-stock daily event-study output.",
     "covid_extreme_day_sensitivity.csv": "EVT002 extreme-day diagnostics; partial-window sums are not reported as comparable CARs.",
+    "event_timing_sensitivity.csv": "Alternative first-session versus following-session CARs for events with unresolved timing metadata.",
 }
 
 
@@ -47,7 +48,7 @@ def build_demo_dashboard(analysis_dir: str | Path, output_path: str | Path | Non
         "event_master.csv", "multi_stock_event_study.csv", "multi_stock_car.csv",
         "multi_stock_significance.csv", "cross_stock_consistency.csv",
         "event_window_audit.csv", "event_level_audit.csv", "event_pair_overlap_audit.csv",
-        "event_relationship_highlights.csv",
+        "event_relationship_highlights.csv", "event_timing_sensitivity.csv",
         "event_trading_results.csv", "sample_performance.csv",
         "transaction_cost_sensitivity.csv", "covid_extreme_day_sensitivity.csv",
     )
@@ -87,7 +88,7 @@ header{display:flex;gap:24px;align-items:flex-start;justify-content:space-betwee
 <section class="panel wide"><h2>Inference & uncertainty</h2><p class="small">Confidence intervals and Holm-adjusted p-values are approximate under the current model assumptions. Statistical significance is not causality.</p><div id="inference"></div></section>
 <section class="panel"><h2>Across-stock consistency</h2><p class="small">Do stocks move in the same direction around this event?</p><div id="consistency"></div></section>
 <section class="panel"><h2>Hypothetical trading diagnostic</h2><p class="small">Exploratory close-to-close rule; not an investable backtest.</p><div id="trading"></div><div id="costs" style="margin-top:12px"></div></section>
-<section class="panel wide"><h2>Event register</h2><div id="eventRegister"></div></section>\n<section class="panel wide"><h2>Event dependence & independence audit</h2><p class="small">Temporal overlap is calculated on trading sessions. Shared episode IDs and categories are metadata-based clustering warnings—not evidence of causality. Pending source/timing checks remain review cautions.</p><div id="eventDependenceAudit"></div></section>
+<section class="panel wide"><h2>Event register</h2><div id="eventRegister"></div></section>\n<section class="panel wide"><h2>Event dependence & independence audit</h2><p class="small">Temporal overlap is calculated on trading sessions. Shared episode IDs and categories are metadata-based clustering warnings—not evidence of causality. Pending source/timing checks remain review cautions.</p><div id="eventDependenceAudit"></div></section>\n<section class="panel wide"><h2>Event timing sensitivity</h2><p class="small">For events with unresolved timing metadata, compare the first session on or after the announcement date with the following session. If the announcement date was not a trading session, the first scenario is the next available session—not a same-day reaction. This is a robustness diagnostic, not an automatic date correction.</p><div id="eventTimingSensitivity"></div></section>
 <section class="panel wide"><h2>Data provenance & interpretation limits</h2><div id="provenance"></div><div class="noteBox">Daily data cannot isolate intraday reactions to market-hours announcements. The sample contains only a small, hand-selected set of events; overlapping news and shared macro episodes weaken independence. Do not interpret these associations as causal effects or future returns.</div></section>
 </div><div class="footer">EventEcho research prototype · Data provider and timestamps are recorded in the manifest. Confirm event timing and primary sources before presenting results. No investment advice.</div>
 <script id="eventecho-data" type="application/json">__PAYLOAD__</script>
@@ -175,6 +176,10 @@ $("eventDependenceAudit").innerHTML='<h3>Selected event diagnostics</h3>'+table(
 var pairRows=pairs.filter(function(r){return !q.e||r.event_id_a===q.e||r.event_id_b===q.e;});
 $("eventDependenceAudit").innerHTML+='<h3 style="margin-top:14px">Pairwise event relationships</h3>'+table(["Event A","Event B","Shared sessions","Shared episode","Same category","Flags","Explanation"],pairRows.map(function(r){return [esc(r.event_id_a),esc(r.event_id_b),esc(r.overlapping_session_count),String(r.shared_episode_id).toLowerCase()==="true"?"Yes":"No",String(r.same_category).toLowerCase()==="true"?"Yes":"No",esc(r.overlap_types),esc(r.explanation)];}));
 }
+function eventTimingSensitivity(){
+var q=selected(),rows=(d["event_timing_sensitivity.csv"]||[]).filter(function(r){return (!q.e||r.event_id===q.e)&&(!q.s||q.s==="all"||r.stock===q.s)&&(!q.w||r.window===q.w);});
+$("eventTimingSensitivity").innerHTML=table(["Event","Stock","Window","Scenario","Scenario Day 0","Recorded Day 0","Scenario CAR","Recorded CAR","Delta vs recorded","Announcement date is session"],rows.map(function(r){return [esc(r.event_id),esc(r.stock),esc(r.window),esc(r.scenario),esc(r.scenario_effective_date),esc(r.recorded_effective_event_date),signed(r.scenario_CAR_pct),signed(r.recorded_CAR_pct),signed(r.delta_vs_recorded_CAR_pct),String(r.announcement_date_is_trading_session).toLowerCase()==="true"?"Yes":"No"];}));
+}
 function provenance(){
 var p=m.input_data_provenance||{},checks=m.input_checksums_sha256||{};
 $("provenance").innerHTML='<div class="tablewrap"><table><tbody>'+
@@ -189,7 +194,7 @@ $("metrics").innerHTML=metric("Historical events",m.event_count||events.length,"
 metric("Stock-event-day rows",obs.toLocaleString(),"Actual, expected and abnormal returns")+
 metric("CAR estimates",carCount.toLocaleString(),"Three windows where complete")+
 metric("Holm-significant in selected event",significant.toString(),"Of "+testRows.length+" tests in current event filter");
-heatmap();eventDetail();chart();inference();consistency();trading();register();eventDependenceAudit();provenance();
+heatmap();eventDetail();chart();inference();consistency();trading();register();eventDependenceAudit();eventTimingSensitivity();provenance();
 }
 ["eventSelect","stockSelect","windowSelect","sampleSelect"].forEach(function(id){$(id).addEventListener("change",render);});
 render();
