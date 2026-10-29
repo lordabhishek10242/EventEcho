@@ -44,6 +44,7 @@ from src.sensitivity import (  # noqa: E402
 from src.statistics import event_study_significance  # noqa: E402
 from src.clustered_inference import clustered_strategy_inference  # noqa: E402
 from src.estimation_sensitivity import estimation_window_sensitivity  # noqa: E402
+from src.robustness_ledger import build_robustness_evidence_ledger  # noqa: E402
 from src.trading import event_portfolio_returns, simulate_trades, summarize_samples  # noqa: E402
 
 LOGGER = logging.getLogger("eventecho")
@@ -214,6 +215,9 @@ def run_analysis(
         "multi_stock_significance.csv": significance,
         "estimation_window_sensitivity.csv": estimation_window_details,
         "estimation_window_sensitivity_summary.csv": estimation_window_summary,
+        "robustness_evidence_ledger.csv": build_robustness_evidence_ledger(
+            estimation_window_details, events, event_window_audit, event_level_audit
+        ),
         "single_stock_event_study.csv": _single_stock_export(event_study, "RELIANCE"),
     }
     if not covid_sensitivity.empty:

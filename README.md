@@ -71,6 +71,10 @@ The CLI refuses offline runs without local prices, fails clearly if an explicitl
 
 The new `notebooks/EventEcho.ipynb` displays the supplied archived tables for review. The original notebook is retained unchanged at `notebook/notebook5b4a79ed78.ipynb`; its hardcoded `/kaggle/working` export location applies only to its original execution environment.
 
+## Robustness evidence ledger
+
+`robustness_evidence_ledger.csv` consolidates the 60/100/150-session sensitivity results at the event-stock-window level. It distinguishes HAC-Holm significance that survives all three estimation lengths from findings that appear only under some specifications. It also carries configured event-window overlap, shared-episode, and timing/source review flags so statistical stability is not mistaken for clean attribution. These flags are not a complete confounder census, and stable significance is not causal proof.
+
 ## Estimation-window robustness
 
 The run also exports `estimation_window_sensitivity.csv` and `estimation_window_sensitivity_summary.csv`. The market model is re-estimated with 60, 100, and 150 pre-event sessions, holding the event gap and event windows fixed. The dashboard reports CAR correlation and absolute CAR changes versus the 100-session baseline, plus conventional and HAC Holm-significance counts for each specification. Holm correction is applied within each specification; the comparison is a pre-specified robustness check, not a search for the most favorable p-value.
