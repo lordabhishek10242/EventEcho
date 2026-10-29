@@ -47,6 +47,8 @@ def test_macro_economic_and_industry_events_expand_coverage_without_leaking_into
         "EVT017": ("eci.gov.in", "Election / Political Event", HOLDOUT_EVENT_IDS),
         "EVT018": ("pib.gov.in", "Economic Release", HOLDOUT_EVENT_IDS),
         "EVT019": ("hindenburgresearch.com", "Major Industry Event", DEVELOPMENT_EVENT_IDS),
+        "EVT020": ("pib.gov.in", "Government Policy / Budget", HOLDOUT_EVENT_IDS),
+        "EVT021": ("pib.gov.in", "Economic Release", HOLDOUT_EVENT_IDS),
     }
     for event_id, (domain, category, expected_split) in expected.items():
         row = by_id.loc[event_id]
@@ -58,7 +60,7 @@ def test_macro_economic_and_industry_events_expand_coverage_without_leaking_into
         assert pd.notna(row["verification_status"])
         assert pd.notna(row["notes"])
 
-    assert len(events) == 19
+    assert len(events) == 21
     assert "ADANI_ENTERPRISES" in STOCK_TICKERS
     assert "ADANI_PORTS" in STOCK_TICKERS
     adani = by_id.loc["EVT019"]
@@ -86,3 +88,21 @@ def test_2024_election_counting_event_uses_primary_eci_press_note():
     assert row["event_date"] == "2024-06-04"
     assert "counting day" in row["headline"].lower()
     assert "Election Commission of India" in row["source_name"]
+
+
+def test_2024_budget_and_q1_gdp_events_have_primary_sources_and_conservative_timing():
+    events = pd.read_csv(ROOT / "results" / "event_master.csv").set_index("event_id")
+    budget = events.loc["EVT020"]
+    assert budget["event_date"] == "2024-07-23"
+    assert budget["effective_event_date"] == "2024-07-23"
+    assert "PRID=2036078" in budget["source_url"]
+    assert "not modeled" in budget["event_time"].lower()
+    assert "next-session alignment" in budget["notes"].lower()
+
+    gdp = events.loc["EVT021"]
+    assert gdp["event_date"] == "2024-08-30"
+    assert gdp["effective_event_date"] == "2024-09-02"
+    assert "PRID=2050139" in gdp["source_url"]
+    assert "17:30" in gdp["event_time"]
+    assert "after-close" in gdp["notes"].lower()
+    assert gdp["episode_id"] == "GDP_RELEASE_Q1FY25"
