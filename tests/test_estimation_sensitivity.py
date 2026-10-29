@@ -30,7 +30,8 @@ def test_estimation_window_sensitivity_includes_baseline_and_alternatives():
     assert (summary["tests_available"] == 12).all()
     base = details[details["estimation_sessions"] == 100]
     assert np.allclose(base["CAR_delta_vs_100_pct"], 0.0)
-    assert base["conventional_holm_significant_tests"].sum() == base["significant_after_holm_5pct"].sum()
+    base_summary = summary[summary["estimation_sessions"] == 100].iloc[0]
+    assert base_summary["conventional_holm_significant_tests"] == base["significant_after_holm_5pct"].sum()
 
 
 def test_estimation_window_sensitivity_requires_100_session_reference():
@@ -42,4 +43,4 @@ def test_estimation_window_sensitivity_requires_100_session_reference():
 def test_estimation_window_sensitivity_rejects_invalid_lengths():
     returns, events = _data()
     with pytest.raises(ValueError):
-        estimation_window_sensitivity(returns, events, window_lengths=(60, 100, 2))
+        estimation_window_sensitivity(returns, events, ["A"], window_lengths=(60, 100, 2))
