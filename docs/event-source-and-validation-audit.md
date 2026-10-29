@@ -41,7 +41,7 @@ Scope: the 21-event master in `results/event_master.csv`, daily-close event-stud
 1. **Do not equate a source URL with verified timing.** Store separate date-verification and time-verification fields; exact timestamp must be supported by the source.
 2. **After-close releases:** when event information arrives after the regular close, Day 0 must be the next trading session. Never use the pre-release same-day close as the reaction.
 3. **Intraday events:** daily OHLC/close data cannot identify the sequence or intraday reaction. Mark the day as event-exposed and report a next-session sensitivity; do not imply precise causal attribution.
-4. **Overlapping events:** EVT007 and EVT019 overlap; EVT017 and EVT018 overlap; EVT020's window overlaps other macro/political windows. Clustered inference handles some dependence but cannot disentangle event attribution.
+4. **Overlapping events (computed from the ±5-session CAR windows in the current run):** EVT007–EVT019; all pairs among EVT010, EVT011, EVT012 and EVT013 (EVT011 and EVT012 share Day 0, 2025-04-21); EVT017–EVT018. EVT020 and EVT021 overlap other events only in the wider −20:+20 volatility windows. Clustered inference handles some dependence but cannot disentangle event attribution.
 5. **Earnings cross-section:** for EVT010–EVT014, the focal issuer is the direct event target. Other stocks are peer/spillover observations, not direct issuer effects.
 6. **Hindenburg claims:** describe these as claims made by the report publisher. Do not present allegations as adjudicated facts.
 7. **Small, selected event set:** 21 selected events and seven retrospectively chosen stocks do not support broad population-level conclusions.
@@ -62,9 +62,9 @@ Scope: the 21-event master in `results/event_master.csv`, daily-close event-stud
 - [ ] Verify exact RBI release times for EVT003–EVT005 and EVT007–EVT009; otherwise leave time unresolved.
 - [ ] Verify whether the exact Hindenburg publication timestamp can be independently supported; do not infer it from first market reaction.
 - [ ] Verify exchange/company filing timestamps for EVT013–EVT014 and distinguish Infosys' management-call time from its results-release time.
-- [ ] Keep both same-session and next-session timing scenarios visible for EVT006, EVT013, EVT014, EVT016, EVT017, EVT019, and EVT020 where daily data cannot identify the arrival time.
-- [ ] Review event windows and realized-volatility windows jointly; flag overlapping events before narrating individual effects.
-- [ ] Run tests and the historical rebuild after any metadata or alignment change, and inspect the latest artifact rather than stale archived CSVs.
+- [x] Keep both same-session and next-session timing scenarios visible for EVT006, EVT013, EVT014, EVT016, EVT017, EVT019, and EVT020 where daily data cannot identify the arrival time (exported in `event_timing_sensitivity.csv`; EVT020 added in the final release).
+- [x] Review event windows and realized-volatility windows jointly; flag overlapping events before narrating individual effects (dashboard and final evidence audit show both).
+- [x] Run tests and the historical rebuild after any metadata or alignment change, and inspect the latest outputs rather than stale archived CSVs (see `docs/final-evidence-audit-2026-10-29.md`).
 - [ ] In the final presentation, separate statistical evidence, robustness, plausible explanations, and causal claims.
 
 This audit records what is currently supported and what remains unresolved; it does not silently rewrite event dates or assert that every source timestamp has been verified.

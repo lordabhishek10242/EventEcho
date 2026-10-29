@@ -129,6 +129,9 @@ def event_timing_sensitivity(
         "pending", "unverified", "not_in_master", "not in master",
         "check_required", "required", "assumption", "review",
         "not_release_timestamp", "not separately confirmed", "not reported",
+        # Market-hours events (for example a budget speech) cannot be isolated
+        # with daily closes, so their next-session alternative is also shown.
+        "not_isolatable",
     )
     after_market_tokens = (
         "after trading hours", "after-market", "after market",
