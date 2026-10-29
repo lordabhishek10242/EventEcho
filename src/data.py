@@ -76,7 +76,7 @@ def download_prices(
     end: str,
     benchmark_ticker: str,
 ) -> tuple[pd.DataFrame, pd.Series]:
-    """Download adjusted stock closes and the benchmark price close.
+    """Download stock close prices and the benchmark price close on a price-return basis.
 
     yfinance is imported lazily so synthetic/unit-test workflows have no network
     or data-provider dependency.
@@ -91,7 +91,7 @@ def download_prices(
     for label, ticker in tickers.items():
         try:
             raw = yf.download(ticker, start=start, end=end, auto_adjust=False, progress=False)
-            stocks[label] = _extract_price_column(raw, "Adj Close", ticker).rename(label)
+            stocks[label] = _extract_price_column(raw, "Close", ticker).rename(label)
         except Exception as exc:  # Provider failures vary by ticker and network state.
             LOGGER.warning("Could not download %s (%s): %s", label, ticker, exc)
             failures.append(label)

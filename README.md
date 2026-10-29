@@ -8,6 +8,7 @@ This repository includes a modular Python implementation, the original research 
 
 - [Problem-statement coverage matrix](docs/problem-statement-coverage.md) maps each requirement to code/output evidence and defines final acceptance checks.
 - [Event-source and validation audit](docs/event-source-and-validation-audit.md) distinguishes verified event dates from unresolved timestamps, documents daily-close timing limitations, and records the remaining high-priority checks.
+- [Event timing, overlap, and return-convention policy](docs/event-timing-overlap-return-convention.md) defines timestamp evidence labels, overlap treatment, and the consistent price-return convention.
 
 These audits deliberately preserve unresolved timestamps as unresolved rather than inferring them from observed stock-price moves.
 
@@ -17,7 +18,7 @@ These audits deliberately preserve unresolved timestamps as unresolved rather th
 - Benchmark: Nifty 50 (`^NSEI`) close, a **price index**, not a total-return index.
 - Intended price period: 2016-01-01 through 2025-12-31 (provider end date is exclusive); actual dates depend on data availability.
 - Events: 21 selected records in the expanded event master spanning policy/tax reform, monetary policy, corporate earnings, election results, GDP release, and a company-specific industry event. This remains a small, selected sample rather than a representative event population. Records are selected by event relevance and source availability, not by observed return direction.
-- Stock returns in the original code use Yahoo Finance `Adj Close`; benchmark returns use `Close`. Dividend adjustment conventions therefore differ, and the benchmark omits reinvested dividends.
+- The current acquisition uses Yahoo Finance `Close` for both stocks and the Nifty 50 `Close` price index. This consistent price-return convention excludes dividends on both sides; it is not a total-return comparison. Historical runs generated before this change used stock `Adj Close` and are superseded for comparisons involving the return convention.
 
 Event dates, effective dates, source links, episode IDs, timing confidence, and notes are recorded in `results/event_master.csv`. For corporate-earnings events, `affected_stocks` identifies the focal issuer; the analysis still reports the configured seven-stock cross-section to inspect possible peer/sector spillovers. Those peer responses must not be described as direct issuer effects. Five FY2025 corporate earnings records have been added from company-primary sources, alongside GST rollout, the 2019 and 2024 Lok Sabha result dates, the Q4 FY2023-24 GDP release, and the Hindenburg Research report on Adani. TCS explicitly schedules its earnings release after trading hours; Infosys provides an after-close management-event schedule on 2025-04-17; Good Friday (2025-04-18) means its next regular session is 2025-04-21; HDFC Bank's board approval occurred on a Saturday. For Reliance and ITC the cited source confirms the release date but not the exact publication time, so next-session alignment is provisional and must be tested against same-day alignment before making event-specific claims. A source URL and recorded verification status are provenance fields, not independent verification by this refactor. In particular, daily prices cannot identify the intraday reaction to announcements during market hours.
 
@@ -174,7 +175,7 @@ No project license was assigned because the intended license was not provided. T
 - Nine hand-selected events are too few and heterogeneous for generalization; episode-level dependence reduces effective sample size.
 - Survivorship and selection bias are possible: the seven-stock universe is fixed retrospectively and not a point-in-time index constituent universe.
 - Event dates/timing and source descriptions require independent primary-source review. Market-hours events need intraday prices for clean reaction timing.
-- Adjusted stock close and benchmark price close have different dividend conventions.
+- Stock Close and benchmark price-index Close both exclude dividends; this is a price-return comparison, not a total-return comparison.
 - The market model is a one-factor OLS model; robust inference and event-induced volatility methods would be useful improvements.
 - Overlapping event windows should be pre-specified, flagged, and addressed in inference rather than considered independent tests.
 - Execution, corporate actions, taxes, and realistic portfolio sizing are absent from the trading simulation.
