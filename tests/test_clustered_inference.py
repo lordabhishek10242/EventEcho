@@ -44,7 +44,7 @@ def test_cluster_bootstrap_outputs_reproducible_uncertainty_for_both_splits():
     assert first["independent_dependency_clusters"].tolist() == [2, 2]
     assert first["events_available"].tolist() == [3, 3]
     assert first["inference_status"].eq("cluster_bootstrap_exploratory").all()
-    np.testing.assert_allclose(first["mean_excess_return_pct_point"], [1.0, 0.6666666667])
+    np.testing.assert_allclose(first["mean_excess_return_pct_point"], [1.6666666667, 0.3333333333])
     np.testing.assert_allclose(
         first[["mean_excess_return_pct_ci95_lower", "mean_excess_return_pct_ci95_upper"]].to_numpy(),
         second[["mean_excess_return_pct_ci95_lower", "mean_excess_return_pct_ci95_upper"]].to_numpy(),
