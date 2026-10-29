@@ -42,6 +42,10 @@ from .robust_tests import EVENT_DAYS, EventUnit, group_tests
 from .statistics import car_significance
 
 HOLDOUT_START = pd.Timestamp("2023-01-01")
+# Placebo: the same stocks, 30 sessions after each results day (mid-quarter).
+# Fixed before the study was run. Shows the variance ratio on ordinary days,
+# which is above 1 because daily returns have fat tails and volatility drifts.
+PLACEBO_SHIFT_SESSIONS = 30
 MAIN_WINDOW = "CAR_-1_+1"
 SEED = 2026
 REQUIRED_COLUMNS = {"earnings_id", "stock", "fiscal_quarter", "announcement_date", "source_url"}
@@ -264,7 +268,49 @@ def run_earnings_study(
     replication = _replication(summary)
     if not replication.empty:
         outputs["earnings_replication.csv"] = replication
+    placebo = _placebo(returns, meta, estimation_sessions, gap_sessions, radius)
+    if not placebo.empty:
+        outputs["earnings_placebo.csv"] = placebo
     return outputs
+
+
+def _placebo(
+    returns: pd.DataFrame, meta: pd.DataFrame, estimation_sessions: int, gap_sessions: int, radius: int
+) -> pd.DataFrame:
+    """Variance ratio on pseudo-event days that are not results days.
+
+    Each real Day 0 is moved forward by PLACEBO_SHIFT_SESSIONS sessions. A
+    pseudo-event is dropped when its (-5,+5) window would touch any real
+    results window of the same stock, so the placebo never contains results.
+    """
+    sessions = pd.DatetimeIndex(returns.index).tz_localize(None).normalize()
+    real_positions: dict[str, list[int]] = {}
+    for stock, day in zip(meta["stock"], meta["event_date"]):
+        real_positions.setdefault(stock, []).append(sessions.get_loc(day))
+    rows, dropped = [], 0
+    for earnings_id, stock, day in zip(meta["earnings_id"], meta["stock"], meta["event_date"]):
+        position = sessions.get_loc(day) + PLACEBO_SHIFT_SESSIONS
+        if position + radius >= len(sessions):
+            dropped += 1
+            continue
+        if any(abs(position - other) <= 2 * radius for other in real_positions[stock]):
+            dropped += 1
+            continue
+        rows.append({"unit_id": f"P_{earnings_id}", "stock": stock, "event_date": sessions[position]})
+    table = pd.DataFrame(rows)
+    if table.empty:
+        return pd.DataFrame()
+    units, _, _ = build_event_units(returns, table, estimation_sessions, gap_sessions, radius)
+    clusters = window_clusters({u.unit_id: u.event_position for u in units}, radius)
+    groups = [("all", "All placebo days", units)] + [
+        ("stock", stock, [u for u in units if u.stock == stock]) for stock in sorted({u.stock for u in units})
+    ]
+    out = []
+    for index, (group_type, group, members) in enumerate(groups):
+        for row in group_tests(members, CAR_WINDOWS, clusters, SEED + 500 + 10 * index):
+            out.append({"group_type": group_type, "group": group, "shift_sessions": PLACEBO_SHIFT_SESSIONS,
+                        "dropped_for_overlap_or_range": dropped, **row})
+    return pd.DataFrame(out)
 
 
 def _coverage(calendar: pd.DataFrame, skipped: pd.DataFrame) -> pd.DataFrame:

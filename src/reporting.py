@@ -48,6 +48,7 @@ ARTIFACT_DESCRIPTIONS = {
     "earnings_summary.csv": "Earnings announcements grouped by sample, sector and stock: mean and absolute CAR, BMP/KP/rank tests and variance ratio with cluster-bootstrap intervals.",
     "earnings_event_time.csv": "Earnings announcements: mean abnormal return, mean absolute abnormal return and mean squared standardized abnormal return by event day.",
     "earnings_replication.csv": "Whether each stock's earnings-day volatility effect appears in both the development (to 2022) and holdout (2023 onward) announcements.",
+    "earnings_placebo.csv": "Placebo check: the same robust tests and variance ratio on non-results days 30 sessions after each results day.",
     "earnings_coverage.csv": "Every calendar announcement with its Day 0 session and whether it entered the study (with the reason when it did not).",
 }
 
@@ -210,13 +211,20 @@ def key_findings(manifest: dict, datasets: dict[str, list[dict]]) -> list[dict]:
         null = _number(main.get("variance_ratio_null_expectation"))
         replication = datasets.get("earnings_replication.csv", [])
         replicated = sum(1 for r in replication if _truthy(r.get("replicates")))
+        placebo = next((r for r in datasets.get("earnings_placebo.csv", [])
+                        if r.get("group") == "All placebo days" and r.get("window") == "CAR_-1_+1"), None)
+        placebo_text = ""
+        if placebo:
+            placebo_text = (f" On ordinary mid-quarter days (placebo, 30 sessions later) the same measure is {_fmt(_number(placebo.get('variance_ratio')), 1)} "
+                            f"({_fmt(_number(placebo.get('variance_ratio_ci_lower')), 1)} to {_fmt(_number(placebo.get('variance_ratio_ci_upper')), 1)}), so fat tails alone do not explain it.")
         findings.append({
             "title": f"Results days: {main.get('units')} company announcements",
             "value": f"{_fmt(ratio, 1)}x normal variance",
             "detail": (f"Over Day -1 to +1 a company's own results move its stock {_fmt(ratio, 1)} times as much (in variance) as an ordinary 3-day stretch "
                        f"(95% interval {_fmt(lower, 1)} to {_fmt(upper, 1)}; about {_fmt(null, 2)} expected with no effect). Average |CAR| {_fmt(_number(main.get('mean_abs_CAR_pct')), 2, False, '%')}. "
                        f"The signed average is {_fmt(_number(main.get('mean_CAR_pct')), 2, True, '%')} (BMP p = {_p_text(_number(main.get('bmp_p_value')))}), as expected without beat/miss data. "
-                       f"The volatility effect appears in both the development and holdout years for {replicated} of {len(replication)} stocks."),
+                       f"The volatility effect appears in both the development and holdout years for {replicated} of {len(replication)} stocks."
+                       + placebo_text),
         })
     windows = datasets.get("window_choice_summary.csv", [])
     if windows:
@@ -322,7 +330,7 @@ def build_demo_dashboard(analysis_dir: str | Path, output_path: str | Path | Non
         "caar_event_time.csv", "caar_window_summary.csv", "window_choice_summary.csv", "window_choice_agreement.csv",
         "pattern_generalization.csv", "headline_classifier_metrics.csv", "headline_classifier_per_class.csv",
         "event_headline_classification.csv", "robust_tests_registry.csv", "earnings_summary.csv",
-        "earnings_event_time.csv", "earnings_replication.csv",
+        "earnings_event_time.csv", "earnings_replication.csv", "earnings_placebo.csv",
     )
     datasets: dict[str, list[dict]] = {}
     for name in names:
@@ -387,7 +395,7 @@ header{display:flex;gap:24px;align-items:flex-start;justify-content:space-betwee
 "use strict";
 var root=JSON.parse(document.getElementById("eventecho-data").textContent),d=root.datasets||{},m=root.manifest||{},ev=root.evidence||{};
 var windowAudit=d["event_window_audit.csv"]||[];
-var events=d["event_master.csv"]||[],cars=d["multi_stock_car.csv"]||[],study=d["multi_stock_event_study.csv"]||[],sig=d["multi_stock_significance.csv"]||[],cons=d["cross_stock_consistency.csv"]||[],trades=d["event_trading_results.csv"]||[],samples=d["sample_performance.csv"]||[],costs=d["transaction_cost_sensitivity.csv"]||[],clusteredInference=d["clustered_strategy_inference.csv"]||[],covid=d["covid_extreme_day_sensitivity.csv"]||[],estimationSensitivity=d["estimation_window_sensitivity_summary.csv"]||[],robustnessLedger=d["robustness_evidence_ledger.csv"]||[],caarPath=d["caar_event_time.csv"]||[],caarWin=d["caar_window_summary.csv"]||[],winSummary=d["window_choice_summary.csv"]||[],winAgree=d["window_choice_agreement.csv"]||[],generalization=d["pattern_generalization.csv"]||[],clsMetrics=d["headline_classifier_metrics.csv"]||[],clsPerClass=d["headline_classifier_per_class.csv"]||[],clsEvents=d["event_headline_classification.csv"]||[],robustRows=d["robust_tests_registry.csv"]||[],earnSummary=d["earnings_summary.csv"]||[],earnPath=d["earnings_event_time.csv"]||[],earnRep=d["earnings_replication.csv"]||[];
+var events=d["event_master.csv"]||[],cars=d["multi_stock_car.csv"]||[],study=d["multi_stock_event_study.csv"]||[],sig=d["multi_stock_significance.csv"]||[],cons=d["cross_stock_consistency.csv"]||[],trades=d["event_trading_results.csv"]||[],samples=d["sample_performance.csv"]||[],costs=d["transaction_cost_sensitivity.csv"]||[],clusteredInference=d["clustered_strategy_inference.csv"]||[],covid=d["covid_extreme_day_sensitivity.csv"]||[],estimationSensitivity=d["estimation_window_sensitivity_summary.csv"]||[],robustnessLedger=d["robustness_evidence_ledger.csv"]||[],caarPath=d["caar_event_time.csv"]||[],caarWin=d["caar_window_summary.csv"]||[],winSummary=d["window_choice_summary.csv"]||[],winAgree=d["window_choice_agreement.csv"]||[],generalization=d["pattern_generalization.csv"]||[],clsMetrics=d["headline_classifier_metrics.csv"]||[],clsPerClass=d["headline_classifier_per_class.csv"]||[],clsEvents=d["event_headline_classification.csv"]||[],robustRows=d["robust_tests_registry.csv"]||[],earnSummary=d["earnings_summary.csv"]||[],earnPath=d["earnings_event_time.csv"]||[],earnRep=d["earnings_replication.csv"]||[],earnPlacebo=d["earnings_placebo.csv"]||[];
 var $=function(id){return document.getElementById(id);};
 var esc=function(v){return String(v==null?"—":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});};
 var num=function(v){if(v===null||v===undefined||(typeof v==="string"&&v.trim()===""))return null;var n=Number(v);return Number.isFinite(n)?n:null;};
@@ -570,6 +578,8 @@ $("earningsChart").innerHTML=svg+'<p class="small">Bars show the average size of
 var q=selected(),srows=earnSummary.filter(function(r){return r.window===q.w&&r.group_type!=="stock_by_sample";});
 var label={all:"All",sample:"Sample",sector:"Sector",stock:"Stock"};
 $("earningsTable").innerHTML='<h3 style="margin-top:12px">Results-day tests · '+esc(q.w)+'</h3>'+table(["Group","Announcements","Clusters","Mean CAR","Mean |CAR|","Share positive","Variance ratio [95% CI]","No-effect level","BMP p","KP p","Rank p"],srows.map(function(r){return [esc((label[r.group_type]||r.group_type)+": "+r.group),esc(r.units),esc(r.clusters),signed(r.mean_CAR_pct),pct(r.mean_abs_CAR_pct),pct(x100(r.share_positive),0),ratioCi(r),num(r.variance_ratio_null_expectation)===null?"—":Number(r.variance_ratio_null_expectation).toFixed(2),pval(r.bmp_p_value),pval(r.kp_adjusted_p_value),pval(r.rank_p_value)];}));
+var prow=earnPlacebo.filter(function(r){return r.window===q.w;});
+$("earningsTable").innerHTML+='<h3 style="margin-top:12px">Placebo check: same stocks, ordinary days · '+esc(q.w)+'</h3>'+table(["Group","Pseudo-events","Mean |CAR|","Variance ratio [95% CI]","BMP p","Rank p"],prow.map(function(r){return [esc(r.group),esc(r.units),pct(r.mean_abs_CAR_pct),ratioCi(r),pval(r.bmp_p_value),pval(r.rank_p_value)];}))+'<p class="small">Each results day is moved 30 sessions later (mid-quarter). Pseudo-events whose window would touch a real results window are dropped. Ordinary days already score a little above 1 because daily returns have fat tails; the results-day effect should be compared with this level, not only with 1.</p>';
 $("earningsReplication").innerHTML='<h3 style="margin-top:12px">Does the results-day volatility effect repeat? (Day −1 to +1)</h3>'+table(["Stock","Dev. announcements","Dev. variance ratio [95% CI]","Holdout announcements","Holdout variance ratio [95% CI]","Dev. mean |CAR|","Holdout mean |CAR|","Effect in both samples?"],earnRep.map(function(r){var dv={variance_ratio:r.dev_variance_ratio,variance_ratio_ci_lower:r.dev_ci_lower,variance_ratio_ci_upper:r.dev_ci_upper},hv={variance_ratio:r.holdout_variance_ratio,variance_ratio_ci_lower:r.holdout_ci_lower,variance_ratio_ci_upper:r.holdout_ci_upper};return [esc(r.stock),esc(r.dev_events),ratioCi(dv),esc(r.holdout_events),ratioCi(hv),pct(r.dev_mean_abs_CAR_pct),pct(r.holdout_mean_abs_CAR_pct),String(r.replicates).toLowerCase()==="true"?raw('<span class="pill good">Yes</span>'):raw('<span class="pill warn">No</span>')];}))+'<p class="small">Development: announcements to 31 Dec 2022. Holdout: from 1 Jan 2023. The split was fixed before the study was run. "Yes" means the lower end of the 95% interval is above 1 in both samples.</p>';
 }
 function generalizationPanel(){

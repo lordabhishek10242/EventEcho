@@ -88,6 +88,9 @@ def test_earnings_study_finds_injected_volatility_but_no_signed_effect():
     assert tcs_path.loc[0, "mean_abs_AR_pct"] > 3 * tcs_path.loc[-3, "mean_abs_AR_pct"]
     replication = out["earnings_replication.csv"].set_index("stock")
     assert bool(replication.loc["TCS", "replicates"]) and not bool(replication.loc["ITC", "replicates"])
+    placebo = out["earnings_placebo.csv"].set_index(["group", "window"])
+    # Placebo days carry no injected shocks, so TCS looks ordinary there.
+    assert placebo.loc[("TCS", "CAR_-1_+1"), "variance_ratio_ci_upper"] < tcs["variance_ratio_ci_lower"]
 
 
 def test_announcements_without_enough_history_are_listed_not_dropped_silently():

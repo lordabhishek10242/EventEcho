@@ -303,6 +303,13 @@ def _verify_earnings_and_robust(directory: Path, manifest: dict, checks: Checks)
     ordered = summary.dropna(subset=["variance_ratio_ci_lower"])
     checks.check("earnings variance-ratio intervals are ordered",
                  bool((ordered["variance_ratio_ci_lower"] <= ordered["variance_ratio_ci_upper"]).all()))
+    if (directory / "earnings_placebo.csv").is_file():
+        placebo = _read(directory, "earnings_placebo.csv")
+        top = placebo[placebo["group"] == "All placebo days"]
+        checks.check("placebo covers all windows and never exceeds the real announcements",
+                     set(top["window"]) == set(CAR_WINDOWS) and int(top["units"].max()) <= len(included))
+    else:
+        checks.check("placebo output present", False)
     if (directory / "earnings_replication.csv").is_file():
         replication = _read(directory, "earnings_replication.csv")
         checks.check("earnings replication has one row per studied stock",
