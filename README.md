@@ -81,7 +81,9 @@ $$R_{i,t} = \alpha_i + \beta_i R_{m,t} + \epsilon_{i,t}.$$
 
 Expected return is $\widehat{R}_{i,t} = \hat{\alpha}_i + \hat{\beta}_i R_{m,t}$ and abnormal return is $AR_{i,t} = R_{i,t} - \widehat{R}_{i,t}$. CAR is the sum of daily abnormal returns within the selected session window. Windows are (−1,+1), (−3,+3), and (−5,+5). A CAR is missing rather than silently partial if any required event-window observation is unavailable.
 
-The effective date is the designated Day 0 from the event master; an effective date that is not an available trading session is an error in the analysis path rather than silently shifted. Announcement times need separate verification. The supplied event table includes episode identifiers and overlap flags, but users should inspect shared episodes and overlapping announcements before treating tests as independent.\n\nRealized volatility is measured separately from market-model residual volatility. Stock and benchmark realized volatility use trading-session windows −20:−1 and +1:+20, excluding Day 0, with annualization by √252. Category summaries average stock responses within an event and related events within an episode; overlapping windows are excluded. Numeric category summaries require at least three independent episodes.
+The effective date is the designated Day 0 from the event master; an effective date that is not an available trading session is an error in the analysis path rather than silently shifted. Announcement times need separate verification. The supplied event table includes episode identifiers and overlap flags, but users should inspect shared episodes and overlapping announcements before treating tests as independent.
+
+Realized volatility is measured separately from market-model residual volatility. Stock and benchmark realized volatility use trading-session windows −20:−1 and +1:+20, excluding Day 0, with annualization by √252. Category summaries average stock responses within an event and related events within an episode; overlapping windows are excluded. Numeric category summaries require at least three independent episodes.
 
 ## Inference and Sensitivity
 
