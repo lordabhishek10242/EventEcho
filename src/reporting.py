@@ -20,7 +20,7 @@ ARTIFACT_DESCRIPTIONS = {
     "final_strategy_assessment.csv": "Selected headline trading metrics at the configured base cost.",
     "multi_stock_significance.csv": "Approximate CAR inference with Holm-adjusted p-values.",
     "single_stock_event_study.csv": "Reliance subset of the generated multi-stock daily event-study output.",
-    "covid_extreme_day_sensitivity.csv": "EVT002 CAR sensitivity after excluding high absolute market-return sessions.",
+    "covid_extreme_day_sensitivity.csv": "EVT002 extreme-day diagnostics; partial-window sums are not reported as comparable CARs.",
 }
 
 
