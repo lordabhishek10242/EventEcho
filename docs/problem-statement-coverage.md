@@ -24,7 +24,7 @@ This matrix maps the EventEcho problem statement to the current repository imple
 2. **Timing robustness:** daily-close prices cannot isolate intraday announcement effects; same-session/next-session sensitivity must be reviewed for uncertain events.
 3. **Holdout interpretation:** a positive point estimate is not sufficient when the dependence-aware confidence interval crosses zero.
 4. **Data provenance:** Yahoo Finance can revise historical prices; a repeatable workflow is not independent data verification.
-5. **Final narrative:** show the small sample, dependent episodes, selected stock universe, overlapping events, dividend convention mismatch, and trading-simulation simplifications.
+5. **Final narrative:** show the small sample, dependent episodes, selected stock universe, overlapping events, consistent price-return convention (dividends excluded), and trading-simulation simplifications.
 
 ## Submission acceptance checklist
 
