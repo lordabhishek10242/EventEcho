@@ -53,7 +53,7 @@ Scope: the 21-event master in `results/event_master.csv`, daily-close event-stud
 - Estimation-window sensitivity is already computed for 60, 100, and 150 sessions. Significance changes across specifications; stable significance is a robustness description, not causality.
 - HAC/Newey–West CAR inference is explicitly approximate and does not fully resolve cross-event dependence or event-induced variance.
 - The cluster bootstrap resamples connected event-window/episode clusters, but the number of clusters is small and clusters may be uneven.
-- Yahoo Finance prices are third-party and may be revised. A reproducible run is not the same as an independently verified or frozen data source. Stock adjusted close and Nifty price close have different dividend conventions.
+- Yahoo Finance prices are third-party and may be revised. A reproducible run is not the same as an independently verified or frozen data source. Current runs use stock Close and Nifty price-index Close consistently, excluding dividends on both sides. This is a price-return comparison, not total return; older runs using stock adjusted close are superseded for this convention.
 - The market model is a one-factor benchmark model. Market-wide and sector-wide confounds, point-in-time universe selection, intraday response, execution costs, and market impact remain limitations.
 
 ## Required actions before final submission
