@@ -1,6 +1,22 @@
 name: Recover frozen market snapshot
 
 on:
+  # Keep the dashboard and frozen-price analysis synchronized with material
+  # changes to the event registry or analysis methodology.
+  push:
+    branches: ["main"]
+    paths:
+      - "results/event_master.csv"
+      - "src/config.py"
+      - "src/data.py"
+      - "src/event_study.py"
+      - "src/statistics.py"
+      - "src/sensitivity.py"
+      - "src/event_audit.py"
+      - "src/reporting.py"
+      - "scripts/run_analysis.py"
+      - "scripts/acquire_market_snapshot.py"
+      - ".github/workflows/recover-market-snapshot.yml"
   workflow_dispatch:
     inputs:
       snapshot_id:
@@ -13,7 +29,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: eventecho-snapshot-${{ inputs.snapshot_id }}
+  group: eventecho-snapshot-${{ inputs.snapshot_id || 'eventecho_historical_2016_2025' }}
   cancel-in-progress: false
 
 jobs:
@@ -43,7 +59,7 @@ jobs:
         id: acquire
         continue-on-error: true
         env:
-          SNAPSHOT_ID: ${{ inputs.snapshot_id }}
+          SNAPSHOT_ID: ${{ inputs.snapshot_id || 'eventecho_historical_2016_2025' }}
         run: |
           python scripts/acquire_market_snapshot.py --snapshot-id "$SNAPSHOT_ID"
           python - <<'PY'
@@ -94,7 +110,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: eventecho-recovery-${{ inputs.snapshot_id }}
+          name: eventecho-recovery-${{ inputs.snapshot_id || 'eventecho_historical_2016_2025' }}
           path: |
             ${{ inputs.snapshot_id }}.tar.gz
             ${{ inputs.snapshot_id }}.tar.gz.sha256
