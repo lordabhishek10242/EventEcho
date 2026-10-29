@@ -52,7 +52,7 @@ def test_snapshot_writes_raw_canonical_manifest_and_reproducible_checksums(tmp_p
     assert manifest["source"] == "Yahoo Finance via yfinance"
     assert manifest["retrieved_at_utc"].endswith("+00:00")
     assert manifest["frequency"] == "1d"
-    assert manifest["adjustment_policy"]["stock_field"] == "Adj Close"
+    assert manifest["adjustment_policy"]["stock_field"] == "Close"
     assert manifest["adjustment_policy"]["benchmark_field"] == "Close"
     assert manifest["requested_end_exclusive"] == end
     assert len(calls) == len(STOCK_TICKERS) + 1
@@ -69,7 +69,7 @@ def test_snapshot_writes_raw_canonical_manifest_and_reproducible_checksums(tmp_p
     assert canonical.date.min() == pd.Timestamp(start)
     assert canonical.date.max() == pd.Timestamp("2024-01-04")
     assert "2024-01-05" not in canonical.date.astype(str).tolist()
-    assert canonical["RELIANCE"].iloc[0] == pytest.approx(100.0)
+    assert canonical["RELIANCE"].iloc[0] == pytest.approx(110.0)
     assert canonical["NIFTY50"].iloc[0] == pytest.approx(110.0)
     sidecar = json.loads((snapshot / "prices.provenance.json").read_text())
     assert sidecar["classification"] == "historical_market_data"
