@@ -28,7 +28,7 @@ HOLDING_SESSIONS = 3
 
 # Retained exactly from the supplied artifact manifest; do not infer split membership by row order.
 DEVELOPMENT_EVENT_IDS = ("EVT001", "EVT002", "EVT003", "EVT004", "EVT005", "EVT007")
-HOLDOUT_EVENT_IDS = ("EVT008", "EVT009", "EVT006")
+HOLDOUT_EVENT_IDS = ("EVT008", "EVT009", "EVT006", "EVT010", "EVT011", "EVT012", "EVT013", "EVT014")
 
 
 @dataclass(frozen=True)

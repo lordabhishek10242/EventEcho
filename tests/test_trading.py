@@ -54,13 +54,15 @@ def test_missing_benchmark_observations_are_excluded_from_outperformance_rate():
 def test_chronological_split_preserves_original_event_membership():
     events = pd.DataFrame({
         "event_id": list(DEVELOPMENT_EVENT_IDS + HOLDOUT_EVENT_IDS),
-        "event_date": pd.date_range("2016-01-01", periods=9),
+        "event_date": pd.date_range("2016-01-01", periods=len(DEVELOPMENT_EVENT_IDS + HOLDOUT_EVENT_IDS)),
     })
     result = chronological_split(events, DEVELOPMENT_EVENT_IDS, HOLDOUT_EVENT_IDS)
     labels = result.set_index("event_id")["sample"]
     assert labels["EVT007"] == "Development"
     assert labels["EVT008"] == "Holdout"
     assert labels["EVT006"] == "Holdout"
+    for event_id in ("EVT010", "EVT011", "EVT012", "EVT013", "EVT014"):
+        assert labels[event_id] == "Holdout"
 
 
 def test_split_rejects_missing_or_overlapping_ids():
