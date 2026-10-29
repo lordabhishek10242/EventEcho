@@ -88,7 +88,7 @@ def car_significance_hac(
         long_run_variance += 2.0 * weight * gamma
     long_run_variance = max(long_run_variance, 0.0)
     design = np.column_stack((np.ones(len(market)), market))
-    covariance = np.asarray(model["covariance"], dtype=float)
+    covariance = np.asarray(model.get("hac_covariance", model["covariance"]), dtype=float)
     parameter_variance = float(design.sum(axis=0) @ covariance @ design.sum(axis=0))
     variance = max(parameter_variance + len(market) * long_run_variance, 0.0)
     standard_error = float(np.sqrt(variance))
