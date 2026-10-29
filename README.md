@@ -94,7 +94,7 @@ The intervals are still exploratory: the event universe is small and selected, c
 
 ## Methodology
 
-For close price $P_t$, simple return is $R_t = P_t/P_{t-1} - 1$. The pipeline first reindexes stock price levels to the benchmark's observed trading-session calendar, then computes stock and benchmark returns over the same consecutive sessions. No missing prices are filled: if a stock price is missing on a benchmark session, the stock return for that session and the next session remains unavailable rather than bridging the gap. A missing value for one stock does not globally discard another stock's observation.
+For close price $P_t$, simple return is $R_t = P_t/P_{t-1} - 1$. The pipeline first reindexes stock price levels to the benchmark's observed trading-session calendar, then computes stock and benchmark returns over the same consecutive sessions. Event windows and hypothetical trade entry/exit sessions also use that common calendar. No missing prices are filled: if a stock price is missing on a benchmark session, the stock return for that session and the next session remains unavailable rather than bridging the gap. A missing value for one stock does not globally discard another stock's observation.
 
 For each event and stock, the market model is fit on 100 complete trading-session observations ending at Day -26. The 20 omitted sessions are Days -25 through -6, immediately before the event window begins on Day -5:
 
