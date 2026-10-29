@@ -2,7 +2,7 @@
 
 ## Status
 
-This audit covers the committed outputs in [`results/reproduced/`](../results/reproduced/). They were produced by GitHub Actions **Historical Rebuild run 40866165972** on branch `release/final-competition-2026-10-29`, code commit `9aa95c9`, by re-analysing offline the frozen price snapshot `eventecho-historical-40848349737` (downloaded by run 40848349737 on 2026-10-29 09:17 UTC). The run's own integrity report is [`results/reproduced/release_validation.json`](../results/reproduced/release_validation.json).
+This audit covers the committed outputs in [`results/reproduced/`](../results/reproduced/). They were produced by GitHub Actions **Historical Rebuild run 40915721578** on branch `feat/full-ps-coverage`, code commit `24e723f`, by re-analysing offline the frozen price snapshot `eventecho-historical-40848349737` (downloaded by run 40848349737 on 2026-10-29 09:17 UTC). The run's own integrity report is [`results/reproduced/release_validation.json`](../results/reproduced/release_validation.json).
 
 The result set is an **exploratory** event study and a **hypothetical** strategy check. It is not evidence of a trading edge and not evidence that the events caused the price moves.
 
@@ -89,8 +89,8 @@ Mean excess return is negative at every cost level on the full sample, and the h
 
 | Check | Result |
 |---|---|
-| Unit and regression tests (`python -m pytest -q`) | 118 passed locally (Python 3.13); also run inside the CI rebuild (Python 3.11) |
-| `scripts/verify_release.py` on the committed outputs | 47 of 47 checks passed (in CI and again locally) |
+| Unit and regression tests (`python -m pytest -q`) | 127 passed locally (Python 3.13); also run inside the CI rebuild (Python 3.11) |
+| `scripts/verify_release.py` on the committed outputs | 55 of 55 checks passed (in CI and again locally) |
 | Dashboard JavaScript | syntax check passed; headless run over all 126 filter combinations with no script errors, no "NaN"/"undefined", no raw HTML text |
 | Dashboard layout | screenshots at 1440 px and 390 px wide; no horizontal page overflow |
 | Dashboard ↔ CSV | embedded manifest and every embedded table equal the shipped files |
@@ -112,3 +112,13 @@ Mean excess return is negative at every cost level on the full sample, and the h
 **Supported:** EventEcho runs a reproducible OLS market-model event study on a frozen snapshot, reports CARs with conventional and HAC uncertainty and Holm correction, checks estimation-window robustness, audits overlap and timing, and evaluates a fixed hypothetical rule on a chronological holdout with dependence-aware intervals.
 
 **Not supported:** "the strategy beats the market"; "this event caused this move"; "RBI hikes move Adani stocks"; ranking event categories; treating the 441 tests as independent findings.
+
+## Addendum — full PS-03 coverage (run 40915721578)
+
+This run adds the remaining problem-statement items without changing any earlier number. The CARs, significance, volatility, strategy and bootstrap tables match the earlier runs on the same snapshot, apart from floating-point rounding (at most about 1e-14).
+
+- **Average reaction across events (CAAR)** for all events, 6 event classes, 5 sectors, 7 stocks and both samples, with cluster-bootstrap bands. Across all 21 events, CAR(−5,+5) is −0.75% (−2.62% to +1.33%); without overlapping events it is +0.80% (−0.21% to +2.40%).
+- **Event-window choice:** HAC-Holm significant counts are 4, 1 and 5 for ±1, ±3 and ±5. A third of event-stock pairs change CAR sign between ±1 and ±5.
+- **Replication on unseen events:** weak. Development class signs predict holdout signs 4/5, 3/5 and 2/5 times, with binomial p ≥ 0.38.
+- **Headline classifier (NLP):** 81% accuracy on the 21 registry headlines (95% CI 62–95%), against a 29% majority baseline; 75% under grouped cross-validation. See [headline-classifier.md](headline-classifier.md).
+- `scripts/verify_release.py` now runs 55 checks, all passed in CI. The tests count is 127.

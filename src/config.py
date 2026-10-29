@@ -17,6 +17,31 @@ STOCK_TICKERS = {
     "ADANI_ENTERPRISES": "ADANIENT.NS",
     "ADANI_PORTS": "ADANIPORTS.NS",
 }
+# Broad sector grouping used by this project for comparisons. It is a simple
+# business-line grouping, not an official exchange classification. With seven
+# stocks most sectors contain one stock, so sector comparisons are descriptive.
+STOCK_SECTORS = {
+    "RELIANCE": "Energy & Conglomerate",
+    "TCS": "IT Services",
+    "INFOSYS": "IT Services",
+    "HDFC_BANK": "Banking",
+    "ITC": "FMCG",
+    "ADANI_ENTERPRISES": "Infrastructure (Adani Group)",
+    "ADANI_PORTS": "Infrastructure (Adani Group)",
+}
+# Map the registry's detailed categories to the six event classes used by the
+# headline classifier and by the pooled (CAAR) comparisons.
+EVENT_CLASS_BY_CATEGORY = {
+    "Monetary Policy": "monetary_policy",
+    "Corporate Earnings": "corporate_earnings",
+    "Government Policy": "government_policy",
+    "Government Policy / Budget": "government_policy",
+    "Government Policy / Tax Reform": "government_policy",
+    "Public Health / Government Policy": "government_policy",
+    "Economic Release": "economic_data",
+    "Election / Political Event": "election_politics",
+    "Major Industry Event": "corporate_development",
+}
 BENCHMARK_TICKER = "^NSEI"
 START_DATE = "2016-01-01"
 END_DATE = "2026-01-01"  # yfinance end dates are exclusive.

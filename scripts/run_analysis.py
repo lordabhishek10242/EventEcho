@@ -44,7 +44,10 @@ from src.sensitivity import (  # noqa: E402
     event_timing_sensitivity, extreme_market_sensitivity, transaction_cost_sensitivity,
 )
 from src.statistics import event_study_significance  # noqa: E402
-from src.clustered_inference import clustered_strategy_inference  # noqa: E402
+from src.clustered_inference import _dependency_clusters, clustered_strategy_inference  # noqa: E402
+from src.headline_classifier import run_headline_classification  # noqa: E402
+from src.pooled_analysis import caar_tables, pattern_generalization, window_choice_tables  # noqa: E402
+from src.config import STOCK_SECTORS  # noqa: E402
 from src.estimation_sensitivity import estimation_window_sensitivity  # noqa: E402
 from src.robustness_ledger import build_robustness_evidence_ledger  # noqa: E402
 from src.trading import event_portfolio_returns, simulate_trades, summarize_samples  # noqa: E402
@@ -133,6 +136,7 @@ def run_analysis(
     cost_bps_per_side: float = BASE_COST_BPS_PER_SIDE,
     snapshot_id: str | None = None,
     allow_synthetic: bool = False,
+    corpus_path: Path | None = DEFAULT_RESULTS_DIR / "headline_corpus.csv",
 ) -> dict[str, pd.DataFrame]:
     events = validate_events(pd.read_csv(events_path))
     snapshot_manifest = None
@@ -236,6 +240,18 @@ def run_analysis(
     timing_sensitivity = event_timing_sensitivity(
         returns, events, stocks, car_results, ESTIMATION_SESSIONS, GAP_SESSIONS, EVENT_WINDOW_RADIUS
     )
+    # Pooled reactions (CAAR) by event class, sector, stock and sample, using
+    # the same dependency clusters as the strategy bootstrap.
+    clusters = _dependency_clusters(events, event_window_audit)
+    caar_path, caar_windows = caar_tables(
+        event_study, car_results, events, stocks, event_window_audit, clusters,
+        DEVELOPMENT_EVENT_IDS, HOLDOUT_EVENT_IDS,
+    )
+    window_summary, window_agreement = window_choice_tables(significance)
+    generalization = pattern_generalization(car_results, events, stocks, DEVELOPMENT_EVENT_IDS, HOLDOUT_EVENT_IDS)
+    headline_outputs = {}
+    if corpus_path is not None and Path(corpus_path).is_file():
+        headline_outputs = run_headline_classification(pd.read_csv(corpus_path), events)
 
     artifacts = {
         "event_master.csv": events,
@@ -262,6 +278,12 @@ def run_analysis(
             estimation_window_details, events, event_window_audit, event_level_audit
         ),
         "single_stock_event_study.csv": _single_stock_export(event_study, "RELIANCE"),
+        "caar_event_time.csv": caar_path,
+        "caar_window_summary.csv": caar_windows,
+        "window_choice_summary.csv": window_summary,
+        "window_choice_agreement.csv": window_agreement,
+        "pattern_generalization.csv": generalization,
+        **headline_outputs,
     }
     if not covid_sensitivity.empty:
         artifacts["covid_extreme_day_sensitivity.csv"] = covid_sensitivity
@@ -285,6 +307,9 @@ def run_analysis(
         "analysis_calendar": "Observed NIFTY 50 sessions with a non-missing close; stock prices are reindexed to these sessions before returns are computed, and missing prices are never filled.",
         "benchmark_sessions_used": int(len(returns.index)),
         "code_commit": _code_commit(),
+        "stock_sectors": {stock: STOCK_SECTORS.get(stock) for stock in stocks},
+        "headline_corpus": _portable_input_path(Path(corpus_path)) if headline_outputs else None,
+        "headline_corpus_sha256": sha256_file(corpus_path) if headline_outputs else None,
         "estimation_sessions": ESTIMATION_SESSIONS,
         "gap_sessions": GAP_SESSIONS,
         "event_window_sessions": EVENT_WINDOW_RADIUS,

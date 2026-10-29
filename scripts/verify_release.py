@@ -27,6 +27,7 @@ if str(ROOT) not in sys.path:
 from src.config import (  # noqa: E402
     BASE_COST_BPS_PER_SIDE, CAR_WINDOWS, DEVELOPMENT_EVENT_IDS, HOLDOUT_EVENT_IDS, STOCK_TICKERS,
 )
+from src.data import sha256_file  # noqa: E402
 from src.statistics import holm_adjust  # noqa: E402
 
 TOLERANCE = 1e-9
@@ -201,6 +202,37 @@ def verify(directory: Path, registry_path: Path, dashboard_path: Path | None) ->
     gross_mean = trades.groupby("event_id")["gross_return"].mean().mean() * 100
     checks.check("cost scenarios differ from gross by exactly 2 x cost",
                  _close(costs["avg_net_return_pct"], gross_mean - 2 * costs["cost_bps_per_side"] / 100, 1e-9))
+
+    # ---- pooled reactions, window choice, replication, classifier
+    path = _read(directory, "caar_event_time.csv")
+    pooled = _read(directory, "caar_window_summary.csv")
+    everything = path[path["group"] == "All events"].set_index("event_day")["CAAR_pct"]
+    complete_cars = cars.dropna(subset=["CAR"])
+    for window, (lower, upper) in CAR_WINDOWS.items():
+        per_event = complete_cars[complete_cars["window"] == window].groupby("event_id")["CAR"].mean() * 100
+        from_path = everything[upper] - (everything[lower - 1] if lower - 1 in everything.index else 0.0)
+        row = pooled[(pooled["group"] == "All events") & (pooled["window"] == window)].iloc[0]
+        checks.check(f"pooled mean CAR {window} equals CAAR path and per-event CARs",
+                     abs(row["mean_CAR_pct"] - per_event.mean()) < 1e-9 and abs(from_path - per_event.mean()) < 1e-9,
+                     {"mean_CAR_pct": round(float(row["mean_CAR_pct"]), 6)})
+    with_interval = pooled.dropna(subset=["mean_CAR_ci95_lower_pct", "mean_CAR_ci95_upper_pct"])
+    checks.check("pooled intervals are ordered and only reported with 3+ clusters",
+                 bool((with_interval["mean_CAR_ci95_lower_pct"] <= with_interval["mean_CAR_ci95_upper_pct"]).all()
+                      and (with_interval["dependency_clusters"] >= 3).all()))
+    choice = _read(directory, "window_choice_summary.csv").set_index("window")
+    checks.check("window-choice counts equal significance table counts",
+                 all(int(choice.loc[w, "hac_holm_significant"]) == int(sig.loc[sig["window"] == w, "hac_significant_after_holm_5pct"].sum())
+                     and int(choice.loc[w, "conventional_holm_significant"]) == int(sig.loc[sig["window"] == w, "significant_after_holm_5pct"].sum())
+                     for w in CAR_WINDOWS))
+    generalization = _read(directory, "pattern_generalization.csv")
+    checks.check("replication tests cover every window", set(generalization["window"]) == set(CAR_WINDOWS))
+    classified = _read(directory, "event_headline_classification.csv")
+    checks.check("every registry headline is classified once",
+                 sorted(classified["event_id"]) == sorted(events["event_id"]) and not classified["event_id"].duplicated().any())
+    corpus_path = ROOT / str(manifest.get("headline_corpus") or "results/headline_corpus.csv")
+    checks.check("headline corpus checksum matches manifest",
+                 corpus_path.is_file() and sha256_file(corpus_path) == manifest.get("headline_corpus_sha256"),
+                 manifest.get("headline_corpus_sha256"))
 
     # ---- dashboard agreement
     if dashboard_path is not None:
