@@ -141,3 +141,7 @@ def test_analysis_snapshot_selection_records_exact_input_and_provenance(monkeypa
     assert manifest["input_checksums_sha256"]["prices"] == sha256_file(prices)
     assert manifest["real_market_evidence"] is True
     assert manifest["source_independently_verified"] is False
+    for artifact_name in ("event_volatility.csv", "category_car_summary.csv", "category_volatility_summary.csv"):
+        artifact = output / artifact_name
+        assert artifact.is_file()
+        assert not pd.read_csv(artifact).empty

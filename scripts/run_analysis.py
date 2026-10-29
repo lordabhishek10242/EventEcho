@@ -35,6 +35,8 @@ from src.snapshots import resolve_market_snapshot  # noqa: E402
 from src.event_study import calculate_event_study  # noqa: E402
 from src.events import chronological_split, validate_events  # noqa: E402
 from src.event_audit import audit_event_windows, build_event_relationship_audits  # noqa: E402
+from src.volatility import summarize_event_volatility  # noqa: E402
+from src.category_analysis import summarize_category_car, summarize_category_volatility  # noqa: E402
 from src.reporting import write_artifacts  # noqa: E402
 from src.sensitivity import (  # noqa: E402
     event_timing_sensitivity, extreme_market_sensitivity, transaction_cost_sensitivity,
@@ -139,6 +141,11 @@ def run_analysis(
             event_window_radius=EVENT_WINDOW_RADIUS,
         )
     )
+    event_volatility = summarize_event_volatility(returns, events, stocks, models)
+    category_car_summary = summarize_category_car(events, car_results, event_window_audit)
+    category_volatility_summary = summarize_category_volatility(
+        events, event_volatility, event_window_audit
+    )
     trades = simulate_trades(
         stock_prices, benchmark_returns, events, stocks, HOLDING_SESSIONS, cost_bps_per_side
     )
@@ -185,6 +192,9 @@ def run_analysis(
         "event_level_audit.csv": event_level_audit,
         "event_pair_overlap_audit.csv": event_pair_overlap_audit,
         "event_relationship_highlights.csv": event_audit_highlights,
+        "event_volatility.csv": event_volatility,
+        "category_car_summary.csv": category_car_summary,
+        "category_volatility_summary.csv": category_volatility_summary,
         "trade_candidates.csv": trades,
         "event_trading_results.csv": event_trading,
         "sample_performance.csv": sample_performance,
