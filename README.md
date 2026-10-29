@@ -6,7 +6,7 @@ This repository includes a modular Python implementation, the original research 
 
 ## Research Universe
 
-- Stocks: Reliance Industries (`RELIANCE.NS`), TCS (`TCS.NS`), Infosys (`INFY.NS`), HDFC Bank (`HDFCBANK.NS`), and ITC (`ITC.NS`).
+- Stocks: Reliance Industries (`RELIANCE.NS`), TCS (`TCS.NS`), Infosys (`INFY.NS`), HDFC Bank (`HDFCBANK.NS`), ITC (`ITC.NS`), Adani Enterprises (`ADANIENT.NS`), and Adani Ports (`ADANIPORTS.NS`).
 - Benchmark: Nifty 50 (`^NSEI`) close, a **price index**, not a total-return index.
 - Intended price period: 2016-01-01 through 2025-12-31 (provider end date is exclusive); actual dates depend on data availability.
 - Events: 19 selected records in the expanded event master spanning policy/tax reform, monetary policy, corporate earnings, election results, GDP release, and a company-specific industry event. This remains a small, selected sample rather than a representative event population. Records are selected by event relevance and source availability, not by observed return direction.
@@ -31,8 +31,8 @@ src/events.py          Event validation, session alignment, sample labels
 src/event_study.py     Estimation samples, OLS market model, AR and CAR
 src/statistics.py      Approximate CAR inference and Holm correction
 src/trading.py         Long-only trades, costs, benchmark, event aggregation
-src/sensitivity.py     Transaction-cost and extreme-market sensitivities
-src/reporting.py       Non-empty CSV exports and run manifest
+src/sensitivity.py     Transaction-cost, extreme-market, and event-timing sensitivities
+src/volatility.py      Pre/post realized and residual volatility diagnostics\nsrc/category_analysis.py Episode-level CAR and volatility summaries with overlap exclusions\nsrc/reporting.py       CSV exports, dashboard datasets, and run manifest
 scripts/run_analysis.py  Repository-root command-line workflow
 tests/                 Network-free synthetic tests
 notebooks/EventEcho.ipynb  Modular results exploration
@@ -58,7 +58,7 @@ Default run: load the preserved event master and fetch market data through `yfin
 python scripts/run_analysis.py --verbose
 ```
 
-For reproducible/offline input, provide a wide CSV with a `date` column, one column per stock (`RELIANCE`, `TCS`, `INFOSYS`, `HDFC_BANK`, `ITC`), and `NIFTY50` benchmark close. Missing cells may be blank. The input file is ignored by Git because it may be large or subject to provider terms.
+For reproducible/offline input, provide a wide CSV with a `date` column, one column per stock (`RELIANCE`, `TCS`, `INFOSYS`, `HDFC_BANK`, `ITC`, `ADANI_ENTERPRISES`, `ADANI_PORTS`), and `NIFTY50` benchmark close. Missing cells may be blank. The input file is ignored by Git because it may be large or subject to provider terms.
 
 ```bash
 mkdir -p data
