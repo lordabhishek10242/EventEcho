@@ -236,6 +236,7 @@ def run_analysis(
         "event_count": int(events.event_id.nunique()),
         "stock_universe": stocks,
         "benchmark": f"{BENCHMARK_TICKER} price index; not a total-return index",
+        "return_convention": "Close-to-close price returns for stocks and Nifty price index; dividends are excluded from both sides, so this is not a total-return comparison.",
         "estimation_sessions": ESTIMATION_SESSIONS,
         "gap_sessions": GAP_SESSIONS,
         "event_window_sessions": EVENT_WINDOW_RADIUS,
@@ -243,8 +244,8 @@ def run_analysis(
         "transaction_cost_bps_per_side": cost_bps_per_side,
         "development_event_ids": list(DEVELOPMENT_EVENT_IDS),
         "holdout_event_ids": list(HOLDOUT_EVENT_IDS),
-        "inference_note": "CAR t-tests and HAC results are approximate; cluster-bootstrap strategy intervals resample connected components of overlapping event windows and shared episode IDs. Small cluster counts limit inferential strength.",
-        "data_note": "Stock returns use adjusted close; benchmark returns use price close. Local missing prices are not filled.",
+        "inference_note": "CAR t-tests and HAC results are approximate and remain exploratory across the full event-stock-window family; overlapping CAR windows are dependent, excluded from category summaries, and joined into dependence clusters for strategy bootstrap intervals. Small cluster counts limit inferential strength.",
+        "data_note": "Stock and benchmark returns both use Close price series; dividends are excluded on both sides. This resolves the adjusted-stock-close vs price-index mismatch but does not measure total shareholder return. Local missing prices are not filled. Event clock times remain explicitly unresolved where source evidence does not support a precise timestamp; daily closes cannot identify intraday reaction timing.",
         "provider_note": "This run uses a frozen local copy of Yahoo Finance history captured at retrieval time. The snapshot makes this run reproducible, but Yahoo Finance remains a third-party provider and the data are not independently verified; later provider downloads may differ.",
         "input_data_classification": (
             provenance.get("classification", "unverified_local_input") if provenance else "live_provider_download"
