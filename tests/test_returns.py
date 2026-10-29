@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.data import align_stock_benchmark_returns, calculate_aligned_returns, calculate_returns
+from src.data import align_stock_benchmark_returns, align_stock_prices_to_benchmark_calendar, calculate_aligned_returns, calculate_returns
 
 
 def test_simple_returns_and_missing_prices_are_not_filled():
@@ -69,3 +69,18 @@ def test_aligned_returns_use_same_consecutive_sessions_for_stock_and_benchmark()
     assert aligned.loc[dates[1], "A"] == pytest.approx(0.10)
     assert aligned.loc[dates[1], "NIFTY50_RETURN"] == pytest.approx(0.01)
     assert aligned.loc[dates[2], "A"] == pytest.approx(0.10)
+
+
+
+def test_aligned_price_levels_define_trading_calendar_without_filling_missing_values():
+    stock_dates = pd.to_datetime(["2024-01-01", "2024-01-02", "2024-01-04"])
+    benchmark_dates = pd.to_datetime(["2024-01-01", "2024-01-03", "2024-01-04"])
+    stock_prices = pd.DataFrame({"A": [100.0, 102.0, 104.0]}, index=stock_dates)
+    benchmark_prices = pd.Series([100.0, 101.0, 102.0], index=benchmark_dates)
+
+    aligned_prices = align_stock_prices_to_benchmark_calendar(stock_prices, benchmark_prices)
+
+    assert list(aligned_prices.index) == list(benchmark_dates)
+    assert aligned_prices.loc[pd.Timestamp("2024-01-01"), "A"] == pytest.approx(100.0)
+    assert np.isnan(aligned_prices.loc[pd.Timestamp("2024-01-03"), "A"])
+    assert aligned_prices.loc[pd.Timestamp("2024-01-04"), "A"] == pytest.approx(104.0)
