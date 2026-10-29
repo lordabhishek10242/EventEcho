@@ -4,6 +4,13 @@ EventEcho is an exploratory quantitative event-study system for examining stock 
 
 This repository includes a modular Python implementation, the original research notebook, a new notebook interface, archived CSV outputs supplied with the project, and a fresh run in `results/reproduced/`. The legacy outputs have **not** been regenerated from raw prices. No historical price snapshot was included in the archive; the fresh run used current Yahoo Finance history and is not a frozen-vendor reproduction.
 
+## Competition readiness audits
+
+- [Problem-statement coverage matrix](docs/problem-statement-coverage.md) maps each requirement to code/output evidence and defines final acceptance checks.
+- [Event-source and validation audit](docs/event-source-and-validation-audit.md) distinguishes verified event dates from unresolved timestamps, documents daily-close timing limitations, and records the remaining high-priority checks.
+
+These audits deliberately preserve unresolved timestamps as unresolved rather than inferring them from observed stock-price moves.
+
 ## Research Universe
 
 - Stocks: Reliance Industries (`RELIANCE.NS`), TCS (`TCS.NS`), Infosys (`INFY.NS`), HDFC Bank (`HDFCBANK.NS`), ITC (`ITC.NS`), Adani Enterprises (`ADANIENT.NS`), and Adani Ports (`ADANIPORTS.NS`).
