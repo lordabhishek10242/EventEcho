@@ -1,8 +1,8 @@
 {
-  "checked_utc": "2026-10-29T17:45:40.187042+00:00",
+  "checked_utc": "2026-10-29T17:49:49.561465+00:00",
   "analysis_dir": "reproduced",
   "dashboard_checked": true,
-  "passed": 77,
+  "passed": 78,
   "failed": 0,
   "checks": [
     {
@@ -41,12 +41,12 @@
     {
       "check": "code commit recorded",
       "passed": true,
-      "detail": "40af04a23729043cc77ff5a828190dcba2dcd74e"
+      "detail": "083c5e2daaa91ece8036c3ecb69d600e8426afca"
     },
     {
       "check": "manifest artifact row counts match files",
       "passed": true,
-      "detail": 39
+      "detail": 40
     },
     {
       "check": "event IDs unique in output registry",
@@ -425,6 +425,11 @@
       "detail": null
     },
     {
+      "check": "placebo covers all windows and never exceeds the real announcements",
+      "passed": true,
+      "detail": null
+    },
+    {
       "check": "earnings replication has one row per studied stock",
       "passed": true,
       "detail": null
@@ -442,12 +447,12 @@
     {
       "check": "dashboard manifest is this run's manifest",
       "passed": true,
-      "detail": "2026-10-29T17:45:38.145535+00:00"
+      "detail": "2026-10-29T17:49:47.451822+00:00"
     },
     {
       "check": "dashboard tables equal shipped CSVs",
       "passed": true,
-      "detail": 32
+      "detail": 33
     },
     {
       "check": "dashboard has no stale adjusted-close disclaimer",
