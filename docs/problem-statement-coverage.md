@@ -29,6 +29,7 @@ This matrix maps the EventEcho problem statement to the current repository imple
 ## Submission acceptance checklist
 
 - [ ] Price levels are aligned to the benchmark session calendar before calculating returns and strategy holding windows; missing stock prices are not filled or bridged.
+- [ ] Snapshot event-eligibility diagnostics use observed benchmark sessions, not the union of all provider dates.
 - [ ] Latest unit tests pass.
 - [ ] Latest historical rebuild passes and the latest artifact/manifest are inspected.
 - [ ] Event-source audit is reflected in the event master without inventing timestamps.
