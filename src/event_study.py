@@ -72,6 +72,7 @@ def fit_market_model(sample: pd.DataFrame, stock_column: str, market_column: str
         "residual_std": float(np.sqrt(residual_variance)),
         "degrees_freedom": degrees_freedom,
         "covariance": covariance,
+        "estimation_residuals": residuals.tolist(),
         "observations": len(clean),
     }
 
