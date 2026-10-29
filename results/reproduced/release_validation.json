@@ -1,5 +1,5 @@
 {
-  "checked_utc": "2026-10-29T11:28:20.869428+00:00",
+  "checked_utc": "2026-10-29T11:33:36.311114+00:00",
   "analysis_dir": "reproduced",
   "dashboard_checked": true,
   "passed": 47,
@@ -41,7 +41,7 @@
     {
       "check": "code commit recorded",
       "passed": true,
-      "detail": "7ba21661863e1adee4ae4089a527d55f00c92502"
+      "detail": "9aa95c947e97b069f1ad24e8124bda9798639fa5"
     },
     {
       "check": "manifest artifact row counts match files",
@@ -283,7 +283,7 @@
     {
       "check": "dashboard manifest is this run's manifest",
       "passed": true,
-      "detail": "2026-10-29T11:28:19.257901+00:00"
+      "detail": "2026-10-29T11:33:34.172928+00:00"
     },
     {
       "check": "dashboard tables equal shipped CSVs",
