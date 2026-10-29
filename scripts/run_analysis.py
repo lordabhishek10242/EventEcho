@@ -42,6 +42,7 @@ from src.sensitivity import (  # noqa: E402
     event_timing_sensitivity, extreme_market_sensitivity, transaction_cost_sensitivity,
 )
 from src.statistics import event_study_significance  # noqa: E402
+from src.clustered_inference import clustered_strategy_inference  # noqa: E402
 from src.trading import event_portfolio_returns, simulate_trades, summarize_samples  # noqa: E402
 
 LOGGER = logging.getLogger("eventecho")
@@ -155,6 +156,10 @@ def run_analysis(
     event_trading = event_returns.copy()
     event_trading["sample"] = event_trading["event_id"].map(labels)
     sample_performance = summarize_samples(event_returns, DEVELOPMENT_EVENT_IDS, HOLDOUT_EVENT_IDS)
+    clustered_performance_inference = clustered_strategy_inference(
+        event_returns, events, event_window_audit,
+        DEVELOPMENT_EVENT_IDS, HOLDOUT_EVENT_IDS,
+    )
     sensitivity_levels = tuple(sorted(set(COST_LEVELS_BPS + (cost_bps_per_side,))))
     cost_sensitivity = transaction_cost_sensitivity(trades, sensitivity_levels)
     base_cost = cost_sensitivity.loc[
@@ -198,6 +203,7 @@ def run_analysis(
         "trade_candidates.csv": trades,
         "event_trading_results.csv": event_trading,
         "sample_performance.csv": sample_performance,
+        "clustered_strategy_inference.csv": clustered_performance_inference,
         "transaction_cost_sensitivity.csv": cost_sensitivity,
         "final_strategy_assessment.csv": assessment,
         "multi_stock_significance.csv": significance,
@@ -223,7 +229,7 @@ def run_analysis(
         "transaction_cost_bps_per_side": cost_bps_per_side,
         "development_event_ids": list(DEVELOPMENT_EVENT_IDS),
         "holdout_event_ids": list(HOLDOUT_EVENT_IDS),
-        "inference_note": "Approximate t-tests include OLS parameter uncertainty; residual independence/homoskedasticity remain assumptions.",
+        "inference_note": "CAR t-tests and HAC results are approximate; cluster-bootstrap strategy intervals resample connected components of overlapping event windows and shared episode IDs. Small cluster counts limit inferential strength.",
         "data_note": "Stock returns use adjusted close; benchmark returns use price close. Local missing prices are not filled.",
         "provider_note": "This run uses a frozen local copy of Yahoo Finance history captured at retrieval time. The snapshot makes this run reproducible, but Yahoo Finance remains a third-party provider and the data are not independently verified; later provider downloads may differ.",
         "input_data_classification": (
