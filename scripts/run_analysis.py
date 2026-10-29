@@ -34,6 +34,7 @@ from src.data import align_stock_benchmark_returns, calculate_returns, download_
 from src.snapshots import resolve_market_snapshot  # noqa: E402
 from src.event_study import calculate_event_study  # noqa: E402
 from src.events import chronological_split, validate_events  # noqa: E402
+from src.event_audit import audit_event_windows, build_event_relationship_audits  # noqa: E402
 from src.reporting import write_artifacts  # noqa: E402
 from src.sensitivity import extreme_market_sensitivity, transaction_cost_sensitivity  # noqa: E402
 from src.statistics import event_study_significance  # noqa: E402
@@ -125,6 +126,17 @@ def run_analysis(
     )
     significance = event_study_significance(event_study, car_results, models)
     consistency = _cross_stock_consistency(car_results)
+    # Explicitly audit overlapping event windows and shared episode/category metadata.
+    # These are dependence warnings, not claims that events caused one another.
+    event_window_audit = audit_event_windows(
+        events, returns.index, event_window_radius=EVENT_WINDOW_RADIUS
+    )
+    event_level_audit, event_pair_overlap_audit, event_audit_highlights = (
+        build_event_relationship_audits(
+            events, event_window_audit, pd.DataFrame(), returns.index,
+            event_window_radius=EVENT_WINDOW_RADIUS,
+        )
+    )
     trades = simulate_trades(
         stock_prices, benchmark_returns, events, stocks, HOLDING_SESSIONS, cost_bps_per_side
     )
@@ -164,6 +176,10 @@ def run_analysis(
         "multi_stock_event_study.csv": event_study,
         "multi_stock_car.csv": car_results,
         "cross_stock_consistency.csv": consistency,
+        "event_window_audit.csv": event_window_audit,
+        "event_level_audit.csv": event_level_audit,
+        "event_pair_overlap_audit.csv": event_pair_overlap_audit,
+        "event_relationship_highlights.csv": event_audit_highlights,
         "trade_candidates.csv": trades,
         "event_trading_results.csv": event_trading,
         "sample_performance.csv": sample_performance,
