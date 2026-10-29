@@ -138,7 +138,39 @@ def calculate_returns(prices: pd.DataFrame | pd.Series) -> pd.DataFrame | pd.Ser
 def align_stock_benchmark_returns(
     stock_returns: pd.DataFrame, benchmark_returns: pd.Series
 ) -> pd.DataFrame:
-    """Align by date without dropping a date globally for one stock's missing data."""
+    """Align already-computed returns by date.
+
+    This function cannot repair returns computed across different calendars.
+    Prefer calculate_aligned_returns when starting from price levels.
+    """
     benchmark = benchmark_returns.rename("NIFTY50_RETURN")
     aligned = stock_returns.join(benchmark, how="inner").sort_index()
     return aligned
+
+
+def calculate_aligned_returns(
+    stock_prices: pd.DataFrame, benchmark_prices: pd.Series
+) -> pd.DataFrame:
+    """Align price levels to benchmark sessions before computing returns.
+
+    Returns are close-to-close across the same benchmark-session calendar.
+    Missing stock prices remain missing: no forward fill is performed, and a
+    stock return is unavailable until two consecutive aligned sessions have
+    observed prices. This prevents a stock return spanning a holiday/missing
+    benchmark session from being paired with a one-session benchmark return.
+    """
+    stocks = stock_prices.copy().sort_index()
+    benchmark = benchmark_prices.copy().sort_index()
+    stocks.index = pd.DatetimeIndex(stocks.index).tz_localize(None).normalize()
+    benchmark.index = pd.DatetimeIndex(benchmark.index).tz_localize(None).normalize()
+    if stocks.index.has_duplicates or benchmark.index.has_duplicates:
+        raise ValueError("Price observations contain duplicate normalized dates")
+    if stocks.empty or benchmark.empty:
+        raise ValueError("Stock and benchmark prices must both contain observations")
+
+    # Benchmark sessions define the common market calendar. Reindexing leaves
+    # absent stock observations as NaN rather than filling or bridging gaps.
+    stocks = stocks.reindex(benchmark.index)
+    stock_returns = calculate_returns(stocks)
+    benchmark_returns = calculate_returns(benchmark).rename("NIFTY50_RETURN")
+    return align_stock_benchmark_returns(stock_returns, benchmark_returns)
