@@ -178,20 +178,22 @@ def validate_market_prices(
     event_diagnostics = []
     if events is not None:
         returns_frame = (
-            frame[required].pct_change(fill_method=None)
-            if not absent and not any(invalid_counts.values()) else pd.DataFrame(index=frame.index)
+            frame[required].reindex(benchmark_sessions).pct_change(fill_method=None)
+            if not absent and not any(invalid_counts.values()) else pd.DataFrame(index=benchmark_sessions)
         )
         for _, event in events.iterrows():
             event_id = str(event.get("event_id", ""))
             effective = pd.to_datetime(event.get("effective_event_date"), errors="coerce")
             item = {"event_id": event_id, "effective_event_date": effective, "available": False, "stock_eligibility": {}}
-            if pd.isna(effective) or effective.normalize() not in sessions:
+            if pd.isna(effective) or effective.normalize() not in benchmark_sessions:
                 item["warning"] = "effective_event_date_not_an_observed_benchmark_session"
                 warnings.append({"code": "event_date_unavailable", "event_id": event_id, "effective_event_date": effective})
                 event_diagnostics.append(item)
                 continue
             item["available"] = True
-            position = sessions.get_loc(effective.normalize())
+            # Event eligibility is defined on observed benchmark sessions, not
+            # the union of dates returned by all instruments.
+            position = benchmark_sessions.get_loc(effective.normalize())
             first_event = position - EVENT_WINDOW_RADIUS
             end_estimation = first_event - GAP_SESSIONS - 1
             start_estimation = end_estimation - ESTIMATION_SESSIONS + 1
@@ -199,9 +201,9 @@ def validate_market_prices(
                 if stock not in returns_frame.columns:
                     item["stock_eligibility"][stock] = {"eligible": False, "reason": "stock_column_missing"}
                     continue
-                event_dates = sessions[max(0, first_event):min(len(sessions), position + EVENT_WINDOW_RADIUS + 1)]
+                event_dates = benchmark_sessions[max(0, first_event):min(len(benchmark_sessions), position + EVENT_WINDOW_RADIUS + 1)]
                 available_estimation = (
-                    returns_frame.loc[sessions[:end_estimation + 1], [stock, "NIFTY50"]].dropna()
+                    returns_frame.loc[benchmark_sessions[:end_estimation + 1], [stock, "NIFTY50"]].dropna()
                     if end_estimation >= 0 else pd.DataFrame()
                 )
                 estimation_count = int(len(available_estimation))
@@ -214,7 +216,7 @@ def validate_market_prices(
                     "estimation_observations_used": int(len(estimation_sample)),
                     "estimation_sample_start": estimation_sample.index[0] if len(estimation_sample) else None,
                     "estimation_sample_end": estimation_sample.index[-1] if len(estimation_sample) else None,
-                    "estimation_cutoff": sessions[end_estimation] if end_estimation >= 0 else None,
+                    "estimation_cutoff": benchmark_sessions[end_estimation] if end_estimation >= 0 else None,
                     "event_window_observations": event_count,
                     "required_estimation_observations": ESTIMATION_SESSIONS,
                     "required_event_window_observations": 2 * EVENT_WINDOW_RADIUS + 1,
@@ -232,6 +234,7 @@ def validate_market_prices(
         "observed_session_count": len(sessions),
         "observed_benchmark_session_count": len(benchmark_sessions),
         "session_calendar_source": "canonical union of observed provider response dates; no weekday calendar inferred",
+        "event_analysis_calendar_source": "observed dates with non-missing benchmark close; stock prices are reindexed to this calendar before returns are computed",
         "required_tickers": required,
         "price_observations_by_ticker": counts,
         "date_coverage_by_ticker": coverage_by_ticker,
