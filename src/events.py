@@ -49,7 +49,7 @@ def validate_events(events: pd.DataFrame) -> pd.DataFrame:
         "clock_time_recorded_source_status_claims_verified"
     )
 
-    timing_text = (event_time + " " + result["notes"].fillna("").astype(str)).str.lower()
+    timing_text = (event_time + " " + result.get("notes", pd.Series("", index=result.index)).fillna("").astype(str)).str.lower()
     result["event_timing_class"] = "session_timing_unresolved"
     result.loc[
         timing_text.str.contains(r"after trading hours|after.market|after-close|evening|midnight|17:30", regex=True),
