@@ -28,7 +28,6 @@ def parse_args() -> argparse.Namespace:
         help="Unique snapshot identifier. Defaults to a UTC timestamped identifier.",
     )
     parser.add_argument("--events", type=Path, default=DEFAULT_RESULTS_DIR / "event_master.csv")
-    parser.add_argument("--snapshot-root", type=Path, default=DEFAULT_DATA_DIR / "snapshots")
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_RESULTS_DIR / "reproduced")
     parser.add_argument("--start", default=START_DATE)
     parser.add_argument("--end", default=END_DATE, help="Exclusive end date.")
@@ -47,7 +46,7 @@ def main() -> None:
         start_date=args.start,
         end_date_exclusive=args.end,
         events=events,
-        root=args.snapshot_root,
+        root=DEFAULT_DATA_DIR / "snapshots",
     )
     if snapshot.get("status") != "complete":
         raise RuntimeError(f"Snapshot {snapshot_id} is not complete; refusing analysis.")
@@ -64,7 +63,7 @@ def main() -> None:
         args.output_dir,
         output_path=args.output_dir / "eventecho_demo.html",
     )
-    print(f"Snapshot: {args.snapshot_root / snapshot_id}")
+    print(f"Snapshot: {DEFAULT_DATA_DIR / 'snapshots' / snapshot_id}")
     print(f"Analysis: {args.output_dir}")
     print(f"Dashboard: {dashboard}")
 
