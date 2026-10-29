@@ -108,6 +108,18 @@ def audit_event_windows(
             record[f"{prefix}_overlap_count"] = len(partners)
             record[f"{prefix}_shared_sessions"] = len(shared_sessions)
 
+    # Make the policy machine-readable: overlapping events remain in the
+    # all-tests Holm family, are excluded from category summaries, and are
+    # connected into dependence clusters for strategy bootstrap inference.
+    for record in records:
+        overlaps = record.get("event_window_overlap_count", 0)
+        record["overlap_treatment"] = (
+            "exclude_from_category_summary_cluster_for_strategy_uncertainty"
+            if overlaps > 0 else
+            "no_configured_event_window_overlap_detected"
+        )
+        record["CAR_tests_are_independent"] = False if overlaps > 0 else pd.NA
+
     columns = [key for key in records[0] if not key.startswith("_")] if records else []
     return pd.DataFrame([{key: row[key] for key in columns} for row in records], columns=columns)
 
