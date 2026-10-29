@@ -4,7 +4,8 @@
 
 The generated event_master.csv adds:
 
-- timestamp_evidence_status: distinguishes a missing clock time, qualitative/date-only timing, a time that is only contextual (for example, a management call), and a recorded clock time whose source status claims verification.
+- event_timestamp_ist: normalized ISO-8601 timestamp with +05:30 only when the registry has a clock time explicitly marked IST and its source-status field claims verification; otherwise null.
+- timestamp_semantics and timestamp_evidence_status: distinguish a missing clock time, qualitative/date-only timing, a time that is only contextual (for example, a management call or board approval), and a recorded clock time whose source status claims verification.
 - timestamp_review_required: true unless the registry records a clock time with an explicit verified/confirmed status and the time is not marked as context-only.
 - event_timing_class: broad session-timing category for review, not a substitute for an exact timestamp.
 - inference_scope: records that the current selected 21-event set is exploratory and was not pre-registered as a confirmatory sample.
