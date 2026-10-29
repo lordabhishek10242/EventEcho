@@ -118,7 +118,7 @@ def audit_event_windows(
             if overlaps > 0 else
             "no_configured_event_window_overlap_detected"
         )
-        record["CAR_tests_are_independent"] = False if overlaps > 0 else pd.NA
+        record["event_window_overlap_detected"] = bool(overlaps > 0)
 
     columns = [key for key in records[0] if not key.startswith("_")] if records else []
     return pd.DataFrame([{key: row[key] for key in columns} for row in records], columns=columns)
