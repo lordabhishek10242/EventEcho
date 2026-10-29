@@ -13,7 +13,7 @@ These are audit labels, not independent verification. Do not infer missing times
 
 ## Overlapping windows
 
-The configured CAR window is ±5 sessions; volatility windows are also audited. event_window_audit.csv now includes overlap_treatment and CAR_tests_are_independent so overlap handling is visible in the artifact:
+The configured CAR window is ±5 sessions; volatility windows are also audited. event_window_audit.csv now includes overlap_treatment and event_window_overlap_detected so overlap handling is visible in the artifact:
 
 - Overlapping events stay in the full event × stock × window Holm family; the adjusted p-values are exploratory and do not remove dependence.
 - Overlapping events are excluded from category-level summaries.
