@@ -22,7 +22,7 @@ ARTIFACT_DESCRIPTIONS = {
     "sample_performance.csv": "Event-weighted development and holdout performance summaries.",
     "transaction_cost_sensitivity.csv": "Strategy summary metrics at configured per-side cost levels.",
     "final_strategy_assessment.csv": "Selected headline trading metrics at the configured base cost.",
-    "multi_stock_significance.csv": "Approximate CAR inference with Holm-adjusted p-values.",
+    "multi_stock_significance.csv": "Conventional and Newey-West/HAC-sensitivity CAR inference, each with Holm-adjusted p-values.",
     "single_stock_event_study.csv": "Reliance subset of the generated multi-stock daily event-study output.",
     "covid_extreme_day_sensitivity.csv": "EVT002 extreme-day diagnostics; partial-window sums are not reported as comparable CARs.",
     "event_timing_sensitivity.csv": "Alternative first-session versus following-session CARs for events with unresolved timing metadata.",

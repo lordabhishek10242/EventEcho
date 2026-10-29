@@ -64,7 +64,19 @@ def fit_market_model(sample: pd.DataFrame, stock_column: str, market_column: str
     residuals = y - x @ coefficients
     degrees_freedom = len(y) - x.shape[1]
     residual_variance = float(residuals @ residuals / degrees_freedom)
-    covariance = residual_variance * np.linalg.inv(x.T @ x)
+    bread = np.linalg.inv(x.T @ x)
+    covariance = residual_variance * bread
+
+    # Newey-West sandwich covariance for the estimated market-model coefficients.
+    n = len(y)
+    bandwidth = min(n - 1, max(1, int(np.floor(4 * (n / 100.0) ** (2 / 9)))))
+    scores = x * residuals[:, None]
+    meat = scores.T @ scores
+    for lag in range(1, bandwidth + 1):
+        weight = 1.0 - lag / (bandwidth + 1.0)
+        cross = scores[lag:].T @ scores[:-lag]
+        meat += weight * (cross + cross.T)
+    hac_covariance = bread @ meat @ bread
     return {
         "alpha": float(coefficients[0]),
         "beta": float(coefficients[1]),
@@ -72,6 +84,9 @@ def fit_market_model(sample: pd.DataFrame, stock_column: str, market_column: str
         "residual_std": float(np.sqrt(residual_variance)),
         "degrees_freedom": degrees_freedom,
         "covariance": covariance,
+        "hac_covariance": hac_covariance,
+        "hac_bandwidth": bandwidth,
+        "estimation_residuals": residuals.tolist(),
         "observations": len(clean),
     }
 
