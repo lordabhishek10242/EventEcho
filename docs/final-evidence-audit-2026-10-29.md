@@ -23,7 +23,8 @@ This note audits the successful historical rebuild artifact from GitHub Actions 
 - Events: 21; stocks: 7; CAR rows: 441 (21 × 7 × 3 event windows).
 - Event windows: 11 sessions for CAR windows -5:+5, -3:+3 and -1:+1.
 - Estimation-window sensitivity: 60, 100 and 150 sessions; 20-session gap before the event window.
-- Eight events are flagged for overlap/dependence handling: EVT007, EVT010, EVT011, EVT012, EVT013, EVT017, EVT018 and EVT019.
+- The configured ±5-session CAR windows contain 8 overlapping event pairs involving 8 event IDs: EVT007, EVT010, EVT011, EVT012, EVT013, EVT017, EVT018 and EVT019.
+- The broader `event_master.csv` `overlap_flag` has 9 True, 9 False and 3 unset values. It is not the same field as the configured CAR-window overlap audit: EVT020 and EVT021 also carry master-level flags because broader window/dependence review includes volatility-window considerations. Preserve the distinction; do not report the master flag count as the number of CAR-window-overlap events.
 - Timestamp registry: 2 exact clock timestamps recorded (the GDP releases EVT018 and EVT021 at 17:30 IST); 19 events still require timestamp review. Do not infer exact times from stock-price movements.
 - At the 100-session specification, Holm-adjusted conventional tests mark 8/441 CAR rows significant; HAC-based Holm-adjusted tests mark 10/441. Seven rows remain HAC-significant in all three estimation-window specifications and have stable CAR direction. These are selected event-stock results and do not establish causation.
 - Sensitivity changes the count of conventional Holm-significant rows to 12 (60 sessions), 8 (100) and 11 (150); HAC counts are 14, 10 and 10. CAR correlation with the 100-session baseline is high (0.982 for 60; 0.994 for 150), but individual effect sizes and significance can change.
