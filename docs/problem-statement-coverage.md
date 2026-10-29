@@ -11,7 +11,7 @@ This matrix maps the EventEcho problem statement to the current repository imple
 | Statistical significance and uncertainty | `src/statistics.py`; HAC/Newey–West inference; Holm correction | Implemented, approximate | Do not imply exact finite-sample correction; mention multiplicity and dependence. |
 | Pre/post volatility around events | `src/volatility.py`; event-volatility output | Implemented | Interpret volatility changes as descriptive and audit overlapping volatility windows. |
 | Compare stocks and event categories | `src/reporting.py`; cross-stock and category summaries | Implemented | Category summaries have few independent episodes; earnings peer responses are not direct issuer effects. |
-| Account for overlapping events/confounds | `src/event_audit.py`; overlap and episode audits; clustered inference | Partially addressed | Audit manually high-impact overlaps; dependence adjustment does not identify which event caused a move. |
+| Account for overlapping events/confounds | `src/event_audit.py`; overlap and episode audits; clustered inference | Partially addressed | Overlapping events are excluded from category summaries and clustered for strategy bootstrap uncertainty; all CAR tests remain exploratory and Holm-adjusted as one family. Dependence adjustment does not identify which event caused a move. |
 | Robustness to estimation-window choices | `src/estimation_sensitivity.py`; 60/100/150-session outputs | Implemented | Explain significance changes and CAR differences; do not select the most favorable specification. |
 | Unseen historical validation | Explicit development/holdout event IDs in `src/config.py`; `src/events.py`; strategy inference outputs | Implemented with limitations | Audit leakage/peeking in analysis choices; small dependent holdout means no reliable edge claim. |
 | Optional ML-based event categorization | No validated event-text classifier required by the current core pipeline | Optional / not a blocker | Add only with labelled data, chronological evaluation, and evidence it improves decisions. |
@@ -32,7 +32,7 @@ This matrix maps the EventEcho problem statement to the current repository imple
 - [ ] Snapshot event-eligibility diagnostics use observed benchmark sessions, not the union of all provider dates.
 - [ ] Latest unit tests pass.
 - [ ] Latest historical rebuild passes and the latest artifact/manifest are inspected.
-- [ ] Event-source audit is reflected in the event master without inventing timestamps.
+- [ ] Event-source audit is reflected in generated event metadata without inventing timestamps; unresolved timestamps remain flagged.
 - [ ] Timing sensitivities are reviewed for unresolved and intraday events.
 - [ ] Dashboard tables and figures correspond to the latest run and current 21-event/seven-stock universe.
 - [ ] Statistical significance, economic magnitude, robustness, and causal interpretation are clearly distinguished.
