@@ -225,7 +225,7 @@ def run_analysis(
         "holdout_event_ids": list(HOLDOUT_EVENT_IDS),
         "inference_note": "Approximate t-tests include OLS parameter uncertainty; residual independence/homoskedasticity remain assumptions.",
         "data_note": "Stock returns use adjusted close; benchmark returns use price close. Local missing prices are not filled.",
-        "provider_note": "Yahoo Finance history is provider-controlled and can change; this run is not based on a frozen vendor snapshot.",
+        "provider_note": "This run uses a frozen local copy of Yahoo Finance history captured at retrieval time. The snapshot makes this run reproducible, but Yahoo Finance remains a third-party provider and the data are not independently verified; later provider downloads may differ.",
         "input_data_classification": (
             provenance.get("classification", "unverified_local_input") if provenance else "live_provider_download"
         ),
