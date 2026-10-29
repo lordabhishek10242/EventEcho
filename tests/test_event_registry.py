@@ -77,3 +77,12 @@ def test_expanded_registry_has_non_overlapping_chronological_development_and_hol
     assert labels["EVT019"] == "Development"
     assert labels["EVT017"] == "Holdout"
     assert labels["EVT018"] == "Holdout"
+
+
+def test_2024_election_counting_event_uses_primary_eci_press_note():
+    events = pd.read_csv(ROOT / "results" / "event_master.csv").set_index("event_id")
+    row = events.loc["EVT017"]
+    assert row["source_url"] == "https://elections24.eci.gov.in/docs/NuSOkXHRFY.pdf"
+    assert row["event_date"] == "2024-06-04"
+    assert "counting day" in row["headline"].lower()
+    assert "Election Commission of India" in row["source_name"]
