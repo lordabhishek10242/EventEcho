@@ -20,6 +20,7 @@ ARTIFACT_DESCRIPTIONS = {
     "trade_candidates.csv": "Per-event and per-stock simulated entries, exits, costs, and benchmark returns.",
     "event_trading_results.csv": "Equal-weighted event portfolio returns and benchmark excess returns.",
     "sample_performance.csv": "Event-weighted development and holdout performance summaries.",
+    "clustered_strategy_inference.csv": "Development and holdout strategy metrics with cluster-bootstrap intervals resampling overlapping-window/shared-episode components.",
     "transaction_cost_sensitivity.csv": "Strategy summary metrics at configured per-side cost levels.",
     "final_strategy_assessment.csv": "Selected headline trading metrics at the configured base cost.",
     "multi_stock_significance.csv": "Conventional and Newey-West/HAC-sensitivity CAR inference, each with Holm-adjusted p-values.",
@@ -53,7 +54,7 @@ def build_demo_dashboard(analysis_dir: str | Path, output_path: str | Path | Non
         "event_window_audit.csv", "event_level_audit.csv", "event_pair_overlap_audit.csv",
         "event_relationship_highlights.csv", "event_timing_sensitivity.csv",
         "event_volatility.csv", "category_car_summary.csv", "category_volatility_summary.csv",
-        "event_trading_results.csv", "sample_performance.csv",
+        "event_trading_results.csv", "sample_performance.csv", "clustered_strategy_inference.csv",
         "transaction_cost_sensitivity.csv", "covid_extreme_day_sensitivity.csv",
     )
     datasets: dict[str, list[dict]] = {}
