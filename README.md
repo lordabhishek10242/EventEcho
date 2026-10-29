@@ -32,7 +32,9 @@ src/event_study.py     Estimation samples, OLS market model, AR and CAR
 src/statistics.py      Approximate CAR inference and Holm correction
 src/trading.py         Long-only trades, costs, benchmark, event aggregation
 src/sensitivity.py     Transaction-cost, extreme-market, and event-timing sensitivities
-src/volatility.py      Pre/post realized and residual volatility diagnostics\nsrc/category_analysis.py Episode-level CAR and volatility summaries with overlap exclusions\nsrc/reporting.py       CSV exports, dashboard datasets, and run manifest
+src/volatility.py      Pre/post realized and residual volatility diagnostics
+src/category_analysis.py Episode-level CAR and volatility summaries with overlap exclusions
+src/reporting.py       CSV exports, dashboard datasets, and run manifest
 scripts/run_analysis.py  Repository-root command-line workflow
 tests/                 Network-free synthetic tests
 notebooks/EventEcho.ipynb  Modular results exploration
@@ -79,11 +81,11 @@ $$R_{i,t} = \alpha_i + \beta_i R_{m,t} + \epsilon_{i,t}.$$
 
 Expected return is $\widehat{R}_{i,t} = \hat{\alpha}_i + \hat{\beta}_i R_{m,t}$ and abnormal return is $AR_{i,t} = R_{i,t} - \widehat{R}_{i,t}$. CAR is the sum of daily abnormal returns within the selected session window. Windows are (−1,+1), (−3,+3), and (−5,+5). A CAR is missing rather than silently partial if any required event-window observation is unavailable.
 
-The effective date is the designated Day 0 from the event master; an effective date that is not an available trading session is an error in the analysis path rather than silently shifted. Announcement times need separate verification. The supplied event table includes episode identifiers and overlap flags, but users should inspect shared episodes and overlapping announcements before treating tests as independent.
+The effective date is the designated Day 0 from the event master; an effective date that is not an available trading session is an error in the analysis path rather than silently shifted. Announcement times need separate verification. The supplied event table includes episode identifiers and overlap flags, but users should inspect shared episodes and overlapping announcements before treating tests as independent.\n\nRealized volatility is measured separately from market-model residual volatility. Stock and benchmark realized volatility use trading-session windows −20:−1 and +1:+20, excluding Day 0, with annualization by √252. Category summaries average stock responses within an event and related events within an episode; overlapping windows are excluded. Numeric category summaries require at least three independent episodes.
 
 ## Inference and Sensitivity
 
-The reusable implementation calculates approximate two-sided t-tests using estimation residual variance plus OLS parameter-estimation variance, with Student-t degrees of freedom from the estimation sample. It applies the Holm step-down correction across all generated event × stock × window tests. This is still approximate: the method assumes independent, homoskedastic event-window residuals and does not model event-induced variance or cross-event dependence. Statistical significance is not economic significance or causality.
+The reusable implementation calculates approximate two-sided t-tests using estimation residual variance plus OLS parameter-estimation variance, with Student-t degrees of freedom from the estimation sample. It applies the Holm step-down correction across all generated event × stock × window tests. This is still approximate: the method assumes independent, homoskedastic event-window residuals and does not model event-induced variance or fully account for cross-event dependence. Statistical significance is not economic significance or causality.
 
 The original notebook logs COVID-period confounders and compares CAR after excluding event sessions where the absolute Nifty return exceeds 5%. Such exclusions are diagnostic only and can remove genuine event-period response. The modular pipeline exports this extreme-day sensitivity when EVT002 is present. The original notebook also compares market-model and market-adjusted expected returns; the latter assumes alpha zero and beta one and is not inherently superior.
 
