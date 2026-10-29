@@ -39,8 +39,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--frequency", choices=[FREQUENCY], default=FREQUENCY)
     parser.add_argument(
         "--stock-adjustment",
-        choices=["adjusted-close"],
-        default="adjusted-close",
+        choices=["close-price"],
+        default="close-price",
         help=f"Explicit stock price field policy; currently fixed to {STOCK_FIELD}",
     )
     parser.add_argument(

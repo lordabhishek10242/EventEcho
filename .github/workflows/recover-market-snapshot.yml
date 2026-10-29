@@ -9,6 +9,8 @@ on:
       - "results/event_master.csv"
       - "src/config.py"
       - "src/data.py"
+      - "src/snapshots.py"
+      - "src/events.py"
       - "src/event_study.py"
       - "src/statistics.py"
       - "src/sensitivity.py"
