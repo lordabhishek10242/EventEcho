@@ -1,8 +1,8 @@
 {
-  "checked_utc": "2026-10-29T11:33:36.311114+00:00",
+  "checked_utc": "2026-10-29T16:49:05.339540+00:00",
   "analysis_dir": "reproduced",
   "dashboard_checked": true,
-  "passed": 47,
+  "passed": 55,
   "failed": 0,
   "checks": [
     {
@@ -41,12 +41,12 @@
     {
       "check": "code commit recorded",
       "passed": true,
-      "detail": "9aa95c947e97b069f1ad24e8124bda9798639fa5"
+      "detail": "efcfd82a6ef1095512ea9a6728023c48a069f81e"
     },
     {
       "check": "manifest artifact row counts match files",
       "passed": true,
-      "detail": 24
+      "detail": 33
     },
     {
       "check": "event IDs unique in output registry",
@@ -276,6 +276,52 @@
       "detail": null
     },
     {
+      "check": "pooled mean CAR CAR_-1_+1 equals CAAR path and per-event CARs",
+      "passed": true,
+      "detail": {
+        "mean_CAR_pct": -0.122155
+      }
+    },
+    {
+      "check": "pooled mean CAR CAR_-3_+3 equals CAAR path and per-event CARs",
+      "passed": true,
+      "detail": {
+        "mean_CAR_pct": 0.178031
+      }
+    },
+    {
+      "check": "pooled mean CAR CAR_-5_+5 equals CAAR path and per-event CARs",
+      "passed": true,
+      "detail": {
+        "mean_CAR_pct": -0.747231
+      }
+    },
+    {
+      "check": "pooled intervals are ordered and only reported with 3+ clusters",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "window-choice counts equal significance table counts",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "replication tests cover every window",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "every registry headline is classified once",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "headline corpus checksum matches manifest",
+      "passed": true,
+      "detail": "3699710981e04ef3f195952f5fa125ef7da2a0fa56df4e8d42fd6bbd32597253"
+    },
+    {
       "check": "dashboard embeds a data payload",
       "passed": true,
       "detail": null
@@ -283,12 +329,12 @@
     {
       "check": "dashboard manifest is this run's manifest",
       "passed": true,
-      "detail": "2026-10-29T11:33:34.172928+00:00"
+      "detail": "2026-10-29T16:49:03.825492+00:00"
     },
     {
       "check": "dashboard tables equal shipped CSVs",
       "passed": true,
-      "detail": 20
+      "detail": 28
     },
     {
       "check": "dashboard has no stale adjusted-close disclaimer",

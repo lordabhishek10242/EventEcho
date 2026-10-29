@@ -1,0 +1,7 @@
+evaluation,event_class,precision,recall,f1,support
+grouped_cross_validation_on_corpus,monetary_policy,0.7830188679245284,0.9764705882352941,0.8691099476439791,85
+grouped_cross_validation_on_corpus,corporate_earnings,0.9285714285714286,0.9454545454545454,0.9369369369369369,55
+grouped_cross_validation_on_corpus,government_policy,0.5689655172413793,0.559322033898305,0.5641025641025641,59
+grouped_cross_validation_on_corpus,economic_data,0.7317073170731707,0.6,0.6593406593406593,50
+grouped_cross_validation_on_corpus,election_politics,0.7843137254901961,0.8333333333333334,0.8080808080808081,48
+grouped_cross_validation_on_corpus,corporate_development,0.7096774193548387,0.5714285714285714,0.6330935251798561,77
