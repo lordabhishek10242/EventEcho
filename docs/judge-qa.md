@@ -76,7 +76,7 @@ It cross-checks our hand-assigned event categories. It scores 81% on the 21 regi
 - Prices are frozen in a snapshot with SHA-256 checksums.
 - CI re-runs the analysis offline from that snapshot.
 - `verify_release.py` runs 78 checks, for example: CAR = sum of abnormal returns, Holm recomputes, dashboard tables equal the CSVs, and the variance ratio recomputes from the SCARs.
-- `pytest` runs 148 tests without network access.
+- `pytest` runs 149 tests without network access.
 
 **20. Yahoo Finance isn't official data.**
 True. It's the practical free source. We record the exact field (Close for both stocks and NIFTY, so dividends are excluded on both sides) and freeze the bytes. A checksum proves sameness, not correctness. A second-vendor check is on our limits list.

@@ -4,7 +4,7 @@ EventEcho is a reproducible **event study** of Indian stocks. It asks: around im
 
 It is an evidence explorer, not a prediction engine. Results show **association**, not cause.
 
-> **Current verified result set:** [`results/reproduced/`](results/reproduced/) — one CI run (Historical Rebuild run 40924836126) on frozen snapshot `eventecho-historical-40848349737`, with its [manifest](results/reproduced/manifest.json), [integrity report](results/reproduced/release_validation.json) and [dashboard](results/reproduced/eventecho_demo.html).
+> **Current verified result set:** [`results/reproduced/`](results/reproduced/) — one CI run (Historical Rebuild run 41011220268) on frozen snapshot `eventecho-historical-40848349737`, with its [manifest](results/reproduced/manifest.json), [integrity report](results/reproduced/release_validation.json) and [dashboard](results/reproduced/eventecho_demo.html).
 > Read the [final evidence audit](docs/final-evidence-audit-2026-10-29.md) before quoting any number.
 
 ## Questions the project answers
@@ -57,7 +57,7 @@ Every line of the competition problem statement (PS 03) is mapped to code, outpu
 
 Details: [timing, overlap and return convention](docs/event-timing-overlap-return-convention.md), [event source audit](docs/event-source-and-validation-audit.md), [problem-statement coverage](docs/problem-statement-coverage.md).
 
-## Main findings (run 40924836126)
+## Main findings (run 41011220268)
 
 The dashboard opens with these findings, computed from the same tables.
 

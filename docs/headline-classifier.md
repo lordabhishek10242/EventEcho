@@ -41,7 +41,7 @@ The corpus does **not** contain headlines written for this project, and no headl
 1. **Grouped cross-validation (5 folds):** whole search groups are held out at once. A group is mostly about one event family (for example "RBI cuts in 2019", or "Yes Bank moratorium"), so this measures how the model does on event families it has not seen.
 2. **External test on the 21 registry headlines:** these headlines are short and formal, unlike news headlines, and are never used for training. Corpus headlines about any registry event are removed from training for this test. The 95% interval is a bootstrap over the 21 headlines.
 
-## Results (run 40915721578; unchanged in run 40924836126)
+## Results (run 40915721578; unchanged in run 41011220268)
 
 | Test | Model | Accuracy | 95% CI | Macro F1 |
 |---|---|---:|---:|---:|
