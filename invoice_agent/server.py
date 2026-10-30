@@ -68,7 +68,10 @@ class Handler(BaseHTTPRequestHandler):
         return self.server.ctx  # type: ignore[attr-defined]
 
     def log_message(self, fmt: str, *args: Any) -> None:  # noqa: A003 - stdlib signature
-        sys.stderr.write("[invoice-agent] %s - %s\n" % (self.address_string(), fmt % args))
+        agent = (self.headers.get("User-Agent") or "-")[:48]
+        sys.stderr.write(
+            "[invoice-agent] %s ua=%r %s\n" % (self.address_string(), agent, fmt % args)
+        )
 
     def _send(self, status: int, payload: dict[str, Any], media_type: str) -> None:
         body = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
@@ -81,6 +84,10 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", media_type)
             self.send_header("Content-Length", str(len(body)))
             self.send_header("Cache-Control", "no-store")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Access-Control-Allow-Headers", "Authorization, Content-Type, A2A-Version")
+            self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+            self.send_header("Access-Control-Expose-Headers", "Content-Type")
             self.end_headers()
             if self.command != "HEAD":
                 self.wfile.write(body)
@@ -117,12 +124,32 @@ class Handler(BaseHTTPRequestHandler):
     def do_HEAD(self) -> None:  # noqa: N802
         self._dispatch("GET")
 
+    def do_OPTIONS(self) -> None:  # noqa: N802
+        self.send_response(204)
+        self.send_header("Content-Length", "0")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Headers", "Authorization, Content-Type, A2A-Version")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Max-Age", "600")
+        self.end_headers()
+
     def _dispatch(self, method: str) -> None:
         parsed = urlparse(self.path)
         path = unquote(parsed.path)
 
         if path in {"/healthz", "/health"}:
-            self._send(200, {"status": "ok"}, "application/json")
+            stats = self.ctx.store.stats()
+            self._send(
+                200,
+                {
+                    "status": "ok",
+                    "service": "eventecho-invoice-agent",
+                    "protocol": "A2A 1.0 HTTP+JSON",
+                    "tasks": stats["tasks"],
+                    "cachedDecisions": stats["cached_decisions"],
+                },
+                "application/json",
+            )
             return
         if path.rstrip("/") == CARD_PATH:
             self._send(200, agent_card(self._origin_base()), "application/json")
