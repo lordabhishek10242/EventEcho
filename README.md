@@ -10,6 +10,23 @@ A reproducible, bias-audited **event study** on 7 NSE large caps and NIFTY 50, 2
 
 ---
 
+## Also in this repository: Invoice Action Agent (A2A 1.0)
+
+A separate, dependency-free service that reads invoice claim batches, proposes
+**one typed business action per package** with the three decisive evidence
+references, gates every execution on the reviewer's `ACCEPTED` result, and stores
+task state so retries can never repeat a payment.
+
+- Agent Card: `https://8000-i08mehv473n5yap8hpkdj.e2b.app/.well-known/agent-card.json`
+- A2A base URL: `https://8000-i08mehv473n5yap8hpkdj.e2b.app/a2a/`
+- Code: `invoice_agent/` · Docs: [`docs/INVOICE_AGENT.md`](docs/INVOICE_AGENT.md)
+- Verify: `python3 scripts/verify_invoice_agent.py` · Tests:
+  `python3 -m unittest tests.test_invoice_agent`
+
+The agent study below is unchanged and independent of the service.
+
+---
+
 ## Headline numbers (all from one verified run)
 
 | Metric | Value | Meaning |

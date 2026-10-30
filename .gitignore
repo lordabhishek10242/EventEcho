@@ -25,3 +25,5 @@ data/*.feather
 # Editor and OS noise
 .DS_Store
 .vscode/
+# Invoice agent runtime state (durable tasks, idempotency, decision cache)
+data/invoice_agent*.sqlite3*
