@@ -403,32 +403,7 @@ python scripts/simulate_drift_null.py
 
 ## Repository layout
 
-```text
-src/                        analysis library — 5,009 lines, 21 modules
-  data.py, snapshots.py       prices, calendar alignment, SHA-256, basis refusal
-  events.py, event_audit.py   registry validation, Day 0, overlap/confounder audit
-  event_study.py, statistics.py, robust_tests.py   model, CAR, t/HAC/Holm, BMP/KP/rank
-  pooled_analysis.py, category_analysis.py, clustered_inference.py   CAAR, clusters
-  estimation_sensitivity.py, sensitivity.py, volatility.py, trading.py
-  earnings_study.py, earnings_extensions.py  266 results days, placebo, follow-ups
-  headline_classifier.py     TF-IDF + logistic regression, baselines
-  reporting.py, robustness_ledger.py   offline dashboard, evidence ledger
-scripts/                    acquire · rebuild · run_analysis · build_demo · verify
-                            build_earnings_calendar · simulate_drift_null
-tests/                      26 files, 2,858 lines, 155 network-free tests
-results/
-  event_master.csv          the 21-event registry (input, with source URLs)
-  earnings_events.csv       266 sourced results dates (input)
-  headline_corpus.csv       374 labelled headlines (input)
-  reproduced/               current verified outputs: 45 CSVs, manifest,
-                            release_validation.json, eventecho_demo.html
-  legacy_2026-10-27/        quarantined original 9-event exports (do not cite)
-docs/                       audits, timing/overlap convention, earnings study,
-                            release-time verification, classifier, judge Q&A,
-                            PS-03 coverage matrix
-notebook/, notebooks/       original notebook (unchanged) + exploration notebook
-.github/workflows/          tests · historical-rebuild · recover-market-snapshot
-```
+A full tree with a one-line explanation of **every file** is in [the appendix](#appendix--file-structure-and-what-each-file-means).
 
 ---
 
@@ -448,3 +423,181 @@ notebook/, notebooks/       original notebook (unchanged) + exploration notebook
 Market data are from Yahoo Finance via the unofficial `yfinance` package; check the provider's terms before redistributing. Event, earnings and headline sources are linked row-by-row in the input CSVs. No project licence has been chosen yet, so no licence is granted for reuse.
 
 **Educational research project. Not investment advice.** No result here establishes a trading edge, and nothing here should be read as a causal explanation of any price move.
+
+---
+
+## Appendix — file structure and what each file means
+
+Every path in the repository, with its purpose. Line counts are from the submitted commit; test counts are the number of cases `pytest` collects from each file (155 in total).
+
+### Top level
+
+```text
+EventEcho/
+├── README.md                     this document
+├── requirements.txt              pinned runtime deps: numpy, pandas, scipy, yfinance, scikit-learn, pytest
+├── .gitignore                    excludes venvs, caches and data/snapshots (raw prices are not redistributed)
+├── src/                          reusable analysis library — 5,009 lines, 21 modules
+├── scripts/                      command-line entry points — 1,281 lines, 7 scripts
+├── tests/                        network-free test suite — 2,858 lines, 26 files, 155 tests
+├── results/                      inputs (event registry, earnings dates, headlines) + verified outputs
+├── docs/                         audits, method notes, judge Q&A, PS-03 coverage, deck PDF
+├── .github/workflows/            3 CI pipelines
+├── notebook/                     original submission notebook, kept unchanged for provenance
+└── notebooks/                    thin exploration notebook
+```
+
+| Path | What it is | Why it exists |
+|---|---|---|
+| `README.md` | Project documentation | Setup, method, results, limits, file map |
+| `requirements.txt` | Dependency list | One command installs everything; no version drift |
+| `.gitignore` | Ignore rules | Keeps raw/restricted market data and venvs out of git |
+| `notebook/notebook5b4a79ed78.ipynb` | The original notebook (1.4 MB) | Preserved untouched so judges can see the starting point |
+| `notebook/EventEcho_artifacts.zip` | Artifacts exported from that notebook | Historical record of the first pass |
+| `notebooks/EventEcho.ipynb` | Small exploration notebook | Scratch exploration, no reported numbers |
+
+### `src/` — analysis library (21 modules, 5,009 lines)
+
+```text
+src/
+├── __init__.py                     package marker
+├── config.py                       all settings, tickers, sectors, split IDs
+├── data.py                         load prices, align calendar, build returns
+├── snapshots.py                    freeze raw data, SHA-256, integrity diagnostics
+├── events.py                       event registry validation, Day 0, sample split
+├── event_audit.py                  overlap, shared-episode and confounder audit
+├── event_study.py                  market model, abnormal returns, CAR windows
+├── statistics.py                   t-test, HAC, Holm correction
+├── robust_tests.py                 BMP, Kolari–Pynnönen, rank test, variance ratio
+├── pooled_analysis.py              CAAR, window choice, replication tests
+├── category_analysis.py            category summaries with episodes as the unit
+├── clustered_inference.py          cluster bootstrap for strategy inference
+├── estimation_sensitivity.py       60 / 100 / 150-session re-fits
+├── sensitivity.py                  cost grid and extreme-day sensitivity
+├── volatility.py                   realised volatility before vs after each event
+├── trading.py                      hypothetical post-event trade simulation
+├── earnings_study.py               266 results days, placebo, replication
+├── earnings_extensions.py          three pre-registered follow-up questions
+├── headline_classifier.py          TF-IDF + logistic regression, baselines
+├── reporting.py                    CSV schemas, manifest, HTML dashboard
+└── robustness_ledger.py            reviewer-facing caveat ledger
+```
+
+| Module | Lines | What it does | Key outputs |
+|---|---:|---|---|
+| `__init__.py` | 3 | Marks `src` as an importable package | — |
+| `config.py` | 79 | Single source of truth: ticker map, sector grouping, category→class map, estimation/gap/window settings, cost levels, holding period, and the fixed development/holdout event IDs. `AnalysisConfig` validates its own arguments (e.g. gap ≥ window radius, non-negative costs) | `manifest.json` blocks |
+| `data.py` | 199 | Loads a frozen snapshot or price CSV, **refuses any basis other than Close/Close**, takes the observed-NIFTY session calendar, re-indexes stocks to it and builds close-to-close returns. Never fills a missing price | in-memory panels → `manifest.json` |
+| `snapshots.py` | 433 | Downloads provider data, writes raw responses plus per-file SHA-256, and runs integrity diagnostics (session counts, coverage, gaps) before anything is analysed | `snapshot_metadata/`, checksums |
+| `events.py` | 120 | Validates the event registry (required columns, unique IDs, non-empty sources), classifies timestamp evidence without inferring times from prices, aligns each event to its first tradeable session, and enforces that development/holdout IDs are disjoint and chronologically ordered | `event_master.csv` (validated) |
+| `event_audit.py` | 481 | Computes **CAR-window** and **volatility-window** overlap on trading sessions, finds shared episodes, records documented and unverified confounders, and exposes the timing sensitivity of uncertain events | `event_pair_overlap_audit.csv`, `event_level_audit.csv`, `event_window_audit.csv`, `event_timing_sensitivity.csv` |
+| `event_study.py` | 169 | Fits the OLS market model (`α + β·NIFTY`) on 100 complete sessions ending 20 before the window, then computes abnormal returns and CARs for ±1/±3/±5. A CAR is left missing if any session is missing | `multi_stock_event_study.csv`, `multi_stock_car.csv` |
+| `statistics.py` | 160 | Parameter-aware CAR standard errors (`SE² = Lσ² + xᵀVx`), the conventional t-test, the Newey–West/HAC version, and Holm correction across all 441 tests | `multi_stock_significance.csv` |
+| `robust_tests.py` | 238 | Cross-sectional tests that do not assume constant event-day volatility: BMP standardised test, Kolari–Pynnönen same-day correlation adjustment, Corrado/Cowan rank test, and the event-induced variance ratio with a cluster bootstrap | `robust_tests_registry.csv`, `earnings_summary.csv` |
+| `pooled_analysis.py` | 296 | Builds CAAR paths and window summaries from the per-event panels, compares windows (±1/±3/±5, sign and verdict flips), and runs development→holdout replication checks | `caar_event_time.csv`, `caar_window_summary.csv`, `window_choice_*.csv`, `pattern_generalization.csv` |
+| `category_analysis.py` | 211 | Descriptive summaries by event class, with **episodes / dependency clusters** as the analysis unit; withholds a number when the unit count is too small | `category_car_summary.csv`, `category_volatility_summary.csv` |
+| `clustered_inference.py` | 155 | Cluster bootstrap (5,000 draws, seed 2026) over connected components of overlapping windows and shared episodes, used for every strategy interval | `clustered_strategy_inference.csv`, `sample_performance.csv` |
+| `estimation_sensitivity.py` | 77 | Re-fits the market model at 60 and 150 sessions and compares CARs and significance counts with the 100-session baseline | `estimation_window_sensitivity*.csv` |
+| `sensitivity.py` | 229 | Transaction-cost grid (0/5/10/20/30 bps per side) and the COVID extreme-day drop test | `transaction_cost_sensitivity.csv`, `covid_extreme_day_sensitivity.csv` |
+| `volatility.py` | 254 | Realised volatility in sessions −20:−1 vs +1:+20 (Day 0 excluded), annualised by √252, plus market-model residual volatility | `event_volatility.csv` |
+| `trading.py` | 109 | Simulates the rule: buy at the close of the first session after Day 0, hold 3 sessions, sell at the close, equal weight, costs charged on both sides, benchmark measured over the same sessions | `event_trading_results.csv`, `trade_candidates.csv` |
+| `earnings_study.py` | 418 | The 266-announcement results-day panel: each company studied only on its own results day; variance ratio as the main measure, placebo at +30 sessions, development/holdout replication, per-stock and per-sector breakouts | `earnings_summary.csv`, `earnings_placebo.csv`, `earnings_replication.csv`, `earnings_event_car.csv`, `earnings_coverage.csv` |
+| `earnings_extensions.py` | 300 | Three follow-ups written down **before** the run: post-results drift/reversal, peer spillover, and the yearly volatility trend — reported as they came out (2 nulls, 1 moderate) | `earnings_drift_*.csv`, `earnings_peer_*.csv`, `earnings_volatility_trend.csv` |
+| `headline_classifier.py` | 237 | TF-IDF (words 1–2, chars 3–5) + logistic regression for 6 event classes, with a keyword baseline, a majority-class baseline, and group-aware cross-validation so no search group leaks across the split | `headline_classifier_*.csv`, `event_headline_classification.csv` |
+| `reporting.py` | 737 | Single writer for every result table (stable column order), the run manifest with provenance, and the **offline single-file HTML dashboard** whose tables are embedded verbatim | all CSVs, `manifest.json`, `eventecho_demo.html` |
+| `robustness_ledger.py` | 114 | Turns the audit tables into a per-result caveat ledger, so a reader sees the attribution warning next to the number | `robustness_evidence_ledger.csv` |
+
+### `scripts/` — entry points (7 scripts, 1,281 lines)
+
+| Script | Lines | What it does | When to run it |
+|---|---:|---|---|
+| `run_analysis.py` | 401 | The orchestrator: loads the snapshot (offline or via download), runs every module above in order, writes an output directory | Main analysis step |
+| `build_demo.py` | 31 | Turns one verified analysis directory into the self-contained HTML dashboard | After `run_analysis.py` |
+| `verify_release.py` | 392 | 87 invariant checks on an output directory (CAR = Σ AR, Holm p-values recomputed, dashboard tables == shipped CSVs, split order, cost arithmetic, overlap symmetry, checksums). **Not** expected-value checks, so it catches drift without freezing results | Before publishing; runs in CI |
+| `rebuild_historical.py` | 72 | One-command full rebuild: download → freeze a new uniquely named snapshot → analyse offline → build dashboard | Fresh end-to-end run |
+| `acquire_market_snapshot.py` | 88 | Opt-in acquisition of a frozen price snapshot only (no analysis) | Creating a shareable snapshot |
+| `build_earnings_calendar.py` | 263 | Rebuilds `results/earnings_events.csv` from the hand-collected, sourced dates; refuses to write if a quarter is missing or duplicated | Regenerating the results calendar |
+| `simulate_drift_null.py` | 35 | Runs the drift test on simulated no-drift price paths — used to show the test is calibrated (~1 in 20 false fires) | Method validation |
+
+### `tests/` — network-free suite (26 files, 2,858 lines, 155 cases)
+
+| Test file | Cases | What it protects |
+|---|---:|---|
+| `test_release_integrity.py` | 15 | Regression tests for the release fixes: benchmark-session calendar, manifest price policy, dashboard/CSV equality |
+| `test_snapshots.py` | 13 | Snapshot writing, checksums, acquisition failures, CLI behaviour |
+| `test_returns.py` | 11 | Close-to-close return construction, calendar alignment, no imputation |
+| `test_phase1_reports.py` | 11 | Report schemas, row counts and required columns |
+| `test_robust_tests.py` | 11 | BMP / KP / rank / variance-ratio numerics |
+| `test_statistics.py` | 8 | CAR variance, HAC, Holm correction behaviour |
+| `test_trading.py` | 7 | Trade arithmetic, cost application, benchmark alignment |
+| `test_earnings_study.py` | 7 | Results-day windowing, placebo exclusion, variance ratio |
+| `test_volatility.py` | 6 | Pre/post volatility windows, annualisation, missing-day handling |
+| `test_sensitivity.py` | 6 | Cost grid and extreme-day sensitivity |
+| `test_reporting.py` | 6 | Dashboard content and embedding |
+| `test_event_windows.py` | 6 | Window bounds, gap rules, missing-session behaviour |
+| `test_event_relationship_audit.py` | 6 | Overlap symmetry and shared-episode logic |
+| `test_event_registry.py` | 6 | Registry validation and required provenance fields |
+| `test_earnings_extensions.py` | 6 | Drift, peer and trend follow-up calculations |
+| `test_pooled_analysis.py` | 5 | CAAR construction and window-choice agreement |
+| `test_data_provenance.py` | 5 | Manifest provenance fields and basis refusal |
+| `test_headline_classifier.py` | 4 | No leakage across groups; registry headlines never in training |
+| `test_event_timing_metadata.py` | 4 | Timestamp-evidence classification; no price-inferred timing |
+| `test_clustered_inference.py` | 4 | Cluster construction and bootstrap determinism |
+| `test_estimation_sensitivity.py` | 3 | 60/100/150-session re-fit consistency |
+| `test_price_return_convention.py` | 1 | Close/Close price-return basis is enforced |
+| `test_overlap_treatment.py` | 1 | Overlapping events excluded from category summaries |
+| `test_robustness_ledger.py` | 1 | Caveat ledger covers every result |
+| `test_rebuild_script.py` | 1 | Rebuild entry point smoke test |
+| `test_snapshot_cli.py` | 1 | Snapshot CLI wiring |
+
+### `results/` — inputs and outputs
+
+**Inputs (hand-curated, committed, each row carries a source URL):**
+
+| File | Rows | What it is |
+|---|---:|---|
+| `event_master.csv` | 21 | The macro-event registry: date, effective date, headline, category, source, episode ID, timing confidence, release-session check |
+| `earnings_events.csv` | 266 | Every quarterly results date, 7 stocks × 38 quarters (Q1 FY17 – Q2 FY26) |
+| `headline_corpus.csv` | 374 | Labelled headlines in 49 search groups — training data for the NLP check only |
+
+**Verified outputs (`results/reproduced/`, 45 CSVs + manifest + dashboard):**
+
+| Group | Files | What they contain |
+|---|---|---|
+| Event study core | `multi_stock_event_study.csv` (1,617), `multi_stock_car.csv` (441), `single_stock_event_study.csv` (231) | Daily ARs per event × stock × session, and CARs for three windows |
+| Significance & robustness | `multi_stock_significance.csv` (441), `robust_tests_registry.csv` (66), `robustness_evidence_ledger.csv` (441) | t/HAC/Holm results per test, BMP/KP/rank/variance ratio per group, caveats per result |
+| Aggregation | `caar_event_time.csv` (242), `caar_window_summary.csv` (66), `category_car_summary.csv` (27), `category_volatility_summary.csv` (27), `cross_stock_consistency.csv` (63) | CAAR paths and bands, per class/sector/stock/sample summaries |
+| Window & model sensitivity | `window_choice_summary.csv` (3), `window_choice_agreement.csv` (3), `estimation_window_sensitivity.csv` (1,323), `estimation_window_sensitivity_summary.csv` (3), `covid_extreme_day_sensitivity.csv` (21) | How verdicts change with the window and with 60/100/150-session models |
+| Audit | `event_level_audit.csv` (21), `event_pair_overlap_audit.csv` (210), `event_window_audit.csv` (21), `event_relationship_highlights.csv` (10), `event_timing_sensitivity.csv` (714), `event_volatility.csv` (147) | Overlap, confounders, timing alternatives, volatility before/after |
+| Earnings | `earnings_summary.csv` (90), `earnings_placebo.csv` (24), `earnings_replication.csv` (7), `earnings_event_car.csv` (266), `earnings_event_time.csv` (88), `earnings_coverage.csv` (266), `earnings_drift_events.csv` (266), `earnings_drift_summary.csv` (20), `earnings_peer_events.csv` (152), `earnings_peer_spillover.csv` (8), `earnings_volatility_trend.csv` (14) | The 266-event panel, its placebo, replication test and the three pre-registered follow-ups |
+| NLP | `headline_classifier_metrics.csv` (6), `headline_classifier_confusion.csv` (24), `headline_classifier_per_class.csv` (6), `event_headline_classification.csv` (21) | Accuracy vs baselines, confusion matrix, per-class scores, headline-level predictions |
+| Strategy | `event_trading_results.csv` (21), `trade_candidates.csv` (147), `clustered_strategy_inference.csv` (2), `sample_performance.csv` (2), `final_strategy_assessment.csv` (7), `transaction_cost_sensitivity.csv` (5), `pattern_generalization.csv` (18) | Per-event trades, cluster-bootstrap intervals, cost sensitivity, replication verdicts |
+| Provenance | `manifest.json`, `release_validation.json` (87 checks), `snapshot_metadata/` | Code commit, snapshot ID, price SHA-256, settings, integrity results |
+| Demo | `eventecho_demo.html` (3.1 MB) | Self-contained offline dashboard with all tables embedded |
+| Quarantined | `results/legacy_2026-10-27/` | The original 9-event exports — kept for history, **never cite** |
+
+### `docs/`
+
+| File | Purpose |
+|---|---|
+| `EventEcho_Presentation_v3.1.pdf` | The submitted 10-slide deck |
+| `final-evidence-audit-2026-10-29.md` | Full release audit: what was fixed, coverage, timing, overlap, statistics, validation |
+| `problem-statement-coverage.md` | Every PS-03 basic/advanced/brownie item → code → output → dashboard panel |
+| `judge-qa.md` | 25 anticipated judge questions with short answers, plus "things never to say" |
+| `earnings-and-robust-tests.md` | The 266-day results study, placebo, replication and the three follow-ups |
+| `release-time-verification.md` | Per-event release-session evidence and the 2 unresolved cases |
+| `event-timing-overlap-return-convention.md` | Day 0, overlap and Close/Close convention in detail |
+| `event-source-and-validation-audit.md` | Provenance and validation of every registry event |
+| `headline-classifier.md` | Classifier design, leakage controls and scores |
+
+### `.github/workflows/`
+
+| Workflow | Trigger | What it does |
+|---|---|---|
+| `tests.yml` | Push to `main`/`feat/**`, pull requests | Runs the 155-test suite, no network |
+| `historical-rebuild.yml` | Changes on `main`, or manual | Tests → snapshot (fresh or reused via `source_run_id`) → analysis → dashboard → `verify_release.py`; uploads a 7-day artifact, publishes outputs when asked |
+| `recover-market-snapshot.yml` | Registry/method changes on `main`, or manual | Re-acquires a frozen snapshot and re-runs the analysis; hard-fails on an incomplete snapshot |
+
+---
+
+**Reading tip for judges:** start at `src/config.py` (every assumption lives there), then `src/event_study.py` → `src/statistics.py` → `src/robust_tests.py` for the numbers, and `scripts/verify_release.py` for how those numbers are defended.
