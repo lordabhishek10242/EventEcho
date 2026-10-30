@@ -337,7 +337,7 @@ def build_demo_dashboard(analysis_dir: str | Path, output_path: str | Path | Non
         path = root / name
         if path.is_file():
             try:
-                frame = pd.read_csv(path)
+                frame = pd.read_csv(path, float_precision="round_trip")
                 datasets[name] = frame.astype(object).where(pd.notna(frame), None).to_dict(orient="records")
             except pd.errors.EmptyDataError:
                 datasets[name] = []

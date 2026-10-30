@@ -46,7 +46,10 @@ class Checks:
 
 
 def _read(directory: Path, name: str) -> pd.DataFrame:
-    return pd.read_csv(directory / name)
+    # round_trip parsing gives the exact floats that were written, whatever the
+    # pandas version (pandas 3 defaults to a faster parser that can differ in
+    # the last digit, which would break the exact dashboard-vs-CSV comparison).
+    return pd.read_csv(directory / name, float_precision="round_trip")
 
 
 def _close(a: pd.Series | np.ndarray, b: pd.Series | np.ndarray, tolerance: float = TOLERANCE) -> bool:
