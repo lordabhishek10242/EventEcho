@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Face model — GLB preview</title>
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; height: 100%; background: #14171c; color: #e7e9ee;
+               font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  #stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+  canvas:active { cursor: grabbing; }
+  .panel { position: fixed; background: rgba(20,23,28,.82); border: 1px solid #2b313b;
+           border-radius: 10px; padding: 10px 12px; backdrop-filter: blur(6px); }
+  #hud { left: 14px; top: 14px; max-width: 320px; font-size: 12.5px; }
+  #hud b { font-weight: 600; }
+  #hud .muted { color: #98a0ad; }
+  #hud a { color: #8fc7ff; }
+  #controls { right: 14px; top: 14px; display: flex; gap: 8px; }
+  button { background: #232933; color: #e7e9ee; border: 1px solid #333c48;
+           border-radius: 7px; padding: 6px 11px; font: inherit; font-size: 12.5px; cursor: pointer; }
+  button:hover { background: #2b323d; }
+  #err { left: 50%; top: 50%; transform: translate(-50%,-50%); display: none;
+         border-color: #7a2f36; color: #ffb4bb; max-width: 460px; }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="gl"></canvas></div>
+
+<div id="hud" class="panel">
+  <div><b>Face model</b> — glTF 2.0 binary</div>
+  <div class="muted" id="stats">loading…</div>
+  <div class="muted" style="margin-top:6px">
+    drag to rotate · wheel to zoom · <a href="/face.glb">direct .glb</a> · <a href="/preview.png">renders</a>
+  </div>
+</div>
+
+<div id="controls" class="panel">
+  <button id="spin">pause spin</button>
+  <button id="reset">reset view</button>
+</div>
+
+<div id="err" class="panel"></div>
+
+<script>
+(() => {
+  const canvas = document.getElementById("gl");
+  const gl = canvas.getContext("webgl2", { antialias: true, alpha: false })
+          || canvas.getContext("webgl", { antialias: true, alpha: false });
+  const statsEl = document.getElementById("stats");
+  const errEl = document.getElementById("err");
+
+  function fail(msg) {
+    errEl.style.display = "block";
+    errEl.textContent = msg;
+    statsEl.textContent = "failed to load";
+  }
+  if (!gl) { fail("WebGL is not available in this browser."); return; }
+
+  // ---------------------------------------------------------------- shaders
+  const vsSrc = `
+    attribute vec3 aPosition; attribute vec3 aNormal; attribute vec3 aColor;
+    uniform mat4 uMVP; uniform mat3 uRot;
+    varying vec3 vNormal; varying vec3 vColor; varying vec3 vView;
+    void main() {
+      vec4 p = uMVP * vec4(aPosition, 1.0);
+      vNormal = normalize(uRot * aNormal);
+      vColor = aColor;
+      vView = normalize((uRot * aPosition));
+      gl_Position = p;
+    }`;
+  const fsSrc = `
+    precision mediump float;
+    varying vec3 vNormal; varying vec3 vColor; varying vec3 vView;
+    void main() {
+      vec3 n = normalize(vNormal);
+      vec3 key = normalize(vec3(-0.45, 0.62, 0.65));
+      vec3 fill = normalize(vec3(0.75, 0.10, 0.35));
+      vec3 up = normalize(vec3(0.0, 1.0, 0.25));
+      float d = max(dot(n, key), 0.0);
+      float f = max(dot(n, fill), 0.0) * 0.30;
+      float a = 0.26 + 0.16 * max(dot(n, up), 0.0);
+      vec3 eye = normalize(vView);
+      float rim = pow(1.0 - max(dot(n, eye), 0.0), 3.0) * 0.16;
+      // cheap specular for the eyes
+      vec3 h = normalize(key + eye);
+      float spec = pow(max(dot(n, h), 0.0), 48.0) * 0.35;
+      vec3 c = vColor * (a + d * 0.85 + f) + vec3(rim) + vec3(spec);
+      c = pow(c, vec3(1.0 / 2.2));
+      gl_FragColor = vec4(c, 1.0);
+    }`;
+
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, vsSrc));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fsSrc));
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+  gl.useProgram(prog);
+
+  const loc = {
+    aPosition: gl.getAttribLocation(prog, "aPosition"),
+    aNormal: gl.getAttribLocation(prog, "aNormal"),
+    aColor: gl.getAttribLocation(prog, "aColor"),
+    uMVP: gl.getUniformLocation(prog, "uMVP"),
+    uRot: gl.getUniformLocation(prog, "uRot"),
+  };
+
+  // ------------------------------------------------------------ mat helpers
+  const mat4 = {
+    perspective(fovy, aspect, near, far) {
+      const f = 1 / Math.tan(fovy / 2);
+      const nf = 1 / (near - far);
+      return new Float32Array([
+        f / aspect, 0, 0, 0,
+        0, f, 0, 0,
+        0, 0, (far + near) * nf, -1,
+        0, 0, 2 * far * near * nf, 0]);
+    },
+    mul(a, b) {
+      const o = new Float32Array(16);
+      for (let i = 0; i < 4; i++)
+        for (let j = 0; j < 4; j++) {
+          let s = 0;
+          for (let k = 0; k < 4; k++) s += a[k * 4 + j] * b[i * 4 + k];
+          o[i * 4 + j] = s;
+        }
+      return o;
+    },
+    translation(x, y, z) {
+      return new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, x,y,z,1]);
+    },
+    scale(x, y, z) {
+      return new Float32Array([x,0,0,0, 0,y,0,0, 0,0,z,0, 0,0,0,1]);
+    },
+  };
+
+  const mat3 = {
+    fromEuler(yaw, pitch) {
+      const cy = Math.cos(yaw), sy = Math.sin(yaw);
+      const cp = Math.cos(pitch), sp = Math.sin(pitch);
+      // R = Ry * Rx  (column-major)
+      return new Float32Array([
+        cy, sy * sp, sy * cp,
+        0, cp, -sp,
+        -sy, cy * sp, cy * cp]);
+    },
+  };
+
+  // --------------------------------------------------------------- glb parse
+  function parseGlb(buffer) {
+    const dv = new DataView(buffer);
+    if (dv.getUint32(0, true) !== 0x46546c67) throw new Error("not a GLB file");
+    const version = dv.getUint32(4, true);
+    if (version !== 2) throw new Error("GLB version " + version);
+    let offset = 12, jsonDoc = null, bin = null;
+    while (offset < dv.byteLength) {
+      const len = dv.getUint32(offset, true);
+      const type = dv.getUint32(offset + 4, true);
+      const body = new Uint8Array(buffer, offset + 8, len);
+      if (type === 0x4e4f534a) jsonDoc = JSON.parse(new TextDecoder().decode(body));
+      else if (type === 0x004e4942) bin = body;
+      offset += 8 + len;
+    }
+    if (!jsonDoc) throw new Error("no JSON chunk");
+    if (!bin) throw new Error("no BIN chunk");
+
+    const CTYPE = { 5121: Uint8Array, 5123: Uint16Array, 5125: Uint32Array, 5126: Float32Array };
+    const NCOMP = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT4: 16 };
+
+    function readAccessor(index) {
+      const acc = jsonDoc.accessors[index];
+      const view = jsonDoc.bufferViews[acc.bufferView];
+      const Type = CTYPE[acc.componentType];
+      const n = NCOMP[acc.type];
+      const byteOffset = (view.byteOffset || 0) + (acc.byteOffset || 0);
+      const count = acc.count;
+      const raw = new Type(bin.buffer, bin.byteOffset + byteOffset, count * n);
+      return { array: raw, n, count };
+    }
+
+    const primitives = [];
+    for (const mesh of jsonDoc.meshes || []) {
+      for (const prim of mesh.primitives) {
+        if (prim.mode !== undefined && prim.mode !== 4) continue;
+        const pos = readAccessor(prim.attributes.POSITION);
+        const nrm = prim.attributes.NORMAL !== undefined ? readAccessor(prim.attributes.NORMAL) : null;
+        const col = prim.attributes.COLOR_0 !== undefined ? readAccessor(prim.attributes.COLOR_0) : null;
+        const idx = readAccessor(prim.indices);
+        const count = pos.count;
+
+        let colors = col ? col.array : new Float32Array(count * 3).fill(0.8);
+        // COLOR_0 may be normalised ubyte/ushort; convert when needed.
+        if (col && !(col.array instanceof Float32Array)) {
+          const max = col.array instanceof Uint8Array ? 255 : 65535;
+          const conv = new Float32Array(col.count * 3);
+          for (let i = 0; i < conv.length; i++) conv[i] = col.array[i] / max;
+          colors = conv;
+        }
+
+        primitives.push({
+          positions: new Float32Array(pos.array),
+          normals: nrm ? new Float32Array(nrm.array) : new Float32Array(count * 3),
+          colors: new Float32Array(colors),
+          indices: idx.array,
+          indexType: idx.array instanceof Uint32Array ? 5125
+                   : idx.array instanceof Uint8Array ? 5121 : 5123,
+          count: idx.count,
+          vertices: count,
+        });
+      }
+    }
+    return { document: jsonDoc, primitives };
+  }
+
+  // ------------------------------------------------------------------ state
+  let model = null;
+  let yaw = 0.32, pitch = 0.06, zoom = 1.0, spin = true;
+  let bounds = { ymin: -10, ymax: 12, radius: 12 };
+
+  function upload(prims) {
+    return prims.map((p) => ({
+      count: p.count,
+      indexType: p.indexType,
+      vertexCount: p.vertices,
+      iPos: (() => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
+                     gl.bufferData(gl.ARRAY_BUFFER, p.positions, gl.STATIC_DRAW); return b; })(),
+      iNrm: (() => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
+                     gl.bufferData(gl.ARRAY_BUFFER, p.normals, gl.STATIC_DRAW); return b; })(),
+      iCol: (() => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
+                     gl.bufferData(gl.ARRAY_BUFFER, p.colors, gl.STATIC_DRAW); return b; })(),
+      iIdx: (() => { const b = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, b);
+                     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, p.indices, gl.STATIC_DRAW); return b; })(),
+    }));
+  }
+
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = Math.floor(canvas.clientWidth * dpr);
+    const h = Math.floor(canvas.clientHeight * dpr);
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w; canvas.height = h;
+    }
+    gl.viewport(0, 0, canvas.width, canvas.height);
+  }
+
+  function draw() {
+    resize();
+    gl.clearColor(0.078, 0.09, 0.11, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    if (!model) return;
+
+    const aspect = canvas.width / canvas.height;
+    const dist = bounds.radius * 3.1 / zoom;
+    const proj = mat4.perspective(Math.PI / 4.4, aspect, 0.1, 1000);
+    const view = mat4.mul(
+      mat4.translation(0, 0, -dist),
+      mat4.translation(0, -(bounds.ymin + bounds.ymax) / 2, 0)
+    );
+    const mvp = mat4.mul(proj, view);
+    const rot = mat3.fromEuler(yaw, pitch);
+
+    gl.useProgram(prog);
+    gl.uniformMatrix4fv(loc.uMVP, false, mvp);
+    gl.uniformMatrix3fv(loc.uRot, false, rot);
+
+    for (const part of model) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, part.iPos);
+      gl.enableVertexAttribArray(loc.aPosition);
+      gl.vertexAttribPointer(loc.aPosition, 3, gl.FLOAT, false, 0, 0);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, part.iNrm);
+      gl.enableVertexAttribArray(loc.aNormal);
+      gl.vertexAttribPointer(loc.aNormal, 3, gl.FLOAT, false, 0, 0);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, part.iCol);
+      gl.enableVertexAttribArray(loc.aColor);
+      gl.vertexAttribPointer(loc.aColor, 3, gl.FLOAT, false, 0, 0);
+
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, part.iIdx);
+      gl.drawElements(gl.TRIANGLES, part.count, part.indexType, 0);
+    }
+  }
+
+  let raf = 0;
+  function loop() {
+    if (spin) yaw += 0.004;
+    draw();
+    raf = requestAnimationFrame(loop);
+  }
+
+  // -------------------------------------------------------------- interaction
+  let dragging = false, lastX = 0, lastY = 0;
+  canvas.addEventListener("pointerdown", (e) => {
+    dragging = true; lastX = e.clientX; lastY = e.clientY;
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    yaw -= (e.clientX - lastX) * 0.0075;
+    pitch += (e.clientY - lastY) * 0.0055;
+    pitch = Math.max(-0.85, Math.min(0.85, pitch));
+    lastX = e.clientX; lastY = e.clientY;
+  });
+  canvas.addEventListener("pointerup", (e) => {
+    dragging = false;
+    try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
+  });
+  canvas.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    zoom *= Math.exp(-e.deltaY * 0.0012);
+    zoom = Math.max(0.45, Math.min(3.2, zoom));
+  }, { passive: false });
+
+  document.getElementById("spin").addEventListener("click", (e) => {
+    spin = !spin;
+    e.target.textContent = spin ? "pause spin" : "start spin";
+  });
+  document.getElementById("reset").addEventListener("click", () => {
+    yaw = 0.32; pitch = 0.06; zoom = 1.0;
+  });
+
+  // ------------------------------------------------------------------ start
+  fetch("face.glb", { cache: "no-cache" })
+    .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.arrayBuffer(); })
+    .then((buffer) => {
+      const parsed = parseGlb(buffer);
+      model = upload(parsed.primitives);
+
+      let ymin = Infinity, ymax = -Infinity, tris = 0, verts = 0;
+      for (const p of parsed.primitives) {
+        tris += p.count / 3;
+        verts += p.vertices;
+      }
+      const facePrim = parsed.primitives[0];
+      for (let i = 1; i < facePrim.positions.length; i += 3) {
+        const y = facePrim.positions[i];
+        if (y < ymin) ymin = y;
+        if (y > ymax) ymax = y;
+      }
+      bounds = { ymin, ymax, radius: Math.max(ymax - ymin, 1) * 0.62 };
+
+      statsEl.innerHTML =
+        `${(buffer.byteLength / 1000).toFixed(0)} KB · ${tris.toLocaleString()} triangles · ` +
+        `${verts.toLocaleString()} vertices · ${(parsed.document.materials || []).length} materials`;
+      cancelAnimationFrame(raf);
+      loop();
+    })
+    .catch((err) => fail("Could not load face.glb — " + err.message));
+})();
+</script>
+</body>
+</html>
