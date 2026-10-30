@@ -26,22 +26,6 @@ A reproducible, bias-audited **event study** on 7 NSE large caps and NIFTY 50, 2
 
 ---
 
-## How this maps to the judging criteria
-
-| Criterion | Where it is answered |
-|---|---|
-| 1. Problem understanding | [§1](#1-problem-understanding) |
-| 2. Quantitative correctness | [§2](#2-quantitative-correctness) |
-| 3. Data & validation | [§3](#3-data--validation) |
-| 4. Engineering & implementation | [§4](#4-engineering--implementation) |
-| 5. Innovation & results | [§5](#5-innovation--results) |
-| 6. Presentation & technical defence | [§6](#6-presentation--technical-defence) |
-| 7. **EventEcho-specific checks** | [§7](#7-eventecho-problem-specific-judging-checks) |
-| 8. Submission, status & originality | [§8](#8-submission-status-originality) |
-| Honest limits & failure cases | [§9](#9-limitations-failure-cases-and-what-we-do-not-claim) |
-
----
-
 ## 1. Problem understanding
 
 ### The core problem
