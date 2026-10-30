@@ -4,7 +4,7 @@ Short answers to say out loud: the first sentence answers the question, and the 
 
 ## A. The 30-second pitch
 
-> EventEcho asks whether Indian large-cap stocks behave differently around important events, and how sure we can be. We built a reproducible event study: frozen prices with checksums, a market model, three windows, strict multiple-testing correction, cluster-bootstrap uncertainty, a held-out later sample, and 78 automatic integrity checks in CI. The strongest finding is that on a company's own results day the stock moves about 2.7 times as much as on an ordinary day; on placebo days the same measure is 0.9. Macro events show no reliable average move, and the trading rule shows no edge. We report what holds up and what does not.
+> EventEcho asks whether Indian large-cap stocks behave differently around important events, and how sure we can be. We built a reproducible event study: frozen prices with checksums, a market model, three windows, strict multiple-testing correction, cluster-bootstrap uncertainty, a held-out later sample, and 87 automatic integrity checks in CI. The strongest finding is that on a company's own results day the stock moves about 2.7 times as much as on an ordinary day; on placebo days the same measure is 0.9. Macro events show no reliable average move, and the trading rule shows no edge. We report what holds up and what does not.
 
 ## B. Method questions
 
@@ -88,7 +88,7 @@ It cross-checks our hand-assigned event categories. It scores 81% on the 21 regi
 - Prices are frozen in a snapshot with SHA-256 checksums.
 - CI re-runs the analysis offline from that snapshot.
 - `verify_release.py` runs 87 checks, for example: CAR = sum of abnormal returns, Holm recomputes, dashboard tables equal the CSVs, and the variance ratio recomputes from the SCARs.
-- `pytest` runs 149 tests without network access.
+- `pytest` runs 155 tests without network access.
 
 **24. Yahoo Finance isn't official data.**
 True. It's the practical free source. We record the exact field (Close for both stocks and NIFTY, so dividends are excluded on both sides) and freeze the bytes. A checksum proves sameness, not correctness. A second-vendor check is on our limits list.
