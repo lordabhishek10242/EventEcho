@@ -50,7 +50,7 @@ Every panel and doc labels results as associations. A significant CAR shows that
 - [x] Price levels are aligned to the benchmark session calendar before calculating returns; missing prices are not filled.
 - [x] Snapshot event-eligibility diagnostics use observed benchmark sessions.
 - [x] Unit tests pass (149 tests).
-- [x] Latest historical rebuild (run 41011773210) passes, and its manifest and integrity report (78 checks) are inspected; outputs are committed in `results/reproduced/`.
+- [x] Latest historical rebuild (run 41019176924) passes, and its manifest and integrity report (87 checks) are inspected; outputs are committed in `results/reproduced/`.
 - [x] Unresolved timestamps remain flagged, and timing alternatives are exported.
 - [x] Dashboard tables equal the shipped CSVs.
 - [x] Significance, size, robustness and causal interpretation are kept apart.

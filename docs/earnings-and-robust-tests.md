@@ -1,6 +1,6 @@
 # Company results days and robust group tests
 
-Results below are from Historical Rebuild run **41011773210** (code `1f7f2c0`, frozen snapshot `eventecho-historical-40848349737`). The integrity check passed 78 of 78 checks.
+Results below are from Historical Rebuild run **41019176924** (code `7f3ea88`, frozen snapshot `eventecho-historical-40848349737`). The integrity check passed 87 of 87 checks. Sections 1–6 are unchanged from run 41011773210; section 7 is new.
 
 ## 1. Why a separate earnings study
 
@@ -106,10 +106,61 @@ All events, Day −1 to +1:
 - No group has a rank p below 0.05 in any window.
 - One group, election results at (−1,+1), has a KP p of 0.04. It rests on only 2 events and is uncorrected across 66 rows, so it is treated as descriptive.
 
-## 6. Limits
+## 7. Three follow-up questions (`src/earnings_extensions.py`)
+
+These were written down in the module docstring and pushed (commit `7f3ea88`) **before** the real-data run, and are reported as they came out.
+
+### 7.1 Does the results move continue or reverse? — **No reliable pattern**
+
+Each announcement is "up" or "down" by the sign of its own CAR(−1,+1). We then measure the CAR from Day +2 to Day +20 with the same market model. One announcement was dropped because the next results of the same stock fell inside the window; 265 remain (38 clusters).
+
+| Sample | Up minus down, CAR(+2,+20) | 95% interval |
+|---|---:|---:|
+| All announcements (main test) | **+0.44 pp** | −1.19 to +2.13 |
+| Development (to 2022) | +0.23 pp | −1.91 to +2.42 |
+| Holdout (2023 onward) | +0.88 pp | −1.31 to +3.66 |
+| Without registry-event overlap | +0.66 pp | −1.25 to +2.51 |
+
+- The slope of later CAR on the results-day CAR is 0.15 (−0.13 to 0.41).
+- So the market seems to absorb results within about two days. There is no sign of the "post-earnings drift" known from US studies, though with 265 announcements a drift smaller than about 2 pp could be missed.
+- **Calibration check:** `scripts/simulate_drift_null.py` runs the same test on 20 simulated price sets with no drift. 1 of 20 showed an interval excluding zero, as expected at 5%.
+
+### 7.2 Does one company's results move its closest peer? — **Peers move together, but no more than usual**
+
+On each issuer's results day we take the peer's CAR(−1,+1). Compare with ordinary (placebo) days of the issuer.
+
+| Issuer → peer | Correlation of CARs on results days [95% CI] | Same correlation on ordinary days |
+|---|---|---:|
+| TCS → Infosys | 0.52 [0.24, 0.76] | 0.65 |
+| Infosys → TCS | 0.40 [0.15, 0.62] | 0.51 |
+| Adani Ent → Adani Ports | 0.46 [0.17, 0.69] | 0.28 |
+| Adani Ports → Adani Ent | 0.71 [0.26, 0.88] | 0.39 |
+
+- All four correlations are positive, but every interval contains the ordinary-day level. So we cannot say results spread to the peer **beyond the normal day-to-day co-movement** of the two stocks.
+- The peer's variance ratio on the issuer's day is above its own ordinary-day level in all four pairs (for example TCS → Infosys 1.70 vs 0.59), but every interval reaches down to the ordinary-day level or close to it, and in "clean" days (the peer did not report within 2 sessions: 22 days for IT, 11 for Adani) the excess shrinks. TCS and Infosys often report within days of each other, which makes a clean test hard.
+- Adani Ports → Adani Ent (variance ratio 3.27, interval 0.74 to 7.81) is driven by a few 2023 days; treat as descriptive.
+
+### 7.3 Are results days getting bigger? — **Yes, moderately, and not because markets got jumpier**
+
+| Measure | Change per year in variance ratio | 95% interval |
+|---|---:|---:|
+| Results days | **+0.21** | +0.03 to +0.39 |
+| Placebo (ordinary) days | −0.01 | −0.06 to +0.04 |
+| **Difference (main test)** | **+0.22** | **+0.03 to +0.41** |
+| Results days without macro-event overlap | +0.20 | −0.03 to +0.48 |
+
+- Variance ratio by year: about 2.1 on average to 2022 and 3.8 from 2023 (2023 alone: 4.93, 2.91 to 6.94). Ordinary days show no trend.
+- **How strong is this?** The main test passes, but only just, and the version without macro-event overlap has an interval that touches zero. Two checks were done **after** seeing the result, so they are labelled post-hoc:
+  - Dropping any one year keeps the slope positive (smallest: +0.14 without 2023).
+  - The slope is positive for 6 of 7 stocks (HDFC Bank is the exception).
+- A careful reading: results days in 2023–2025 moved these stocks more than results days in 2016–2022, relative to each stock's normal noise. Why (more retail trading, faster news, derivatives activity) is not tested here.
+
+## 8. Limits
 
 - No earnings-surprise data, so direction cannot be studied. A natural next step would be consensus estimates, which are not freely available.
 - Board-meeting dates are third-party compiled. The sample check found 12/12 agreement, but a full exchange-filing audit was not done.
 - Release times within the day are not verified for these 266 dates. The (−1,+1) window is the safeguard.
 - The placebo uses one fixed shift (30 sessions). Other shifts were not tried, to avoid choosing the friendliest one.
+- Placebo estimation windows can contain an earlier results day, which raises their standard error a little. Real results days share this, so comparisons with placebo stay fair, but the placebo level (0.88) is slightly below 1 partly for this reason.
+- The follow-up tests use the same 265–266 announcements, so they are not independent of the main study. Three questions were asked; with one positive out of three, the trend result should be read with that in mind.
 - KP correlations are averaged over all pairs. Pairs whose event days never coincide count as zero. This is a project choice, documented in `src/robust_tests.py`.

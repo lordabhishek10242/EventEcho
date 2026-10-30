@@ -53,35 +53,47 @@ Pooled, yes: 2.15 for 2016–2022 and 3.82 for 2023–2025, both well above 1. P
 **13. Do IT stocks react more than banks?**
 We can't say that. IT is 3.5× and banking 3.1×, but the intervals overlap heavily. Adani Enterprises is the one clear outlier: it moves a lot on ordinary days too, so results add little.
 
+**14. Does the stock keep drifting after results, like the US "post-earnings drift"?**
+We tested it, with the design fixed before the run. Up-move stocks minus down-move stocks over Day +2 to +20: +0.44 pp, interval −1.19 to +2.13. No reliable drift or reversal. On fake prices with no drift, the test wrongly fires about 1 time in 20, so it is not biased.
+
+**15. Do TCS results move Infosys?**
+They move together (correlation 0.52 on TCS results days), but they move together about as much on ordinary days (0.65). So no extra spillover is shown. Clean tests are hard because the two often report within days of each other.
+
+**16. Your "volatility is rising" result — isn't the whole market just more volatile now?**
+That is exactly why we compare with placebo days, which use the same stocks and the same model. Placebo days show no trend (−0.01 per year); results days rise +0.21 per year. The difference, +0.22 (+0.03 to +0.41), excludes zero, but only just, and without macro-event overlap it touches zero. So we call it moderate. Dropping any single year keeps it positive.
+
+**17. You asked three new questions and one came out positive. Isn't that fishing?**
+All three were written down and pushed before the run, with the main statistic for each named in advance, and we report the two null results with the same weight. One of three passing at 5% is still more than chance would usually give, but we call it moderate, not proven.
+
 ## D. Results and honesty
 
-**14. What's your strongest result?**
+**18. What's your strongest result?**
 The results-day volatility effect: 266 events, a placebo, held-out years, and cluster-robust intervals. On the macro side, the largest moves are Adani stocks around the Hindenburg report (−75.6% CAR over ±5 for Adani Enterprises). But that window overlaps an RBI decision, so we call it an association, not a measured cause.
 
-**15. Can I trade on this?**
+**19. Can I trade on this?**
 No. The hypothetical rule's holdout excess return interval is −0.26 to +0.38 pp, which includes zero. The earnings finding is about the size of moves, not their direction. Knowing a stock will move a lot is not knowing which way.
 
-**16. What does significant mean here?**
+**20. What does significant mean here?**
 That the move was unusual for the market model. It doesn't tell you why: overlapping news, shared episodes and timing uncertainty all remain.
 
-**17. Why only 7 stocks and 21 macro events?**
+**21. Why only 7 stocks and 21 macro events?**
 The stocks are large, liquid names across five sectors; the events are major, sourced Indian events. That's a selected sample, and we say so. The earnings study is the counterweight: 266 events chosen by rule (every quarter), not by hand.
 
-**18. What's the NLP part for? Isn't it decoration?**
+**22. What's the NLP part for? Isn't it decoration?**
 It cross-checks our hand-assigned event categories. It scores 81% on the 21 registry headlines (never used for training), against 29% for always guessing the most common class. It disagrees on 4, which we show. It does not affect any return result.
 
 ## E. Data and engineering
 
-**19. How can we reproduce it?**
+**23. How can we reproduce it?**
 - Prices are frozen in a snapshot with SHA-256 checksums.
 - CI re-runs the analysis offline from that snapshot.
-- `verify_release.py` runs 78 checks, for example: CAR = sum of abnormal returns, Holm recomputes, dashboard tables equal the CSVs, and the variance ratio recomputes from the SCARs.
+- `verify_release.py` runs 87 checks, for example: CAR = sum of abnormal returns, Holm recomputes, dashboard tables equal the CSVs, and the variance ratio recomputes from the SCARs.
 - `pytest` runs 149 tests without network access.
 
-**20. Yahoo Finance isn't official data.**
+**24. Yahoo Finance isn't official data.**
 True. It's the practical free source. We record the exact field (Close for both stocks and NIFTY, so dividends are excluded on both sides) and freeze the bytes. A checksum proves sameness, not correctness. A second-vendor check is on our limits list.
 
-**21. Why price returns and not total returns?**
+**25. Why price returns and not total returns?**
 NIFTY 50 is a price index, so we use stock Close too. That way both sides exclude dividends. Mixing adjusted stock prices with a price index would bias abnormal returns upward around dividend dates.
 
 ## F. Hard follow-ups (stay calm, answer short)

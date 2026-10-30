@@ -4,7 +4,7 @@ EventEcho is a reproducible **event study** of Indian stocks. It asks: around im
 
 It is an evidence explorer, not a prediction engine. Results show **association**, not cause.
 
-> **Current verified result set:** [`results/reproduced/`](results/reproduced/) — one CI run (Historical Rebuild run 41011773210) on frozen snapshot `eventecho-historical-40848349737`, with its [manifest](results/reproduced/manifest.json), [integrity report](results/reproduced/release_validation.json) and [dashboard](results/reproduced/eventecho_demo.html).
+> **Current verified result set:** [`results/reproduced/`](results/reproduced/) — one CI run (Historical Rebuild run 41019176924) on frozen snapshot `eventecho-historical-40848349737`, with its [manifest](results/reproduced/manifest.json), [integrity report](results/reproduced/release_validation.json) and [dashboard](results/reproduced/eventecho_demo.html).
 > Read the [final evidence audit](docs/final-evidence-audit-2026-10-29.md) before quoting any number.
 
 ## Questions the project answers
@@ -57,11 +57,12 @@ Every line of the competition problem statement (PS 03) is mapped to code, outpu
 
 Details: [timing, overlap and return convention](docs/event-timing-overlap-return-convention.md), [event source audit](docs/event-source-and-validation-audit.md), [problem-statement coverage](docs/problem-statement-coverage.md).
 
-## Main findings (run 41011773210)
+## Main findings (run 41019176924)
 
 The dashboard opens with these findings, computed from the same tables.
 
 - **Results days:** across 266 company results days, the stock moves **2.7× as much as normal** over Day −1 to +1 (variance ratio 2.68, 95% interval 2.17–3.23). On placebo mid-quarter days it is 0.88 (0.70–1.08). The effect peaks on Day +1, holds in both the 2016–2022 and 2023–2025 announcements, and has no average direction (mean CAR −0.28%, BMP p = 0.13). Per stock it replicates clearly only for TCS and Infosys; sectors cannot be ranked.
+- **After results (three questions fixed before the run):** no reliable drift or reversal over Day +2 to +20 (up minus down +0.44 pp, −1.19 to +2.13); peers move together on results days but not more than on ordinary days; results-day volatility **rises over the years** (+0.22 per year beyond placebo days, 95% interval +0.03 to +0.41; 2023–25 about 3.8× vs 2.1× before), a moderate result. See [section 7](docs/earnings-and-robust-tests.md#7-three-follow-up-questions-srcearnings_extensionspy).
 - **Robust tests on the 21 macro events:** BMP, Kolari–Pynnönen and rank tests all agree there is no reliable average move (all events, Day −1 to +1: p = 0.92, 0.93, 0.61).
 - **Release times:** 19 of 21 events now have a sourced release session, and all 19 agree with the existing Day 0; two Q4 FY25 earnings releases remain unresolved.
 
