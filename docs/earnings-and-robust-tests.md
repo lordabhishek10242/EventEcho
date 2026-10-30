@@ -1,6 +1,6 @@
 # Company results days and robust group tests
 
-Results below are from Historical Rebuild run **41011220268** (code `34a6cfa`, frozen snapshot `eventecho-historical-40848349737`). The integrity check passed 78 of 78 checks.
+Results below are from Historical Rebuild run **41011773210** (code `1f7f2c0`, frozen snapshot `eventecho-historical-40848349737`). The integrity check passed 78 of 78 checks.
 
 ## 1. Why a separate earnings study
 
