@@ -19,6 +19,7 @@ on:
       - "src/**"
       - "scripts/**"
       - "results/event_master.csv"
+      - "results/earnings_events.csv"
       - "requirements.txt"
       - ".github/workflows/historical-rebuild.yml"
 
