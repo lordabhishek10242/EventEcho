@@ -64,3 +64,19 @@ def test_verified_ist_publication_time_is_normalized_with_timezone():
 
     assert result.loc[0, "event_timestamp_ist"] == "2024-05-31T17:30:00+05:30"
     assert result.loc[0, "timestamp_semantics"] == "source_status_verified_publication_time_IST"
+
+
+def test_registry_release_session_checks_are_sourced_and_consistent_with_day0():
+    import pandas as pd
+
+    registry = pd.read_csv("results/event_master.csv", dtype=str, keep_default_na=False)
+    allowed = {"after_close", "during_session", "non_trading_day", "unresolved"}
+    assert set(registry["release_session_check"]) <= allowed
+    assert registry["release_time_evidence"].str.len().gt(20).all()
+    assert registry["release_time_source_url"].str.startswith("http").all()
+    resolved = registry[registry["release_session_check"] != "unresolved"]
+    same_day = resolved["release_session_check"] == "during_session"
+    # A release inside the session keeps Day 0 on that date; otherwise Day 0 moves to a later session.
+    assert (resolved.loc[same_day, "effective_event_date"] == resolved.loc[same_day, "event_date"]).all()
+    assert (resolved.loc[~same_day, "effective_event_date"] > resolved.loc[~same_day, "event_date"]).all()
+    assert set(registry["day0_consistent_with_release"]) <= {"True", "unresolved"}

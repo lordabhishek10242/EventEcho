@@ -46,7 +46,10 @@ class Checks:
 
 
 def _read(directory: Path, name: str) -> pd.DataFrame:
-    return pd.read_csv(directory / name)
+    # round_trip parsing gives the exact floats that were written, whatever the
+    # pandas version (pandas 3 defaults to a faster parser that can differ in
+    # the last digit, which would break the exact dashboard-vs-CSV comparison).
+    return pd.read_csv(directory / name, float_precision="round_trip")
 
 
 def _close(a: pd.Series | np.ndarray, b: pd.Series | np.ndarray, tolerance: float = TOLERANCE) -> bool:
@@ -229,6 +232,7 @@ def verify(directory: Path, registry_path: Path, dashboard_path: Path | None) ->
     classified = _read(directory, "event_headline_classification.csv")
     checks.check("every registry headline is classified once",
                  sorted(classified["event_id"]) == sorted(events["event_id"]) and not classified["event_id"].duplicated().any())
+    _verify_earnings_and_robust(directory, manifest, checks)
     corpus_path = ROOT / str(manifest.get("headline_corpus") or "results/headline_corpus.csv")
     checks.check("headline corpus checksum matches manifest",
                  corpus_path.is_file() and sha256_file(corpus_path) == manifest.get("headline_corpus_sha256"),
@@ -253,6 +257,110 @@ def verify(directory: Path, registry_path: Path, dashboard_path: Path | None) ->
         checks.check("dashboard has no stale adjusted-close disclaimer",
                      "adjusted-close fields" not in document and "dividend conventions differ" not in document)
     return checks
+
+
+def _verify_earnings_and_robust(directory: Path, manifest: dict, checks: Checks) -> None:
+    """Invariants for the issuer-level earnings study and the robust group tests."""
+    robust = _read(directory, "robust_tests_registry.csv")
+    caar_windows = _read(directory, "caar_window_summary.csv")
+    checks.check("robust tests cover every CAAR group and window",
+                 set(zip(robust["group"], robust["window"])) == set(zip(caar_windows["group"], caar_windows["window"])))
+    positive = robust.dropna(subset=["kp_adjusted_t", "bmp_t"])
+    positive = positive[positive["mean_residual_correlation"] >= 0]
+    checks.check("KP adjustment never enlarges the BMP statistic when correlation is positive",
+                 bool((positive["kp_adjusted_t"].abs() <= positive["bmp_t"].abs() + 1e-9).all()))
+    calendar_name = manifest.get("earnings_calendar")
+    if not calendar_name:
+        checks.check("earnings study present", False, "manifest has no earnings_calendar")
+        return
+    calendar_path = ROOT / calendar_name
+    checks.check("earnings calendar checksum matches manifest",
+                 calendar_path.is_file() and sha256_file(calendar_path) == manifest.get("earnings_calendar_sha256"))
+    calendar = pd.read_csv(calendar_path)
+    coverage = _read(directory, "earnings_coverage.csv")
+    events = _read(directory, "earnings_event_car.csv")
+    summary = _read(directory, "earnings_summary.csv")
+    checks.check("every calendar announcement appears once in coverage",
+                 sorted(coverage["earnings_id"]) == sorted(calendar["earnings_id"]))
+    included = set(coverage.loc[coverage["included"], "earnings_id"])
+    checks.check("excluded announcements all give a reason",
+                 bool(coverage.loc[~coverage["included"], "reason"].notna().all()))
+    checks.check("earnings CAR table = included announcements", set(events["earnings_id"]) == included,
+                 {"included": len(included), "rows": len(events)})
+    checks.check("day 0 is on or after the announcement date",
+                 bool((pd.to_datetime(events["day0_session"]) >= pd.to_datetime(events["announcement_date"])).all()))
+    holdout_start = (manifest.get("earnings_design") or {}).get("holdout_start", "2023-01-01")
+    checks.check("earnings split follows the declared holdout start",
+                 bool(((events["announcement_date"] >= holdout_start) == (events["sample"] == "holdout")).all()))
+    everyone = summary[summary["group"] == "All announcements"].set_index("window")
+    for window in CAR_WINDOWS:
+        scar = events[f"{window}_scar"]
+        checks.check(f"earnings SCAR = CAR / SE ({window})",
+                     _close(scar, events[f"{window}_pct"] / events[f"{window}_se_pct"], 1e-9))
+        row = everyone.loc[window]
+        checks.check(f"earnings variance ratio recomputes from SCARs ({window})",
+                     abs(row["variance_ratio"] - float((scar ** 2).mean())) < 1e-9)
+        checks.check(f"earnings mean CAR recomputes ({window})",
+                     abs(row["mean_CAR_pct"] - float(events[f"{window}_pct"].mean())) < 1e-9)
+        checks.check(f"earnings units = included announcements ({window})", int(row["units"]) == len(included))
+    ordered = summary.dropna(subset=["variance_ratio_ci_lower"])
+    checks.check("earnings variance-ratio intervals are ordered",
+                 bool((ordered["variance_ratio_ci_lower"] <= ordered["variance_ratio_ci_upper"]).all()))
+    if (directory / "earnings_placebo.csv").is_file():
+        placebo = _read(directory, "earnings_placebo.csv")
+        top = placebo[placebo["group"] == "All placebo days"]
+        checks.check("placebo covers all windows and never exceeds the real announcements",
+                     set(top["window"]) == set(CAR_WINDOWS) and int(top["units"].max()) <= len(included))
+    else:
+        checks.check("placebo output present", False)
+    if (directory / "earnings_drift_events.csv").is_file():
+        drift = _read(directory, "earnings_drift_events.csv")
+        drift["excluded"] = drift["excluded"].fillna("")
+        checks.check("drift table lists every included announcement once",
+                     sorted(drift["earnings_id"]) == sorted(included))
+        kept = drift[drift["excluded"] == ""]
+        checks.check("drift direction follows the sign of CAR(-1,+1)",
+                     bool(((drift["CAR_-1_+1_pct"] > 0) == (drift["direction"] == "up")).all()))
+        joined = kept.merge(events[["earnings_id", "CAR_-1_+1_pct"]], on="earnings_id", suffixes=("", "_main"))
+        checks.check("drift uses the same results-day CAR as the earnings table",
+                     _close(joined["CAR_-1_+1_pct"], joined["CAR_-1_+1_pct_main"], 1e-9))
+        summary_drift = _read(directory, "earnings_drift_summary.csv")
+        row = summary_drift[(summary_drift["sample"] == "All announcements")
+                            & (summary_drift["statistic"] == "difference_up_minus_down_pp")].iloc[0]
+        up = kept.loc[kept["direction"] == "up", "CAR_+2_+20_pct"]
+        down = kept.loc[kept["direction"] == "down", "CAR_+2_+20_pct"]
+        checks.check("drift difference recomputes from the event table",
+                     abs(row["value"] - (up.mean() - down.mean())) < 1e-9 and int(row["announcements"]) == len(kept),
+                     {"value": row["value"], "kept": len(kept)})
+        checks.check("drift intervals contain their point value",
+                     bool(((summary_drift["ci95_lower"] <= summary_drift["value"] + 1e-12)
+                           & (summary_drift["value"] <= summary_drift["ci95_upper"] + 1e-12)).dropna().all()))
+    else:
+        checks.check("drift output present", False)
+    if (directory / "earnings_peer_events.csv").is_file():
+        peers = _read(directory, "earnings_peer_events.csv")
+        peer_summary = _read(directory, "earnings_peer_spillover.csv")
+        alldays = peer_summary[peer_summary["sample"] == "all days"].set_index("pair")
+        ok = True
+        for pair, frame in peers.groupby("pair"):
+            ok &= pair in alldays.index and int(alldays.loc[pair, "days"]) == len(frame)
+            ok &= abs(alldays.loc[pair, "peer_variance_ratio"] - float((frame["peer_SCAR"] ** 2).mean())) < 1e-9
+            ok &= abs(alldays.loc[pair, "correlation_issuer_vs_peer_CAR"] - float(frame["issuer_CAR_pct"].corr(frame["peer_CAR_pct"]))) < 1e-9
+        checks.check("peer variance ratio and correlation recompute from peer events", bool(ok))
+        checks.check("peer issuer CAR matches the earnings table",
+                     _close(peers.merge(events[["earnings_id", "CAR_-1_+1_pct"]], on="earnings_id")["issuer_CAR_pct"],
+                            peers.merge(events[["earnings_id", "CAR_-1_+1_pct"]], on="earnings_id")["CAR_-1_+1_pct"], 1e-9))
+    if (directory / "earnings_volatility_trend.csv").is_file():
+        trend = _read(directory, "earnings_volatility_trend.csv")
+        years = trend[trend["row_type"] == "year"]
+        checks.check("trend years cover every included announcement exactly once", int(years["results_days"].sum()) == len(included))
+        by_year = events.assign(year=pd.to_datetime(events["day0_session"]).dt.year).groupby("year")["CAR_-1_+1_scar"].apply(lambda x: float((x ** 2).mean()))
+        checks.check("yearly variance ratios recompute from SCARs",
+                     all(abs(r["variance_ratio"] - by_year[int(r["label"])]) < 1e-9 for _, r in years.iterrows()))
+    if (directory / "earnings_replication.csv").is_file():
+        replication = _read(directory, "earnings_replication.csv")
+        checks.check("earnings replication has one row per studied stock",
+                     sorted(replication["stock"]) == sorted(events["stock"].unique()))
 
 
 def main() -> int:

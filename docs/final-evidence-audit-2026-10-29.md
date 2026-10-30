@@ -122,3 +122,13 @@ This run adds the remaining problem-statement items without changing any earlier
 - **Replication on unseen events:** weak. Development class signs predict holdout signs 4/5, 3/5 and 2/5 times, with binomial p ≥ 0.38.
 - **Headline classifier (NLP):** 81% accuracy on the 21 registry headlines (95% CI 62–95%), against a 29% majority baseline; 75% under grouped cross-validation. See [headline-classifier.md](headline-classifier.md).
 - `scripts/verify_release.py` now runs 55 checks, all passed in CI. The tests count is 127.
+
+## Addendum 2 — earnings study, robust tests, release times (2026-10-30)
+
+New outputs come from a frozen-snapshot rebuild on branch `feat/earnings-and-robust-tests`, using the same snapshot (`eventecho-historical-40848349737`, prices SHA-256 `4d23f6b0…`). The final run ID and its integrity count are recorded in `results/reproduced/manifest.json` and `release_validation.json`.
+
+- **Unchanged:** every number from the earlier run is reproduced exactly: 8/441 Holm, 10/441 HAC, CAAR bands, the strategy holdout interval −0.26 to +0.38 pp, and classifier accuracy 81%. The registry gained only new release-time columns. No date or Day 0 changed.
+- **New:** 266 sourced results days. Variance ratio for (−1,+1): 2.68 [2.17, 3.23], against a placebo of 0.88 [0.70, 1.08]. It replicates pooled, but per stock only for TCS and Infosys. There is no signed effect. Details: [earnings-and-robust-tests.md](earnings-and-robust-tests.md).
+- **New:** BMP, Kolari–Pynnönen and rank tests for all CAAR groups. None changes the "no reliable average macro reaction" conclusion.
+- **New:** release sessions are sourced for 19 of 21 events, and all agree with Day 0. See [release-time-verification.md](release-time-verification.md).
+- **Not claimed:** any sector ranking, any surprise/direction effect for earnings, or any causal effect.
