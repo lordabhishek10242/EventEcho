@@ -38,6 +38,7 @@ import pandas as pd
 
 from .config import CAR_WINDOWS, STOCK_SECTORS
 from .event_study import estimation_sample, fit_market_model
+from .earnings_extensions import drift_events, drift_summary, peer_spillover, volatility_trend
 from .robust_tests import EVENT_DAYS, EventUnit, group_tests
 from .statistics import car_significance
 
@@ -268,15 +269,31 @@ def run_earnings_study(
     replication = _replication(summary)
     if not replication.empty:
         outputs["earnings_replication.csv"] = replication
-    placebo = _placebo(returns, meta, estimation_sessions, gap_sessions, radius)
+    placebo_units, dropped = _placebo_units(returns, meta, estimation_sessions, gap_sessions, radius)
+    placebo = _placebo(placebo_units, dropped, radius)
     if not placebo.empty:
         outputs["earnings_placebo.csv"] = placebo
+    # Follow-up questions (designs fixed in src/earnings_extensions.py).
+    drift = drift_events(returns, meta, unit_map, estimation_sessions, gap_sessions, radius)
+    outputs["earnings_drift_events.csv"] = drift
+    if (drift["excluded"] == "").sum() >= 3:
+        outputs["earnings_drift_summary.csv"] = drift_summary(drift)
+    peer_events, peer_summary = peer_spillover(
+        returns, meta, unit_map, placebo_units, {u.unit_id: u.unit_id for u in placebo_units},
+        build_event_units, estimation_sessions, gap_sessions, radius,
+    )
+    if not peer_events.empty:
+        outputs["earnings_peer_events.csv"] = peer_events
+    if not peer_summary.empty:
+        outputs["earnings_peer_spillover.csv"] = peer_summary
+    if placebo_units:
+        outputs["earnings_volatility_trend.csv"] = volatility_trend(meta, unit_map, placebo_units, sessions, clusters)
     return outputs
 
 
-def _placebo(
+def _placebo_units(
     returns: pd.DataFrame, meta: pd.DataFrame, estimation_sessions: int, gap_sessions: int, radius: int
-) -> pd.DataFrame:
+) -> tuple[list[EventUnit], int]:
     """Variance ratio on pseudo-event days that are not results days.
 
     Each real Day 0 is moved forward by PLACEBO_SHIFT_SESSIONS sessions. A
@@ -299,8 +316,14 @@ def _placebo(
         rows.append({"unit_id": f"P_{earnings_id}", "stock": stock, "event_date": sessions[position]})
     table = pd.DataFrame(rows)
     if table.empty:
-        return pd.DataFrame()
+        return [], dropped
     units, _, _ = build_event_units(returns, table, estimation_sessions, gap_sessions, radius)
+    return units, dropped
+
+
+def _placebo(units: list[EventUnit], dropped: int, radius: int) -> pd.DataFrame:
+    if not units:
+        return pd.DataFrame()
     clusters = window_clusters({u.unit_id: u.event_position for u in units}, radius)
     groups = [("all", "All placebo days", units)] + [
         ("stock", stock, [u for u in units if u.stock == stock]) for stock in sorted({u.stock for u in units})
