@@ -1,8 +1,8 @@
 {
-  "checked_utc": "2026-10-30T06:04:10.253381+00:00",
+  "checked_utc": "2026-10-30T07:19:17.114838+00:00",
   "analysis_dir": "reproduced",
   "dashboard_checked": true,
-  "passed": 78,
+  "passed": 87,
   "failed": 0,
   "checks": [
     {
@@ -41,12 +41,12 @@
     {
       "check": "code commit recorded",
       "passed": true,
-      "detail": "1f7f2c0322cf44bc204aa3b166bc01edd606a27c"
+      "detail": "7f3ea886386ed7f82ccde21eddd3c1857b5a3ea5"
     },
     {
       "check": "manifest artifact row counts match files",
       "passed": true,
-      "detail": 40
+      "detail": 45
     },
     {
       "check": "event IDs unique in output registry",
@@ -430,6 +430,54 @@
       "detail": null
     },
     {
+      "check": "drift table lists every included announcement once",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "drift direction follows the sign of CAR(-1,+1)",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "drift uses the same results-day CAR as the earnings table",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "drift difference recomputes from the event table",
+      "passed": true,
+      "detail": {
+        "value": 0.4397060486409464,
+        "kept": 265
+      }
+    },
+    {
+      "check": "drift intervals contain their point value",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "peer variance ratio and correlation recompute from peer events",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "peer issuer CAR matches the earnings table",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "trend years cover every included announcement exactly once",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "yearly variance ratios recompute from SCARs",
+      "passed": true,
+      "detail": null
+    },
+    {
       "check": "earnings replication has one row per studied stock",
       "passed": true,
       "detail": null
@@ -447,12 +495,12 @@
     {
       "check": "dashboard manifest is this run's manifest",
       "passed": true,
-      "detail": "2026-10-30T06:04:07.930513+00:00"
+      "detail": "2026-10-30T07:19:14.648392+00:00"
     },
     {
       "check": "dashboard tables equal shipped CSVs",
       "passed": true,
-      "detail": 33
+      "detail": 36
     },
     {
       "check": "dashboard has no stale adjusted-close disclaimer",
