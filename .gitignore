@@ -27,3 +27,6 @@ data/*.feather
 .vscode/
 # Invoice agent runtime state (durable tasks, idempotency, decision cache)
 data/invoice_agent*.sqlite3*
+
+# Mailroom action gate runtime state (evaluations, proposals, receipts, decision cache)
+data/mailroom_agent*.sqlite3*

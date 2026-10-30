@@ -27,6 +27,23 @@ The agent study below is unchanged and independent of the service.
 
 ---
 
+## Also in this repository: Mailroom Action Gate
+
+A second dependency-free service that reads mailroom dossiers, proposes **one
+permitted action per dossier** with the smallest line set that establishes the
+authority and the exact arguments, and records an outcome only after verifying
+the reviewer's Ed25519-signed receipt against the proposal it actually issued.
+
+- Endpoint: `https://8001-i08mehv473n5yap8hpkdj.e2b.app/` (health at `/healthz`)
+- Code: `mailroom_agent/` · Docs: [`docs/MAILROOM_AGENT.md`](docs/MAILROOM_AGENT.md)
+- Verify: `python3 scripts/verify_mailroom_agent.py` (27 live checks) · Tests:
+  `python3 -m unittest tests.test_mailroom_agent` (21 tests)
+
+Receipts are checked with an in-repo RFC 8032 Ed25519 implementation, so
+signature verification needs no network call and no third-party crypto package.
+
+---
+
 ## Headline numbers (all from one verified run)
 
 | Metric | Value | Meaning |
