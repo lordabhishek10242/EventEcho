@@ -253,8 +253,8 @@ def key_findings(manifest: dict, datasets: dict[str, list[dict]]) -> list[dict]:
                       + ("It includes zero: no trading edge is shown." if includes else "It excludes zero, but clusters are few and events hand-picked, so this is not proof of an edge."),
         })
     metrics = datasets.get("headline_classifier_metrics.csv", [])
-    model = next((r for r in metrics if r.get("evaluation") == "registry_external_test" and r.get("model") == "tfidf_logistic_regression"), None)
-    base = next((r for r in metrics if r.get("evaluation") == "registry_external_test" and r.get("model") == "majority_class"), None)
+    model = next((r for r in metrics if r.get("evaluation") == "external_test_on_registry_headlines" and r.get("model") == "tfidf_logistic_regression"), None)
+    base = next((r for r in metrics if r.get("evaluation") == "external_test_on_registry_headlines" and r.get("model") == "majority_class"), None)
     if model and base:
         findings.append({
             "title": "Headline classifier (NLP)",

@@ -144,3 +144,14 @@ def test_key_findings_skip_missing_tables():
     from src.reporting import key_findings
 
     assert key_findings({}, {}) == []
+
+
+def test_key_findings_include_classifier_with_real_metric_labels():
+    from src.reporting import key_findings
+
+    rows = [
+        {"evaluation": "external_test_on_registry_headlines", "model": "tfidf_logistic_regression", "accuracy": 0.81},
+        {"evaluation": "external_test_on_registry_headlines", "model": "majority_class", "accuracy": 0.29},
+    ]
+    findings = {f["title"]: f for f in key_findings({}, {"headline_classifier_metrics.csv": rows})}
+    assert findings["Headline classifier (NLP)"]["value"] == "81% vs 29%"

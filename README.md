@@ -4,7 +4,7 @@ EventEcho is a reproducible **event study** of Indian stocks. It asks: around im
 
 It is an evidence explorer, not a prediction engine. Results show **association**, not cause.
 
-> **Current verified result set:** [`results/reproduced/`](results/reproduced/) — one CI run (Historical Rebuild run 40915721578) on frozen snapshot `eventecho-historical-40848349737`, with its [manifest](results/reproduced/manifest.json), [integrity report](results/reproduced/release_validation.json) and [dashboard](results/reproduced/eventecho_demo.html).
+> **Current verified result set:** [`results/reproduced/`](results/reproduced/) — one CI run (Historical Rebuild run 40924836126) on frozen snapshot `eventecho-historical-40848349737`, with its [manifest](results/reproduced/manifest.json), [integrity report](results/reproduced/release_validation.json) and [dashboard](results/reproduced/eventecho_demo.html).
 > Read the [final evidence audit](docs/final-evidence-audit-2026-10-29.md) before quoting any number.
 
 ## Questions the project answers
@@ -18,6 +18,7 @@ It is an evidence explorer, not a prediction engine. Results show **association*
 7. Do patterns seen in earlier events repeat in later, unseen events?
 8. Can a simple text classifier label event headlines into event classes?
 9. Did a fixed, hypothetical post-event trading rule beat NIFTY 50 on a later holdout, after costs and with honest uncertainty?
+10. Across **266 company results days** (each company studied only on its own results day), do stocks move more than on ordinary days, and does that hold up on later years and against a placebo?
 
 Every line of the competition problem statement (PS 03) is mapped to code, output files and dashboard panels in [docs/problem-statement-coverage.md](docs/problem-statement-coverage.md).
 
@@ -27,6 +28,7 @@ Every line of the competition problem statement (PS 03) is mapped to code, outpu
 - **Benchmark:** NIFTY 50 (`^NSEI`), a price index, not a total-return index.
 - **Period:** 2016-01-01 to 2025-12-31 (observed 2016-01-04 to 2025-12-31).
 - **Events:** 21 sourced events in [`results/event_master.csv`](results/event_master.csv): demonetisation, COVID lockdown, GST rollout, two Union Budgets, six RBI policy decisions, two Lok Sabha results, two GDP releases, five FY2025 Q4 earnings releases and the Hindenburg report on Adani. This is a small, hand-selected sample, not a representative population.
+- **Earnings calendar:** 266 sourced quarterly results dates (7 stocks × 38 quarters, Q1 FY17–Q2 FY26) in [`results/earnings_events.csv`](results/earnings_events.csv), each with a source link; a seeded random sample of 12 was cross-checked against independent news (12/12 agree). See [docs/earnings-and-robust-tests.md](docs/earnings-and-robust-tests.md).
 - **Price convention:** Yahoo Finance `Close` for stocks **and** `Close` for NIFTY 50. These are **price returns**: dividends are excluded on both sides, so this is **not total shareholder return**. The run manifest records the fields used, and the dashboard reads its statement from there.
 - **Calendar:** observed NIFTY 50 sessions (non-missing close). Stock prices are reindexed to these sessions before returns are computed; missing prices are never filled.
 - **Provenance:** prices are frozen in a snapshot with raw provider responses and SHA-256 checksums. A checksum proves the bytes are the same; it does not prove the provider's prices are correct, and a later download may differ.
@@ -48,11 +50,20 @@ Every line of the competition problem statement (PS 03) is mapped to code, outpu
 | Window choice | For each window: test counts, significance counts, average size and standard error, plus how often the CAR sign or the significance verdict changes between windows. |
 | Replication | Patterns from development events (to Feb 2023) are checked on holdout events (from Oct 2023): overall direction, class-level direction, a sign-prediction rule against a coin flip, and stock-level reaction size. |
 | Headline classifier (NLP) | TF-IDF (words + characters) and logistic regression, trained on 374 real, sourced headlines in `results/headline_corpus.csv`. Tested by holding out whole search groups and on the 21 registry headlines, which are never used for training. Compared with keyword rules and a majority-class baseline. See [docs/headline-classifier.md](docs/headline-classifier.md). |
+| Robust group tests | For every CAAR group: BMP standardized test (robust to event-day volatility), Kolari–Pynnönen adjustment for same-day correlation, Corrado/Cowan rank test, and the event-induced variance ratio with a cluster-bootstrap interval. |
+| Earnings study | 266 results days, issuer only. Day 0 = first session on/after the date; main window (−1,+1); main measure = variance ratio (direction is unknowable without surprise data). Development to 2022, holdout from 2023; placebo on mid-quarter days. |
+| Release times | Each registry event's release is checked against a timed source and classed as before/during/after the session; see [docs/release-time-verification.md](docs/release-time-verification.md). |
 | Strategy (hypothetical) | Buy at the close of the first session after Day 0, sell 3 sessions later, equal weight, 10 bps per side (also 0, 5, 20, 30). Development events 2016 to Feb 2023, holdout Oct 2023 to 2025. Uncertainty from a cluster bootstrap (5,000 draws). |
 
 Details: [timing, overlap and return convention](docs/event-timing-overlap-return-convention.md), [event source audit](docs/event-source-and-validation-audit.md), [problem-statement coverage](docs/problem-statement-coverage.md).
 
-## Main findings (run 40915721578)
+## Main findings (run 40924836126)
+
+The dashboard opens with these findings, computed from the same tables.
+
+- **Results days:** across 266 company results days, the stock moves **2.7× as much as normal** over Day −1 to +1 (variance ratio 2.68, 95% interval 2.17–3.23). On placebo mid-quarter days it is 0.88 (0.70–1.08). The effect peaks on Day +1, holds in both the 2016–2022 and 2023–2025 announcements, and has no average direction (mean CAR −0.28%, BMP p = 0.13). Per stock it replicates clearly only for TCS and Infosys; sectors cannot be ranked.
+- **Robust tests on the 21 macro events:** BMP, Kolari–Pynnönen and rank tests all agree there is no reliable average move (all events, Day −1 to +1: p = 0.92, 0.93, 0.61).
+- **Release times:** 19 of 21 events now have a sourced release session, and all 19 agree with the existing Day 0; two Q4 FY25 earnings releases remain unresolved.
 
 - 8 of 441 CAR tests are significant after Holm correction (conventional); 10 with HAC. Across 60/100/150-session models the counts change (conventional 12/8/11, HAC 14/10/10).
 - 7 results are significant in all three model settings. All 7 have an attribution caveat: 6 involve Adani stocks around the Hindenburg report (or the RBI decision whose window overlaps it), and 1 is ITC around the COVID lockdown.
@@ -63,7 +74,7 @@ Details: [timing, overlap and return convention](docs/event-timing-overlap-retur
 - Replication is weak. The overall direction repeats in only one window of three, and using development class signs to guess holdout signs is right 4/5, 3/5 and 2/5 times, no better than a coin flip given so few events. Stocks with big moves in one sample also move more in the other, but that mostly reflects how volatile they are.
 - Headline classifier: 81% accuracy on the 21 registry headlines (95% CI 62–95%), against 29% for always guessing the most common class, and 75% under grouped cross-validation. Hand-written keyword rules score higher, but they were written after reading the data, so that comparison is not blind.
 - Strategy: across all events the mean excess return vs NIFTY 50 is −0.22 pp at 10 bps per side and is negative at every cost level. Holdout mean excess is +0.11 pp, but its 95% interval is −0.26 to +0.38 pp, which **includes zero**. No trading edge is established.
-- 19 of 21 events still lack a verified exact release time, and some CARs change a lot under the alternative Day 0 (for example the Hindenburg report).
+- Exact clock times remain unverified for most events, but the release *session* is now sourced for 19 of 21 (see above). Some CARs still change a lot under the alternative Day 0 exported for uncertain cases.
 
 ## Quick start
 
@@ -123,6 +134,7 @@ scripts/rebuild_historical.py, scripts/acquire_market_snapshot.py  snapshot acqu
 tests/                     network-free unit and regression tests
 results/event_master.csv   the event registry (input)
 results/headline_corpus.csv labelled, sourced headlines for the classifier (input)
+results/earnings_events.csv 266 sourced results dates (input; rebuilt by scripts/build_earnings_calendar.py)
 results/reproduced/        current verified outputs, manifest, dashboard
 results/legacy_2026-10-27/ quarantined original 9-event exports (do not cite)
 docs/                      audits and methodology notes
@@ -141,8 +153,9 @@ notebook/, notebooks/      original notebook (unchanged) and an exploration note
 ## Limitations
 
 - 21 hand-picked events and 7 large stocks chosen after the fact; few independent episodes.
-- Daily closes cannot separate intraday reactions; 19 events lack a verified exact release time.
-- One-factor market model; event-day volatility increases are not modelled.
+- Daily closes cannot separate intraday reactions; exact clock times are mostly bounds ("reported by 10:40 IST"), not minutes.
+- The earnings study has no beat/miss (surprise) data, so it measures how much stocks move, not in which direction. Results dates for 222 announcements come from a compiled board-meeting history, checked by sampling rather than one by one.
+- One-factor market model. Event-day volatility is handled at group level (BMP, rank test, variance ratio), not in the per-event t-tests.
 - Overlap audits cover registered events only; other news may confound windows.
 - Price returns only; no total-return comparison.
 - Most sectors contain one stock, and several event classes have one or two events, so those comparisons are descriptive.
