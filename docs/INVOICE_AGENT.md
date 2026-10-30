@@ -126,7 +126,22 @@ Cancellation after completion (or a second result) is `409`.
 
 ---
 
-## 5. Run and verify
+## 5. Verification status
+
+| Check | Result |
+|---|---|
+| Labelled decision cases (`scripts/eval_invoice_decisions.py`) | **40 / 40** (5 actions × 8 paraphrases with negation and decoys) |
+| Unit + end-to-end tests (`tests.test_invoice_agent`) | **21 passed** |
+| Live contract walkthrough (`scripts/verify_invoice_agent.py`) | **41 / 41 checks** |
+| Batch latency, 12 packages, cold cache | ~45–90 ms (one batched model pass) |
+| Idempotent replay latency | ~2 ms (no model call, no action) |
+| Task size for 12 packages | ~25 KB (limit 512 KiB) |
+
+The decision case set is deliberately adversarial: it contains "not a
+duplicate" clauses, "but" reversals, cleared verifications, decoys that name a
+different action, and archive paragraphs that shout "hold the payment".
+
+## 6. Run and verify
 
 ```bash
 python3 -m invoice_agent.server            # 0.0.0.0:8000, base path /a2a

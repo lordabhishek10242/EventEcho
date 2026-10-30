@@ -76,6 +76,10 @@ POSITIVE_CUES: dict[str, list[tuple[str, float]]] = {
         (r"\bpaid\s+(?:under|by|via)\s+(?:remittance|utr|neft|rtgs|wire|ach|sepa|upi)\b", 4.0),
         (r"\bpresented\s+(?:again|twice|a\s+second\s+time)\b", 4.5),
         (r"\bdouble\s+(?:payment|disbursement)\b", 5.0),
+        (r"\b(?:invoice|claim)\s+(?:has\s+|was\s+)?already\s+been\s+(?:paid|settled|processed)\b", 5.0),
+        (r"\bpaid\s+(?:earlier|before|previously|last\s+(?:week|month|cycle))\b", 4.0),
+        (r"\balready\s+(?:cleared|disbursed)\b", 4.5),
+        (r"\bsettled\s+in\s+full\b", 3.5),
     ],
     "open_exception": [
         (r"\bmaterial\s+(?:records?|documents?|data)\s+conflict\b", 5.5),
@@ -107,6 +111,11 @@ POSITIVE_CUES: dict[str, list[tuple[str, float]]] = {
         (r"\bpartial\s+(?:receipt|delivery)\b", 3.0),
         (r"\bquanti(?:ty|ties)\s+(?:received|recorded)\s+(?:differs|does\s+not|is\s+short|falls\s+short)\b", 4.0),
         (r"\bprices?\s+(?:on|in)\s+the\s+(?:invoice|po|purchase\s+order)\s+(?:differ|disagree)\b", 4.0),
+        (r"\b(?:three|3)[\s-]?way\s+match\s+(?:is\s+)?(?:broken|failed|incomplete)\b", 4.5),
+        (r"\bquantity\s+(?:shortfall|difference|short)\b", 3.5),
+        (r"\b(?:unexplained|material)\s+(?:difference|variance)\b", 4.0),
+        (r"\bneeds?\s+(?:an?\s+)?exception\b", 4.5),
+        (r"\b(?:goods\s+receipt|grn)\s+(?:records?|shows?)\s+(?:only\s+)?\d+\s+units?\b", 2.5),
     ],
     "hold_invoice": [
         (r"\bpending\s+(?:bank\s+|vendor\s+|callback\s+)?(?:verification|confirmation|validation|callback)\b", 5.0),
@@ -134,6 +143,10 @@ POSITIVE_CUES: dict[str, list[tuple[str, float]]] = {
         (r"\bonly\s+(?:after|once)\s+(?:the\s+)?(?:verification|confirmation|callback)\b", 4.5),
         (r"\bawaiting\s+(?:bank|vendor)\s+(?:confirmation|verification|response)\b", 4.5),
         (r"\bconfirmation\s+(?:is\s+)?(?:pending|outstanding)\b", 4.5),
+        (r"\bpayment\s+(?:is\s+)?(?:deferred|delayed)\s+(?:until|pending)\b", 4.0),
+        (r"\bdo\s+not\s+(?:pay|release|settle)\s+(?:until|before)\b", 4.5),
+        (r"\bwithhold\s+(?:the\s+)?(?:payment|remittance)\b", 4.0),
+        (r"\bunverified\s+(?:bank|beneficiary|account)\b", 4.0),
     ],
     "request_approval": [
         (r"\bexceeds?\s+(?:the\s+)?(?:delegated|autonomous|approval|spend|authority|authoriz|authoris)\b", 5.0),
@@ -161,6 +174,11 @@ POSITIVE_CUES: dict[str, list[tuple[str, float]]] = {
         (r"\bhuman\s+(?:approval|review|sign[-\s]?off)\b", 3.5),
         (r"\brequires?\s+(?:higher|another|second[-\s]level)\s+authority\b", 4.0),
         (r"\bsits?\s+(?:above|outside)\s+(?:the\s+)?(?:autonomous|delegated)\b", 4.5),
+        (r"\b(?:above|over|beyond)\s+(?:the\s+|this\s+|our\s+)?(?:agent'?s\s+)?(?:autonomous|delegated|approval|spend)\s+(?:limit|threshold|authority|ceiling|band|range)\b", 4.5),
+        (r"\boutside\s+(?:the\s+)?(?:approval|authority)\s+(?:band|range|envelope|matrix)\b", 4.0),
+        (r"\b(?:needs?|requires?)\s+(?:to\s+be\s+)?(?:approved|authorised|authorized)\s+by\b", 4.0),
+        (r"\b(?:may|cannot|can'?t|must)\s+not\s+be\s+(?:settled|paid|released)\s+(?:autonomously|without\s+(?:cfo\s+)?approval)\b", 4.5),
+        (r"\boutside\s+(?:the\s+)?(?:agent'?s\s+)?(?:authority|limit|remit)\b", 4.5),
     ],
     "settle_invoice": [
         (r"\bwithin\s+(?:the\s+)?(?:autonomous|delegated)\s+(?:authority|limit|threshold|authoriz|authoris)\b", 5.0),
@@ -188,6 +206,9 @@ POSITIVE_CUES: dict[str, list[tuple[str, float]]] = {
         (r"\bverified\s+against\s+(?:the\s+)?(?:purchase\s+order|po|grn|goods\s+receipt)\b", 3.5),
         (r"\bthree[-\s]way\s+match\s+(?:was\s+)?performed\b", 3.0),
         (r"\bno\s+(?:open\s+)?(?:issue|blocker|dispute)\b", 2.0),
+        (r"\b(?:can|may)\s+be\s+(?:paid|settled|released)\s+(?:autonomously|without\s+approval)\b", 4.0),
+        (r"\bno\s+approval\s+required\b", 3.5),
+        (r"\bready\s+to\s+(?:settle|pay|release)\b", 3.5),
     ],
 }
 
@@ -319,12 +340,24 @@ def score_text(text: str) -> dict[str, float]:
                     scores[action] -= weight * 0.55
                 else:
                     scores[action] += weight
+    strong_positive_positions: dict[str, list[int]] = {action: [] for action in ACTIONS}
+    for action, cues in _COMPILED_POS.items():
+        for pattern, weight in cues:
+            if weight < 4.5:
+                continue
+            strong_positive_positions[action].extend(m.start() for m in pattern.finditer(lower))
+
     for action, cues in _COMPILED_NEG.items():
         for pattern, weight in cues:
             for match in pattern.finditer(lower):
                 # "not a duplicate, but this repeats the same invoice" — a
-                # contrast clause reverses the negation it follows.
-                factor = 0.45 if _contrast_after(lower, match.end()) else 1.0
+                # later contrast clause or a later strong assertion reverses
+                # the negation it follows.
+                factor = 1.0
+                if _contrast_after(lower, match.end()):
+                    factor = 0.45
+                if any(pos > match.start() for pos in strong_positive_positions[action]):
+                    factor = min(factor, 0.35)
                 scores[action] -= weight * factor
     return scores
 
@@ -472,9 +505,9 @@ def _decisiveness(scores: dict[str, float], paragraph: Paragraph, facts: dict[st
     value = specific + 0.9 * scores["settle_invoice"] + _fact_bonus(paragraph.text, facts)
     value += 0.25 * min(len(paragraph.refs), 3)
     if paragraph.is_cover:
-        value -= 4.5
-    if paragraph.is_decoy:
         value -= 6.0
+    if paragraph.is_decoy:
+        value -= 9.0
     return value
 
 
@@ -506,6 +539,24 @@ def _select_evidence(
     when possible, in document order."""
 
     spans = [(m.start(), m.end(), m.group(1).strip()) for m in re.finditer(r"\[([^\[\]\n]{1,80})\]", decisive.text)]
+    if not spans:
+        # The document declares its references in a sibling field rather than
+        # inline brackets.
+        declared = [ref for ref in decisive.refs if ref]
+        if declared:
+            chosen = declared[:3]
+            for paragraph in paragraphs:
+                if len(chosen) >= 3:
+                    break
+                if paragraph is decisive or paragraph.is_cover or paragraph.is_decoy:
+                    continue
+                for ref in paragraph.refs:
+                    if ref and ref not in chosen:
+                        chosen.append(ref)
+                        if len(chosen) >= 3:
+                            break
+            return chosen[:3]
+
     scored: list[tuple[float, int, str]] = []
     for pos, (start, end, ref) in enumerate(spans):
         prev_end = spans[pos - 1][1] if pos else 0
@@ -577,9 +628,11 @@ def _quote(paragraph: Paragraph, limit: int = 260) -> str:
 
 def _rationale(action: str, facts: dict[str, Any], refs: list[str], decisive: Paragraph) -> str:
     reason = RATIONALE_REASON[action]
+    minor = int(facts.get("amountMinor") or 0)
+    major = f"{minor / 100:,.2f}"
     facts_text = (
         f"vendor {facts['vendorName']}, invoice {facts['invoiceNumber']}, "
-        f"{facts['amountMinor']} {facts['currency']} minor units"
+        f"{facts['currency']} {major} ({minor} minor units)"
     )
     body = f"{action}: {reason}. Decisive facts — {facts_text}."
     quote = _quote(decisive)
@@ -633,15 +686,20 @@ def decide_package(package: Any, policy_revision: str | None = None) -> Decision
         )
 
     scored = [(paragraph, score_text(paragraph.text)) for paragraph in paragraphs]
+
+    # Cover sheets and archive/training paragraphs are never decisive when any
+    # genuine record exists.  They only win if the package has nothing else.
+    candidates = [item for item in scored if not item[0].is_cover and not item[0].is_decoy]
+    if not candidates:
+        candidates = [item for item in scored if not item[0].is_decoy] or scored
     ranked = sorted(
-        scored,
+        candidates,
         key=lambda item: (-_decisiveness(item[1], item[0], facts), item[0].index),
     )
     decisive = ranked[0][0]
     if _decisiveness(ranked[0][1], decisive, facts) < 0.5:
-        # Fall back to the most reference-rich non-cover paragraph.
-        candidates = [p for p in paragraphs if not p.is_cover and not p.is_decoy] or paragraphs
-        decisive = max(candidates, key=lambda p: (len(p.refs), len(p.text)))
+        # Fall back to the most reference-rich genuine record.
+        decisive = max((item[0] for item in candidates), key=lambda p: (len(p.refs), len(p.text)))
 
     structured = structured_signals(package)
     numeric = numeric_limit_signal(facts, paragraphs)

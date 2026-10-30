@@ -62,19 +62,18 @@ class Paragraph:
         return bool(DECOY_RE.search(self.text))
 
 
+# Explicit reference fields win over generic document identifiers.
 REF_HINT_KEYS = (
     "ref",
     "reference",
     "refid",
     "referenceid",
-    "docid",
-    "doc_id",
-    "documentid",
     "evidenceid",
     "citation",
     "evidence_ref",
     "evidenceref",
 )
+DOC_ID_KEYS = ("docid", "doc_id", "documentid", "id")
 TEXT_KEYS = (
     "text",
     "content",
@@ -89,19 +88,33 @@ TEXT_KEYS = (
 )
 
 
-def _scalar(value: Any, path: str, hint: str | None = None) -> Iterable[tuple[str, Any, str | None]]:
-    """Walk any JSON shape, carrying a document reference hint with each string."""
+REF_LIST_KEYS = ("refs", "references", "evidencerefs", "citations", "evidenceids")
+
+
+def _scalar(value: Any, path: str, hint: tuple[str, ...] | None = None) -> Iterable[tuple[str, Any, tuple[str, ...] | None]]:
+    """Walk any JSON shape, carrying document reference hints with each string."""
     if isinstance(value, dict):
-        own_hint = hint
-        for key in REF_HINT_KEYS:
-            for actual_key in value:
-                if _norm_key(str(actual_key)) == _norm_key(key):
+        own_hint: tuple[str, ...] | None = hint
+
+        def _pick(keys: tuple[str, ...]) -> tuple[str, ...] | None:
+            for key in keys:
+                for actual_key in value:
+                    if _norm_key(str(actual_key)) != _norm_key(key):
+                        continue
                     candidate = value[actual_key]
-                    if isinstance(candidate, (str, int)) and 0 < len(str(candidate)) <= 80:
-                        own_hint = str(candidate)
-                    break
-            if own_hint is not hint:
-                break
+                    if isinstance(candidate, list) and 0 < len(candidate) <= 6:
+                        refs = tuple(
+                            str(item).strip()
+                            for item in candidate
+                            if isinstance(item, (str, int)) and 0 < len(str(item).strip()) <= 80
+                        )
+                        if refs:
+                            return refs
+                    elif isinstance(candidate, (str, int)) and 0 < len(str(candidate)) <= 80:
+                        return (str(candidate),)
+            return None
+
+        own_hint = _pick(REF_LIST_KEYS) or _pick(REF_HINT_KEYS) or _pick(DOC_ID_KEYS) or hint
         for key, child in value.items():
             key_norm = _norm_key(str(key))
             carries_text = key_norm in {_norm_key(k) for k in TEXT_KEYS}
@@ -145,14 +158,15 @@ def extract_paragraphs(package: Any) -> list[Paragraph]:
     for source, text, hint in _scalar(package, ""):
         if not isinstance(text, str):
             continue
-        body = _WS.sub(" ", text).strip()
+        raw = text.replace("\r\n", "\n").replace("\r", "\n")
+        body = _WS.sub(" ", raw).strip()
         if not body:
             continue
         has_ref = bool(REF_RE.search(body))
         if not has_ref and len(body) < 60:
             continue
-        for block in _split_blocks(body):
-            block = block.strip()
+        for block in _split_blocks(raw):
+            block = _WS.sub(" ", block).strip()
             if not block or block in seen:
                 continue
             if not REF_RE.search(block) and len(block) < 60:
@@ -160,9 +174,9 @@ def extract_paragraphs(package: Any) -> list[Paragraph]:
             seen.add(block)
             refs = [m.group(1).strip() for m in REF_RE.finditer(block)]
             if not refs and hint:
-                # Some documents carry their reference in a sibling field
-                # rather than inline brackets; use that identifier.
-                refs = [hint]
+                # Some documents carry their reference(s) in a sibling field
+                # rather than inline brackets; use those identifiers.
+                refs = [ref for ref in hint if ref][:3]
             paragraphs.append(
                 Paragraph(
                     text=block,
